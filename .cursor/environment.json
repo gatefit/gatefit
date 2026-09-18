@@ -1,0 +1,4 @@
+{
+  "name": "Gatefit",
+  "install": "chmod +x ./ci-local.sh .cursor/hooks/ci-local.sh"
+}
