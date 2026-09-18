@@ -12,7 +12,7 @@
   },
   "scripts": {
     "gatefit": "tsx src/cli.ts",
-    "test": "tsx --test tests/entitlements/*.test.ts"
+    "test": "tsx --test --test-concurrency=1 tests/entitlements/*.test.ts"
   },
   "dependencies": {
     "tsx": "^4.20.5",
