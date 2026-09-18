@@ -33,7 +33,7 @@ export type CompareResult = {
   mismatches: string[];
 };
 
-const LIVE_KEY = /\bsk_live_[A-Za-z0-9]+/;
+const LIVE_KEY = /\bsk_live(?:_[A-Za-z0-9_]*)?/;
 
 export function assertNoLiveStripeSecret(haystack: string): void {
   if (LIVE_KEY.test(haystack)) {
@@ -60,12 +60,24 @@ export async function loadAdapter(spec: string): Promise<AccessAdapter> {
   assertNoLiveStripeSecret(source);
   assertNoLiveStripeSecret(JSON.stringify(process.env));
   const mod = (await import(pathToFileURL(resolved).href)) as {
-    default?: AccessAdapter;
+    createAdapter?: () => AccessAdapter;
+    default?: AccessAdapter | (() => AccessAdapter);
     adapter?: AccessAdapter;
   };
-  const adapter = mod.default ?? mod.adapter;
+  const adapter = instantiateAdapter(mod);
   if (!adapter || typeof adapter.apply !== "function" || typeof adapter.snapshot !== "function") {
-    throw new Error(`adapter ${spec} must export default AccessAdapter with apply + snapshot`);
+    throw new Error(`adapter ${spec} must export createAdapter() or AccessAdapter with apply + snapshot`);
   }
   return adapter;
+}
+
+function instantiateAdapter(mod: {
+  createAdapter?: () => AccessAdapter;
+  default?: AccessAdapter | (() => AccessAdapter);
+  adapter?: AccessAdapter;
+}): AccessAdapter | undefined {
+  if (typeof mod.createAdapter === "function") return mod.createAdapter();
+  const candidate = mod.default ?? mod.adapter;
+  if (typeof candidate === "function") return candidate();
+  return candidate;
 }

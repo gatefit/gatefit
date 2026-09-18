@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import type { AccessAdapter, AccessSnapshot, BillingEvent } from "../../src/access-adapter.ts";
-import { loadGolden, runGolden } from "../../src/fixture-driver.ts";
+import { loadGolden, requireReset, runGolden } from "../../src/fixture-driver.ts";
 
 function memoryAdapter(): AccessAdapter {
   const rows = new Map<string, AccessSnapshot>();
@@ -62,6 +62,25 @@ test("runGolden applies events then compares declared expect fields", async () =
     ],
   });
   assert.equal(result.ok, true);
+});
+
+test("loadGolden rejects empty steps", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-"));
+  const file = path.join(dir, "empty.yaml");
+  fs.writeFileSync(file, "id: empty\nsubject: cus\nsteps: []\n");
+  assert.throws(() => loadGolden(file), /steps/);
+});
+
+test("requireReset fails directory runs when adapter has no reset", () => {
+  const adapter: AccessAdapter = {
+    apply() {},
+    snapshot() {
+      return { locked: true };
+    },
+  };
+  assert.throws(() => requireReset(adapter, 2), /reset/);
+  assert.doesNotThrow(() => requireReset(adapter, 1));
+  assert.doesNotThrow(() => requireReset({ ...adapter, reset() {} }, 2));
 });
 
 test("runGolden refuses GATEFIT_LIVE_CLOCK", async () => {

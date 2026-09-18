@@ -49,6 +49,8 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 npm install --ignore-scripts >&2
+npx tsc --noEmit || fail "typecheck"
+# Files share process.env (GATEFIT_LIVE_CLOCK probe); keep the test runner serial.
 npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts || fail "entitlement unit tests"
 npx tsx src/cli.ts adapter-check || fail "adapter-check"
 npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/hardened.ts \

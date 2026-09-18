@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { loadAdapter } from "./access-adapter.ts";
-import { listGoldens, loadGolden, runGolden } from "./fixture-driver.ts";
+import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
 
 const GOLDEN_DIR = "tests/entitlements/goldens";
 const S1 = path.join(GOLDEN_DIR, "paid_grants_access.yaml");
@@ -26,8 +26,10 @@ function resolveSuiteFiles(suite: string): string[] {
 
 async function cmdRun(suite: string, adapterPath: string): Promise<number> {
   const adapter = await loadAdapter(adapterPath);
+  const files = resolveSuiteFiles(suite);
+  requireReset(adapter, files.length);
   let failed = 0;
-  for (const file of resolveSuiteFiles(suite)) {
+  for (const file of files) {
     const golden = loadGolden(file);
     const result = await runGolden(adapter, golden);
     if (result.ok) {

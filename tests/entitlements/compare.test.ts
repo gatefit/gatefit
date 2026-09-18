@@ -27,6 +27,7 @@ test("locked true is deny even when a plan looks paid", () => {
 
 test("assertNoLiveStripeSecret refuses sk_live", () => {
   assert.throws(() => assertNoLiveStripeSecret("STRIPE_SECRET_KEY=sk_live_example"), /sk_live/);
+  assert.throws(() => assertNoLiveStripeSecret("sk_live"), /sk_live/);
 });
 
 test("assertNoLiveStripeSecret allows empty and test prefixes", () => {

@@ -12,6 +12,7 @@
   },
   "scripts": {
     "gatefit": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
     "test": "tsx --test --test-concurrency=1 tests/entitlements/*.test.ts"
   },
   "dependencies": {

@@ -30,10 +30,16 @@ export type StepResult = {
 export function loadGolden(filePath: string): GoldenSuite {
   const raw = fs.readFileSync(filePath, "utf8");
   const data = parseYaml(raw) as GoldenSuite;
-  if (!data?.id || !data.subject || !Array.isArray(data.steps)) {
-    throw new Error(`invalid golden: ${filePath}`);
+  if (!data?.id || !data.subject || !Array.isArray(data.steps) || data.steps.length === 0) {
+    throw new Error(`invalid golden: ${filePath} (id, subject, and non-empty steps required)`);
   }
   return data;
+}
+
+export function requireReset(adapter: AccessAdapter, suiteCount: number): void {
+  if (suiteCount > 1 && typeof adapter.reset !== "function") {
+    throw new Error("adapter.reset is required when running more than one golden");
+  }
 }
 
 export function listGoldens(suitePath: string): string[] {
