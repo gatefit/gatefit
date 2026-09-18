@@ -1,0 +1,18 @@
+id: refund_revokes_access
+subject: cus_s3
+steps:
+  - event:
+      id: evt_s3_invoice_paid
+      type: invoice.paid
+      customerId: cus_s3
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s3_charge_refunded
+      type: charge.refunded
+      customerId: cus_s3
+      refunded: true
+    expect:
+      locked: true

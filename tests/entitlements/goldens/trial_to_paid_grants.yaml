@@ -1,0 +1,19 @@
+id: trial_to_paid_grants
+subject: cus_s4
+steps:
+  - event:
+      id: evt_s4_trialing
+      type: customer.subscription.updated
+      customerId: cus_s4
+      status: trialing
+      plan: pro
+    expect:
+      locked: true
+  - event:
+      id: evt_s4_invoice_paid
+      type: invoice.paid
+      customerId: cus_s4
+      plan: pro
+    expect:
+      locked: false
+      plan: pro

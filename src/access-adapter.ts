@@ -18,6 +18,8 @@ export type BillingEvent = {
   features?: string[];
   paid?: boolean;
   canceled?: boolean;
+  refunded?: boolean;
+  status?: string;
   httpStatus?: number;
   stripeHttpStatus?: number;
 };
