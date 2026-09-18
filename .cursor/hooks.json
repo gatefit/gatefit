@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [
+      {
+        "command": ".cursor/hooks/ci-local.sh",
+        "timeout": 180,
+        "loop_limit": 5
+      }
+    ]
+  }
+}

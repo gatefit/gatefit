@@ -1,0 +1,18 @@
+---
+description: Gatefit Cursor Cloud coding policy
+alwaysApply: true
+---
+
+# Cursor Cloud coding policy
+
+- Follow `.cursor/HARNESS.md` (Cursor harness). Do not run Codex/Claude loops or invent a HOW-TO-USE playbook.
+- Coding policy is `CLAUDE.md`. Root `AGENTS.md` is the coding-session entry (product + how agents work here), not a Gemini product-AI spec.
+- GHA (`.github/workflows/ci.yml`) is source of truth for merges. Before opening or updating a PR, run `./ci-local.sh`. A local green never overrides a GHA red.
+- Never merge unless the user says "Merge it".
+- Cloud Agent PRs need two independent verdicts (correctness + security) **or** an explicit `human-review` label / “human review substitutes” note. Cursor does not start Codex fleet reviewers.
+- Prefer reply/continue on the **same cloud agent / same branch** for HOLD fix-ups; do not spawn duplicate agents for the same ticket.
+- Do not re-read the same large files in a loop; summarize and move on.
+- Empty-death: if the queue is empty / no eligible work / blocked on a human, stop cleanly — idle is valid. Do not thrash.
+- Do not implement product features by "chat coding" without the named verify gate. Do not open drive-by refactors or extra PRs outside the asked scope.
+- Account plugins own `using-superpowers` / pstack / superdesign — do not reinvent them in-repo.
+- Do not add detekt, deploy-ios, KMP, or other OtoPilot-only surfaces to this repo.
