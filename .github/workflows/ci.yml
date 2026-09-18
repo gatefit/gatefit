@@ -9,4 +9,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Named verify gate
-        run: ./ci-local.sh
+        run: bash ./ci-local.sh
