@@ -1,0 +1,33 @@
+id: duplicate_webhook_idempotent
+subject: cus_s6
+steps:
+  - event:
+      id: evt_s6_invoice_paid
+      type: invoice.paid
+      customerId: cus_s6
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s6_invoice_paid
+      type: invoice.paid
+      customerId: cus_s6
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s6_subscription_deleted
+      type: customer.subscription.deleted
+      customerId: cus_s6
+      canceled: true
+    expect:
+      locked: true
+  - event:
+      id: evt_s6_invoice_paid
+      type: invoice.paid
+      customerId: cus_s6
+      plan: pro
+    expect:
+      locked: true

@@ -55,6 +55,28 @@ test("hardened ignores Stripe HTTP 200 without invoice.paid", async () => {
   assert.equal(snap.locked, true);
 });
 
+const goldensDir = path.join(root, "tests/entitlements/goldens");
+const s3s6 = [
+  "refund_revokes_access.yaml",
+  "trial_to_paid_grants.yaml",
+  "past_due_denies_until_recovery.yaml",
+  "duplicate_webhook_idempotent.yaml",
+];
+
+for (const name of s3s6) {
+  test(`hardened adapter passes ${name}`, async () => {
+    const adapter = await loadAdapter(path.join(root, "src/adapters/hardened.ts"));
+    const result = await runGolden(adapter, loadGolden(path.join(goldensDir, name)));
+    assert.equal(result.ok, true);
+  });
+
+  test(`naive adapter fails ${name}`, async () => {
+    const adapter = await loadAdapter(path.join(root, "src/adapters/naive.ts"));
+    const result = await runGolden(adapter, loadGolden(path.join(goldensDir, name)));
+    assert.equal(result.ok, false);
+  });
+}
+
 test("loadAdapter returns isolated adapter instances", async () => {
   const naivePath = path.join(root, "src/adapters/naive.ts");
   const a = await loadAdapter(naivePath);

@@ -1,0 +1,26 @@
+id: past_due_denies_until_recovery
+subject: cus_s5
+steps:
+  - event:
+      id: evt_s5_invoice_paid
+      type: invoice.paid
+      customerId: cus_s5
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s5_payment_failed
+      type: invoice.payment_failed
+      customerId: cus_s5
+      status: past_due
+    expect:
+      locked: true
+  - event:
+      id: evt_s5_recovered
+      type: invoice.paid
+      customerId: cus_s5
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
