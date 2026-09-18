@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { loadAdapter } from "../../src/access-adapter.ts";
@@ -89,5 +90,27 @@ test("loadAdapter returns isolated adapter instances", async () => {
     plan: "pro",
   });
   const snap = await b.snapshot("cus_iso");
+  assert.equal(snap.locked, true);
+});
+
+test("sqlite adapter passes all S1–S6 goldens", async () => {
+  const adapter = await loadAdapter(path.join(root, "src/adapters/sqlite.ts"));
+  for (const file of fs.readdirSync(goldensDir).filter((n) => n.endsWith(".yaml"))) {
+    const result = await runGolden(adapter, loadGolden(path.join(goldensDir, file)));
+    assert.equal(result.ok, true, file);
+  }
+});
+
+test("sqlite createAdapter instances are isolated", async () => {
+  const sqlitePath = path.join(root, "src/adapters/sqlite.ts");
+  const a = await loadAdapter(sqlitePath);
+  const b = await loadAdapter(sqlitePath);
+  await a.apply({
+    id: "evt_iso_sql",
+    type: "invoice.paid",
+    customerId: "cus_iso_sql",
+    plan: "pro",
+  });
+  const snap = await b.snapshot("cus_iso_sql");
   assert.equal(snap.locked, true);
 });
