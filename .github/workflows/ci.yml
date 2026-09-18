@@ -14,3 +14,14 @@ jobs:
           cache: npm
       - name: Named verify gate
         run: bash ./ci-local.sh
+  gatefit-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - uses: ./.github/actions/gatefit
+        with:
+          adapter: src/adapters/sqlite.ts
