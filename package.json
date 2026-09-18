@@ -1,0 +1,26 @@
+{
+  "name": "gatefit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Stripe Entitlement Edge Pack — CI gate that asserts the access DB survives ugly billing transitions",
+  "type": "module",
+  "bin": {
+    "gatefit": "./bin/gatefit.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "gatefit": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test --test-concurrency=1 tests/entitlements/*.test.ts"
+  },
+  "dependencies": {
+    "tsx": "^4.20.5",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.2"
+  }
+}

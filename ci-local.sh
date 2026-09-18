@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Named verify gate for Gatefit (edipert/gatefit).
-# Harness High: integrity of the Cursor agentic harness.
-# Later Highs: plug entitlement-edge tests into the block at the bottom.
+# Harness integrity plus GATEFIT-H2 entitlement CLI / S1/S2 goldens.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,12 +35,26 @@ if grep -E -q 'otopilot-cloud' .cursor/rules/*.mdc 2>/dev/null; then
   fail "rules still named/copied as otopilot-cloud; use gatefit-cloud.mdc"
 fi
 
-# Entitlement suite plug-in (product logic is out of scope for this High).
-if [[ -d tests/entitlements ]] && compgen -G 'tests/entitlements/*' >/dev/null; then
-  echo "ci-local: tests/entitlements/ present — no runner wired yet" >&2
-  echo "ci-local: later High must invoke the entitlement runner from this script" >&2
-else
-  ok "entitlement suite not present yet (placeholder)"
+need_file package.json
+need_file src/cli.ts
+need_file src/access-adapter.ts
+need_file src/fixture-driver.ts
+need_file src/adapters/naive.ts
+need_file src/adapters/hardened.ts
+need_file tests/entitlements/goldens/paid_grants_access.yaml
+need_file tests/entitlements/goldens/cancel_revokes_access.yaml
+
+if ! command -v node >/dev/null 2>&1; then
+  fail "node is required for entitlement goldens"
 fi
+
+npm install --ignore-scripts >&2
+npx tsc --noEmit || fail "typecheck"
+# Files share process.env (GATEFIT_LIVE_CLOCK probe); keep the test runner serial.
+npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts || fail "entitlement unit tests"
+npx tsx src/cli.ts adapter-check || fail "adapter-check"
+npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/hardened.ts \
+  || fail "hardened goldens"
+ok "entitlement CLI + S1/S2 goldens"
 
 echo "ci-local: PASS" >&2

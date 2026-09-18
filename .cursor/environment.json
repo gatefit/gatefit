@@ -1,4 +1,4 @@
 {
   "name": "Gatefit",
-  "install": "chmod +x ./ci-local.sh .cursor/hooks/ci-local.sh"
+  "install": "chmod +x ./ci-local.sh .cursor/hooks/ci-local.sh bin/gatefit.js && npm install"
 }

@@ -1,0 +1,11 @@
+id: paid_grants_access
+subject: cus_s1
+steps:
+  - event:
+      id: evt_s1_invoice_paid
+      type: invoice.paid
+      customerId: cus_s1
+      plan: pro
+    expect:
+      locked: false
+      plan: pro

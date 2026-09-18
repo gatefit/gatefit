@@ -23,4 +23,4 @@ This file is coding/product policy. Session/merge/Project ops live in `.cursor/H
 
 ## Verify
 
-Named gate: `./ci-local.sh`. Plug entitlement tests into that script when they exist. Until then the script asserts harness integrity only.
+Named gate: `./ci-local.sh`. It asserts harness integrity, then runs entitlement unit tests, `gatefit adapter-check`, and hardened S1/S2 goldens (`paid_grants_access`, `cancel_revokes_access`). Do not invent a second gate.

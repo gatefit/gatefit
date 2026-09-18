@@ -17,12 +17,11 @@ Exit 0 is green. Treat any non-zero as blocking.
 
 ## What it covers today
 
-Harness integrity (required agent files present; no OtoPilot-only detekt/iOS hooks or `deploy-ios` skill).
-
-## What it will cover later
-
-When `tests/entitlements/` exists, a later High must wire the entitlement runner into `./ci-local.sh`. Until then, do not invent a second gate.
+- Harness integrity (required agent files present; no OtoPilot-only detekt/iOS hooks or `deploy-ios` skill).
+- Entitlement CLI: `gatefit adapter-check` (naive fails S1 / hardened passes S1).
+- Hardened S1/S2 goldens: `paid_grants_access` and `cancel_revokes_access`.
+- `tests/entitlements/*.test.ts`.
 
 ## Merge
 
-GitHub Actions `ci.yml` runs the same script. A local green never overrides a GHA red. Never merge unless the user says **Merge it**.
+GitHub Actions `ci.yml` runs the same script. A local green never overrides a GHA red. Never merge unless the user says **Merge it**. Edip OVERRIDE for GATEFIT-H2: GHA billing may skip — do not block this High on Actions.

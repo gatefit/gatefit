@@ -1,0 +1,18 @@
+id: cancel_revokes_access
+subject: cus_s2
+steps:
+  - event:
+      id: evt_s2_invoice_paid
+      type: invoice.paid
+      customerId: cus_s2
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s2_subscription_deleted
+      type: customer.subscription.deleted
+      customerId: cus_s2
+      canceled: true
+    expect:
+      locked: true
