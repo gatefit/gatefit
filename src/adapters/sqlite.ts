@@ -37,8 +37,7 @@ export function createAdapter(): AccessAdapter {
       event_id TEXT PRIMARY KEY
     );
   `);
-  const seenGet = db.prepare("SELECT 1 AS ok FROM seen_events WHERE event_id = ?");
-  const seenAdd = db.prepare("INSERT INTO seen_events (event_id) VALUES (?)");
+  const seenAdd = db.prepare("INSERT OR IGNORE INTO seen_events (event_id) VALUES (?)");
   const accessGet = db.prepare(
     "SELECT customer_id, locked, plan, seats, features FROM access WHERE customer_id = ?",
   );
@@ -53,20 +52,23 @@ export function createAdapter(): AccessAdapter {
   `);
   const clearAccess = db.prepare("DELETE FROM access");
   const clearSeen = db.prepare("DELETE FROM seen_events");
+  const applyEvent = db.transaction((event: BillingEvent) => {
+    const inserted = seenAdd.run(event.id);
+    if (inserted.changes === 0) return;
+    const current = rowToSnapshot(accessGet.get(event.customerId) as AccessRow | undefined);
+    const next = nextSnapshot(current, event);
+    accessUpsert.run({
+      customer_id: event.customerId,
+      locked: next.locked ? 1 : 0,
+      plan: next.plan ?? null,
+      seats: next.seats ?? null,
+      features: next.features ? JSON.stringify(next.features) : null,
+    });
+  });
 
   return {
     apply(event: BillingEvent) {
-      if (seenGet.get(event.id)) return;
-      seenAdd.run(event.id);
-      const current = rowToSnapshot(accessGet.get(event.customerId) as AccessRow | undefined);
-      const next = nextSnapshot(current, event);
-      accessUpsert.run({
-        customer_id: event.customerId,
-        locked: next.locked ? 1 : 0,
-        plan: next.plan ?? null,
-        seats: next.seats ?? null,
-        features: next.features ? JSON.stringify(next.features) : null,
-      });
+      applyEvent(event);
     },
     snapshot(customerId: string) {
       return rowToSnapshot(accessGet.get(customerId) as AccessRow | undefined);

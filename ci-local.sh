@@ -73,9 +73,9 @@ npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters
   || fail "hardened goldens"
 npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/sqlite.ts \
   || fail "sqlite goldens"
-if npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/naive.ts; then
-  fail "naive unexpectedly passed goldens"
-fi
+naive_out="$(npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/naive.ts 2>&1 || true)"
+echo "$naive_out" >&2
+echo "$naive_out" | grep -q 'gatefit: FAIL' || fail "naive did not report FAIL"
 ok "entitlement CLI + S1–S6 goldens (hardened/sqlite pass, naive fails)"
 
 echo "ci-local: PASS" >&2

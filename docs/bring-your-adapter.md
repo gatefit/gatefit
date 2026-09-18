@@ -29,10 +29,10 @@ Exit 0 = all S1–S6 goldens passed. Do not set `GATEFIT_LIVE_CLOCK`. Do not use
 ```yaml
 - uses: edipert/gatefit/.github/actions/gatefit@main
   with:
-    adapter: src/access-adapter.ts
+    adapter: path/to/your-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo; goldens default to Gatefit’s S1–S6 pack.
+The Action wraps `gatefit run`. Adapter path is in *your* repo (example: `path/to/your-adapter.ts`); goldens default to Gatefit’s S1–S6 pack. In this repo, dogfood `src/adapters/sqlite.ts`.
 
 ## 4. Sanity
 

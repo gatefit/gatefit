@@ -2,7 +2,7 @@
 
 Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions.
 
-Fixture-first S1–S6 goldens, a `gatefit` CLI, and a SQLite reference adapter. Not a billing UI.
+Fixture-first S1–S6 goldens, a `gatefit` CLI, and a SQLite reference adapter. Node 22+. Not a billing UI.
 
 ```bash
 npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/sqlite.ts

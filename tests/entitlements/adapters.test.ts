@@ -93,24 +93,69 @@ test("loadAdapter returns isolated adapter instances", async () => {
   assert.equal(snap.locked, true);
 });
 
+function withoutSqlitePath<T>(fn: () => Promise<T>): Promise<T> {
+  const prev = process.env.GATEFIT_SQLITE_PATH;
+  delete process.env.GATEFIT_SQLITE_PATH;
+  return fn().finally(() => {
+    if (prev === undefined) delete process.env.GATEFIT_SQLITE_PATH;
+    else process.env.GATEFIT_SQLITE_PATH = prev;
+  });
+}
+
 test("sqlite adapter passes all S1–S6 goldens", async () => {
-  const adapter = await loadAdapter(path.join(root, "src/adapters/sqlite.ts"));
-  for (const file of fs.readdirSync(goldensDir).filter((n) => n.endsWith(".yaml"))) {
-    const result = await runGolden(adapter, loadGolden(path.join(goldensDir, file)));
-    assert.equal(result.ok, true, file);
-  }
+  await withoutSqlitePath(async () => {
+    const adapter = await loadAdapter(path.join(root, "src/adapters/sqlite.ts"));
+    for (const file of fs.readdirSync(goldensDir).filter((n) => n.endsWith(".yaml"))) {
+      const result = await runGolden(adapter, loadGolden(path.join(goldensDir, file)));
+      assert.equal(result.ok, true, file);
+    }
+  });
 });
 
 test("sqlite createAdapter instances are isolated", async () => {
-  const sqlitePath = path.join(root, "src/adapters/sqlite.ts");
-  const a = await loadAdapter(sqlitePath);
-  const b = await loadAdapter(sqlitePath);
-  await a.apply({
-    id: "evt_iso_sql",
-    type: "invoice.paid",
-    customerId: "cus_iso_sql",
-    plan: "pro",
+  await withoutSqlitePath(async () => {
+    const sqlitePath = path.join(root, "src/adapters/sqlite.ts");
+    const a = await loadAdapter(sqlitePath);
+    const b = await loadAdapter(sqlitePath);
+    await a.apply({
+      id: "evt_iso_sql",
+      type: "invoice.paid",
+      customerId: "cus_iso_sql",
+      plan: "pro",
+    });
+    const snap = await b.snapshot("cus_iso_sql");
+    assert.equal(snap.locked, true);
   });
-  const snap = await b.snapshot("cus_iso_sql");
-  assert.equal(snap.locked, true);
+});
+
+test("sqlite duplicate event id is a no-op", async () => {
+  await withoutSqlitePath(async () => {
+    const adapter = await loadAdapter(path.join(root, "src/adapters/sqlite.ts"));
+    const event = {
+      id: "evt_dup_sql",
+      type: "invoice.paid",
+      customerId: "cus_dup_sql",
+      plan: "pro" as const,
+    };
+    await adapter.apply(event);
+    await adapter.apply(event);
+    const snap = await adapter.snapshot("cus_dup_sql");
+    assert.equal(snap.locked, false);
+    assert.equal(snap.plan, "pro");
+  });
+});
+
+test("sqlite ignores Stripe HTTP 200 without invoice.paid", async () => {
+  await withoutSqlitePath(async () => {
+    const adapter = await loadAdapter(path.join(root, "src/adapters/sqlite.ts"));
+    await adapter.apply({
+      id: "evt_http_sql",
+      type: "charge.succeeded",
+      customerId: "cus_http_sql",
+      httpStatus: 200,
+      plan: "pro",
+    });
+    const snap = await adapter.snapshot("cus_http_sql");
+    assert.equal(snap.locked, true);
+  });
 });
