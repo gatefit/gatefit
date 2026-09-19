@@ -41,6 +41,7 @@ export function billingEventsFromStripe(input: {
       status: "trialing",
       plan: input.plan,
     });
+    return events;
   }
   for (const invoice of input.invoices) {
     if (invoice.paid === true || invoice.status === "paid") {

@@ -212,6 +212,20 @@ test("trialing maps to locked access even if Stripe returned 200", () => {
   assert.equal(store.rows.get("cus_t")?.locked, true);
 });
 
+test("trialing stays locked even when Stripe has a paid $0 invoice", () => {
+  const events = billingEventsFromStripe({
+    customerId: "cus_t0",
+    plan: "pro",
+    subscription: { id: "sub_t0", status: "trialing", customer: "cus_t0" },
+    invoices: [{ id: "in_free", status: "paid", paid: true, customer: "cus_t0" }],
+    stripeHttpStatus: 200,
+  });
+  assert.equal(events.some((e) => e.type === "invoice.paid"), false);
+  const store = emptyStore();
+  for (const event of events) applyBillingEvent(store, event);
+  assert.equal(store.rows.get("cus_t0")?.locked, true);
+});
+
 type ScriptedOpts = { forceUnpaid?: boolean };
 
 function scriptedStripe(opts: ScriptedOpts = {}): StripeClockClient & {

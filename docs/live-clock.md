@@ -28,6 +28,7 @@ Workflow: `.github/workflows/live-clock.yml`
 ## Landmines
 
 - Never treat Stripe HTTP 200 as access proof — Gatefit asserts the AccessAdapter snapshot.
+- While a subscription is `trialing`, a paid $0 invoice does **not** grant access.
 - Clocks are created, advanced (≤2 billing intervals per step), polled until `ready`, and **deleted in `finally`**. A leftover clock is a flake.
 - ≤3 customers and ≤3 subscriptions per clock. This lane uses 1+1 per scenario.
 - Cards only (`pm_card_visa`). API version is pinned in `src/stripe-clock.ts`.
