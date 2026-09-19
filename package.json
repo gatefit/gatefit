@@ -1,12 +1,22 @@
 {
   "name": "gatefit",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Stripe Entitlement Edge Pack — CI gate that asserts the access DB survives ugly billing transitions",
+  "version": "0.4.0",
+  "description": "Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions",
   "type": "module",
+  "license": "MIT",
+  "author": "edipert",
   "bin": {
     "gatefit": "./bin/gatefit.js"
   },
+  "files": [
+    "bin",
+    "src",
+    "tests/entitlements/goldens",
+    "action.yml",
+    "scripts/action-run.sh",
+    "LICENSE",
+    "README.md"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -14,6 +24,25 @@
     "gatefit": "tsx src/cli.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test --test-concurrency=1 tests/entitlements/*.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edipert/gatefit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/edipert/gatefit/issues"
+  },
+  "homepage": "https://github.com/edipert/gatefit#readme",
+  "keywords": [
+    "stripe",
+    "entitlements",
+    "access",
+    "ci",
+    "webhooks",
+    "billing"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
