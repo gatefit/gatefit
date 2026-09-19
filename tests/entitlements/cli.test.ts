@@ -133,6 +133,38 @@ test("empty caller goldens directory does not false-pass; bundled S1–S6 still 
   assert.match(out, /PASS cancel_revokes_access/);
 });
 
+test("gatefit live refuses to run without GATEFIT_LIVE_CLOCK=1", () => {
+  const result = run(["live", "--adapter", "src/adapters/hardened.ts"], {
+    STRIPE_SECRET_KEY: "sk_test_123",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr + result.stdout, /GATEFIT_LIVE_CLOCK=1/);
+});
+
+test("gatefit live refuses sk_live", () => {
+  const result = run(["live", "--adapter", "src/adapters/hardened.ts"], {
+    GATEFIT_LIVE_CLOCK: "1",
+    STRIPE_SECRET_KEY: "sk_live_nope",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr + result.stdout, /sk_live/);
+});
+
+test("gatefit live without a test key explains the missing secret", () => {
+  const result = run(["live", "--adapter", "src/adapters/hardened.ts"], {
+    GATEFIT_LIVE_CLOCK: "1",
+    STRIPE_SECRET_KEY: "",
+    STRIPE_API_KEY: "",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr + result.stdout, /STRIPE_SECRET_KEY|STRIPE_API_KEY/);
+});
+
+test("gatefit live is listed in usage", () => {
+  const result = run([]);
+  assert.match(result.stderr + result.stdout, /gatefit live/);
+});
+
 test("gatefit bin finds hoisted tsx outside the package directory", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-hoist-"));
   const prefix = path.join(tmp, "node_modules");
