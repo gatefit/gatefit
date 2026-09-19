@@ -22,6 +22,9 @@ export type BillingEvent = {
   status?: string;
   httpStatus?: number;
   stripeHttpStatus?: number;
+  cancel_at_period_end?: boolean;
+  period_end?: number;
+  now?: number;
 };
 
 export type AccessAdapter = {
