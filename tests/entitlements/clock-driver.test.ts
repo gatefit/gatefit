@@ -1,11 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { advanceUntilReady, withTestClock } from "../../src/clock-driver.ts";
 import {
   STRIPE_API_VERSION,
   assertAdvanceWithinTwoIntervals,
   createStripeClockClient,
   requireLiveClockEnabled,
   requireTestModeSecret,
+  type StripeClockClient,
+  type StripeCustomer,
+  type StripeInvoice,
+  type StripeSubscription,
+  type TestClock,
 } from "../../src/stripe-clock.ts";
 
 test("requireLiveClockEnabled demands GATEFIT_LIVE_CLOCK=1", () => {
@@ -64,4 +70,107 @@ test("createStripeClockClient pins Stripe-Version and never sends sk_live", asyn
   assert.equal(STRIPE_API_VERSION, "2025-10-29.clover");
   assert.equal(headers.get("Authorization"), "Bearer sk_test_123");
   assert.match(calls[0]?.url ?? "", /\/v1\/test_helpers\/test_clocks$/);
+});
+
+function memoryStripe(): StripeClockClient & {
+  deleted: string[];
+  created: string[];
+  explodingDelete?: boolean;
+} {
+  const clocks = new Map<string, TestClock>();
+  let n = 0;
+  const api: StripeClockClient & { deleted: string[]; created: string[]; explodingDelete?: boolean } = {
+    deleted: [],
+    created: [],
+    async createClock(input) {
+      n += 1;
+      const clock: TestClock = { id: `clock_${n}`, status: "ready", frozen_time: input.frozenTime };
+      clocks.set(clock.id, clock);
+      api.created.push(clock.id);
+      return { ...clock };
+    },
+    async retrieveClock(id) {
+      const clock = clocks.get(id);
+      if (!clock) throw new Error(`missing clock ${id}`);
+      const snapshot = { ...clock };
+      if (clock.status === "advancing") clock.status = "ready";
+      return snapshot;
+    },
+    async advanceClock(id, frozenTime) {
+      const clock = clocks.get(id);
+      if (!clock) throw new Error(`missing clock ${id}`);
+      clock.frozen_time = frozenTime;
+      clock.status = "advancing";
+      return { ...clock };
+    },
+    async deleteClock(id) {
+      api.deleted.push(id);
+      if (api.explodingDelete) return { id, deleted: false };
+      clocks.delete(id);
+      return { id, deleted: true };
+    },
+    async createCustomer() {
+      return { id: "cus_1" } satisfies StripeCustomer;
+    },
+    async createSubscription() {
+      return { id: "sub_1", status: "active", customer: "cus_1" } satisfies StripeSubscription;
+    },
+    async retrieveSubscription() {
+      return { id: "sub_1", status: "active", customer: "cus_1" };
+    },
+    async cancelSubscription() {
+      return { id: "sub_1", status: "canceled", customer: "cus_1" };
+    },
+    async listInvoices() {
+      return [{ id: "in_1", status: "paid", paid: true, customer: "cus_1" }] satisfies StripeInvoice[];
+    },
+  };
+  return api;
+}
+
+test("withTestClock deletes the clock after success", async () => {
+  const stripe = memoryStripe();
+  const seen = await withTestClock(stripe, { frozenTime: 10, name: "ok" }, async (clock) => clock.id);
+  assert.equal(seen, "clock_1");
+  assert.deepEqual(stripe.deleted, ["clock_1"]);
+});
+
+test("withTestClock deletes the clock after failure (no leak)", async () => {
+  const stripe = memoryStripe();
+  await assert.rejects(
+    () =>
+      withTestClock(stripe, { frozenTime: 10, name: "boom" }, async () => {
+        throw new Error("scenario boom");
+      }),
+    /scenario boom/,
+  );
+  assert.deepEqual(stripe.deleted, ["clock_1"]);
+});
+
+test("withTestClock fails closed when delete does not confirm", async () => {
+  const stripe = memoryStripe();
+  stripe.explodingDelete = true;
+  await assert.rejects(
+    () => withTestClock(stripe, { frozenTime: 10, name: "leak" }, async () => "ok"),
+    /clock leak/,
+  );
+});
+
+test("advanceUntilReady polls until status is ready and caps two intervals", async () => {
+  const stripe = memoryStripe();
+  const clock = await stripe.createClock({ frozenTime: 100 });
+  const sleeps: number[] = [];
+  const ready = await advanceUntilReady(stripe, clock.id, 100 + 14 * 24 * 60 * 60, {
+    sleep: async (ms) => {
+      sleeps.push(ms);
+    },
+    timeoutMs: 5_000,
+    intervalMs: 1,
+  });
+  assert.equal(ready.status, "ready");
+  assert.ok(sleeps.length >= 1);
+  await assert.rejects(
+    () => advanceUntilReady(stripe, clock.id, clock.frozen_time + 90 * 24 * 60 * 60),
+    /two billing intervals/,
+  );
 });
