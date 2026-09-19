@@ -1,0 +1,40 @@
+---
+const checkoutUrl = import.meta.env.PUBLIC_POLAR_CHECKOUT_URL || 'https://polar.sh/';
+const isCheckoutLink = /^https:\/\/buy\.polar\.sh\//.test(checkoutUrl);
+---
+
+<p>
+	<a
+		class="gatefit-polar-cta"
+		href={checkoutUrl}
+		data-polar-checkout
+		data-polar-checkout-theme="light">Get indie license</a
+	>
+</p>
+{
+	isCheckoutLink && (
+		<script
+			is:inline
+			defer
+			data-auto-init
+			src="https://cdn.jsdelivr.net/npm/@polar-sh/checkout@latest/dist/embed.global.js"
+		></script>
+	)
+}
+<p>
+	Polar is the merchant of record. Until a Gatefit checkout link exists, this
+	points at Polar; set <code>PUBLIC_POLAR_CHECKOUT_URL</code> to a <code>buy.polar.sh</code>
+	link after the product is created. npm and the GitHub Action stay free.
+</p>
+
+<style>
+	.gatefit-polar-cta {
+		display: inline-block;
+		padding: 0.6rem 1.1rem;
+		border-radius: 999px;
+		background: var(--sl-color-text-accent);
+		color: var(--sl-color-black);
+		text-decoration: none;
+		font-weight: 600;
+	}
+</style>
