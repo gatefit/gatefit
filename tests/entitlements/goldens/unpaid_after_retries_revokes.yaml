@@ -1,0 +1,40 @@
+# Assumed policy: past_due denies, then unpaid after retries exhaust
+# revokes (locked: true). Immediate cancel stays locked. Fixture-only.
+id: unpaid_after_retries_revokes
+subject: cus_h7_unpaid
+steps:
+  - event:
+      id: evt_h7_unpaid_paid
+      type: invoice.paid
+      customerId: cus_h7_unpaid
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_h7_unpaid_past_due
+      type: invoice.payment_failed
+      customerId: cus_h7_unpaid
+      status: past_due
+    expect:
+      locked: true
+  - event:
+      id: evt_h7_unpaid_exhaust
+      type: customer.subscription.updated
+      customerId: cus_h7_unpaid
+      status: unpaid
+      plan: pro
+      seats: 1
+    expect:
+      locked: true
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_h7_unpaid_canceled
+      type: customer.subscription.deleted
+      customerId: cus_h7_unpaid
+      canceled: true
+    expect:
+      locked: true

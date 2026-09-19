@@ -1,0 +1,29 @@
+# Assumed policy: charge.dispute.created revokes access (locked: true)
+# and flags the row by clearing features. Plan/seats stay. Fixture-only;
+# dispute + Stripe Test Clocks flake (auto-cancel delay).
+id: dispute_revokes_or_flags
+subject: cus_h7_dispute
+steps:
+  - event:
+      id: evt_h7_dispute_paid
+      type: invoice.paid
+      customerId: cus_h7_dispute
+      plan: pro
+      seats: 1
+      features:
+        - team
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+      features:
+        - team
+  - event:
+      id: evt_h7_dispute_created
+      type: charge.dispute.created
+      customerId: cus_h7_dispute
+    expect:
+      locked: true
+      plan: pro
+      seats: 1
+      features: []
