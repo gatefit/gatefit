@@ -14,7 +14,14 @@ export type TestClock = {
 };
 
 export type StripeCustomer = { id: string };
-export type StripeSubscription = { id: string; status: string; customer: string };
+export type StripeSubscription = {
+  id: string;
+  status: string;
+  customer: string;
+  cancel_at_period_end?: boolean;
+  current_period_end?: number;
+  items?: { data?: Array<{ quantity?: number }> };
+};
 export type StripeInvoice = { id: string; status: string; paid: boolean; customer: string };
 
 export type StripeClockClient = {

@@ -4,7 +4,7 @@ import { createAdapter as createHardened } from "../../src/adapters/hardened.ts"
 import { compareAccess } from "../../src/access-adapter.ts";
 import { applyBillingEvent, emptyStore } from "../../src/access-rules.ts";
 import { advanceUntilReady, withTestClock } from "../../src/clock-driver.ts";
-import { billingEventsFromStripe, runLiveLane } from "../../src/live-scenarios.ts";
+import { billingEventsFromStripe, LIVE_SCENARIO_IDS, runLiveLane } from "../../src/live-scenarios.ts";
 import {
   MAX_CUSTOMERS_PER_CLOCK,
   MAX_SUBSCRIPTIONS_PER_CLOCK,
@@ -224,6 +224,62 @@ test("trialing stays locked even when Stripe has a paid $0 invoice", () => {
   const store = emptyStore();
   for (const event of events) applyBillingEvent(store, event);
   assert.equal(store.rows.get("cus_t0")?.locked, true);
+});
+
+test("billingEventsFromStripe maps cancel_at_period_end using clock now, not HTTP 200", () => {
+  const events = billingEventsFromStripe({
+    customerId: "cus_cape",
+    plan: "pro",
+    now: 1_577_836_800,
+    subscription: {
+      id: "sub_cape",
+      status: "active",
+      customer: "cus_cape",
+      cancel_at_period_end: true,
+      current_period_end: 1_577_923_200,
+      items: { data: [{ quantity: 5 }] },
+    },
+    invoices: [{ id: "in_cape", status: "paid", paid: true, customer: "cus_cape" }],
+    stripeHttpStatus: 200,
+  });
+  assert.equal(events.some((e) => e.stripeHttpStatus === 200 || e.httpStatus === 200), false);
+  const cape = events.find((e) => e.cancel_at_period_end === true);
+  assert.equal(cape?.period_end, 1_577_923_200);
+  assert.equal(cape?.now, 1_577_836_800);
+  assert.equal(cape?.seats, 5);
+  assert.equal(cape?.type, "customer.subscription.updated");
+  const paid = events.find((e) => e.type === "invoice.paid");
+  assert.equal(paid?.seats, 5);
+});
+
+test("mapped CAPE locks when clock now reaches period_end", () => {
+  const events = billingEventsFromStripe({
+    customerId: "cus_cape_end",
+    plan: "pro",
+    now: 1_577_923_200,
+    subscription: {
+      id: "sub_cape_end",
+      status: "active",
+      customer: "cus_cape_end",
+      cancel_at_period_end: true,
+      current_period_end: 1_577_923_200,
+      items: { data: [{ quantity: 2 }] },
+    },
+    invoices: [{ id: "in_cape_end", status: "paid", paid: true, customer: "cus_cape_end" }],
+    stripeHttpStatus: 200,
+  });
+  const store = emptyStore();
+  for (const event of events) applyBillingEvent(store, event);
+  assert.equal(store.rows.get("cus_cape_end")?.locked, true);
+  assert.equal(store.rows.get("cus_cape_end")?.seats, 2);
+});
+
+test("LIVE_SCENARIO_IDS stay the H5 trio (H6 is fixture-first)", () => {
+  assert.deepEqual([...LIVE_SCENARIO_IDS], [
+    "paid_grants_access",
+    "cancel_revokes_access",
+    "trial_to_paid_grants",
+  ]);
 });
 
 type ScriptedOpts = { forceUnpaid?: boolean };

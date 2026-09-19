@@ -5,6 +5,8 @@ Opt-in. **Not** the merge path. Fixture S1–S6 (`gatefit run`) stay default CI.
 Ported scenarios: `paid_grants_access`, `cancel_revokes_access`, `trial_to_paid_grants`.
 Not on clocks: `refund_revokes_access` (ACH/dispute poor), `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`.
 
+H6 seats / CAPE / upgrade-race are **fixture goldens** (`period_end` + `now` on YAML events). They are not default `gatefit live` ids. The mapper may attach `cancel_at_period_end` / quantity when those Stripe object fields are present.
+
 ## Local
 
 ```bash

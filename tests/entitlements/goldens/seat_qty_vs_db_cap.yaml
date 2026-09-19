@@ -1,0 +1,29 @@
+id: seat_qty_vs_db_cap
+subject: cus_h6_seats
+steps:
+  - event:
+      id: evt_h6_seats_paid_10
+      type: invoice.paid
+      customerId: cus_h6_seats
+      plan: pro
+      seats: 10
+      features:
+        - team
+    expect:
+      locked: false
+      plan: pro
+      seats: 10
+      features:
+        - team
+  - event:
+      id: evt_h6_seats_qty_3
+      type: customer.subscription.updated
+      customerId: cus_h6_seats
+      plan: pro
+      seats: 3
+    expect:
+      locked: false
+      plan: pro
+      seats: 3
+      features:
+        - team

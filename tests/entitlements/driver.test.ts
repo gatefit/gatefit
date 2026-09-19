@@ -83,6 +83,20 @@ test("requireReset fails directory runs when adapter has no reset", () => {
   assert.doesNotThrow(() => requireReset({ ...adapter, reset() {} }, 2));
 });
 
+test("CAPE golden uses fixture period_end, not wall clock", () => {
+  const driverSrc = fs.readFileSync(
+    path.join(import.meta.dirname, "../../src/fixture-driver.ts"),
+    "utf8",
+  );
+  assert.doesNotMatch(driverSrc, /Date\.now/);
+  const suite = loadGolden(
+    path.join(import.meta.dirname, "goldens/cancel_at_period_end_keeps_access_until_end.yaml"),
+  );
+  assert.equal(suite.steps[1]?.event.period_end, 1_577_923_200);
+  assert.equal(suite.steps[1]?.event.now, 1_577_836_800);
+  assert.equal(suite.steps[2]?.event.now, 1_577_923_200);
+});
+
 test("runGolden refuses GATEFIT_LIVE_CLOCK", async () => {
   const prev = process.env.GATEFIT_LIVE_CLOCK;
   process.env.GATEFIT_LIVE_CLOCK = "1";

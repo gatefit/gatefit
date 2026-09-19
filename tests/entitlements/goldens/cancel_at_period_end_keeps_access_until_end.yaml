@@ -1,0 +1,36 @@
+id: cancel_at_period_end_keeps_access_until_end
+subject: cus_h6_cape
+steps:
+  - event:
+      id: evt_h6_cape_paid
+      type: invoice.paid
+      customerId: cus_h6_cape
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_h6_cape_set
+      type: customer.subscription.updated
+      customerId: cus_h6_cape
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577836800
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_h6_cape_period_end
+      type: customer.subscription.updated
+      customerId: cus_h6_cape
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577923200
+      plan: pro
+    expect:
+      locked: true
