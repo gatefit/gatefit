@@ -34,12 +34,19 @@ export function isCapePeriodEnded(event: BillingEvent): boolean {
   );
 }
 
-export function isRefund(event: BillingEvent): boolean {
+export function isDispute(event: BillingEvent): boolean {
   return (
-    event.refunded === true ||
-    event.type === "charge.refunded" ||
-    event.type === "charge.dispute.created"
+    event.type === "charge.dispute.created" ||
+    event.type === "radar.early_fraud_warning.created"
   );
+}
+
+export function isRefund(event: BillingEvent): boolean {
+  return event.refunded === true || event.type === "charge.refunded";
+}
+
+export function isUnpaidExhaust(event: BillingEvent): boolean {
+  return event.status === "unpaid" || event.type === "invoice.marked_uncollectible";
 }
 
 export function isPastDue(event: BillingEvent): boolean {
@@ -59,7 +66,16 @@ function withEntitlements(base: AccessSnapshot, event: BillingEvent): AccessSnap
 }
 
 export function nextSnapshot(current: AccessSnapshot, event: BillingEvent): AccessSnapshot {
-  if (isRefund(event) || isImmediateCancel(event) || isPastDue(event) || isTrialing(event)) {
+  if (isDispute(event)) {
+    return { ...current, locked: true, features: [] };
+  }
+  if (
+    isRefund(event) ||
+    isImmediateCancel(event) ||
+    isPastDue(event) ||
+    isUnpaidExhaust(event) ||
+    isTrialing(event)
+  ) {
     return { ...current, locked: true };
   }
   if (isCapePeriodEnded(event)) {
