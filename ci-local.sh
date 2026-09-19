@@ -50,6 +50,9 @@ need_file tests/entitlements/goldens/refund_revokes_access.yaml
 need_file tests/entitlements/goldens/trial_to_paid_grants.yaml
 need_file tests/entitlements/goldens/past_due_denies_until_recovery.yaml
 need_file tests/entitlements/goldens/duplicate_webhook_idempotent.yaml
+need_file tests/entitlements/goldens/seat_qty_vs_db_cap.yaml
+need_file tests/entitlements/goldens/cancel_at_period_end_keeps_access_until_end.yaml
+need_file tests/entitlements/goldens/upgrade_plus_cape_race.yaml
 need_file .github/actions/gatefit/action.yml
 need_file docs/bring-your-adapter.md
 need_file action.yml

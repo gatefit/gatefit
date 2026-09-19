@@ -20,6 +20,7 @@ Exit 0 is green. Treat any non-zero as blocking.
 - Harness integrity (required agent files present; no OtoPilot-only detekt/iOS hooks or `deploy-ios` skill).
 - Entitlement CLI: `gatefit adapter-check` (naive fails S1 / hardened passes S1).
 - Hardened and SQLite S1–S6 goldens: `paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`.
+- H6 fixture goldens: `seat_qty_vs_db_cap`, `cancel_at_period_end_keeps_access_until_end`, `upgrade_plus_cape_race` (time via fixture `period_end` / `now`, not wall clock).
 - Naive directory run must fail.
 - Composite Action wraps `gatefit run` (repo-root `action.yml` plus nested `.github/actions/gatefit/action.yml`) and `docs/bring-your-adapter.md`.
 - Packaging: publishable `gatefit@0.4.0` bin, `npm pack`, tarball `npx gatefit adapter-check`.
@@ -28,4 +29,4 @@ Exit 0 is green. Treat any non-zero as blocking.
 
 ## Merge
 
-GitHub Actions `ci.yml` runs the same script (plus an Action dogfood job). A local green never overrides a GHA red. Never merge unless the user says **Merge it**. Edip OVERRIDE for GATEFIT-H5: GHA billing may skip — do not block this High on Actions.
+GitHub Actions `ci.yml` runs the same script (plus an Action dogfood job). A local green never overrides a GHA red. Never merge unless the user says **Merge it**. Edip OVERRIDE for GATEFIT-H6: GHA billing may skip — do not block this High on Actions.
