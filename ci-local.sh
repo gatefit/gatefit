@@ -53,6 +53,8 @@ need_file tests/entitlements/goldens/duplicate_webhook_idempotent.yaml
 need_file tests/entitlements/goldens/seat_qty_vs_db_cap.yaml
 need_file tests/entitlements/goldens/cancel_at_period_end_keeps_access_until_end.yaml
 need_file tests/entitlements/goldens/upgrade_plus_cape_race.yaml
+need_file tests/entitlements/goldens/dispute_revokes_or_flags.yaml
+need_file tests/entitlements/goldens/unpaid_after_retries_revokes.yaml
 need_file .github/actions/gatefit/action.yml
 need_file docs/bring-your-adapter.md
 need_file action.yml

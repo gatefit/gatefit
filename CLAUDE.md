@@ -18,9 +18,9 @@ This file is coding/product policy. Session/merge/Project ops live in `.cursor/H
 - Assertions read the access DB (or a fake that matches its contract). Do not assert HTTP 200 from Stripe as proof of access.
 - Tests must not silently “heal” access in fixtures to make the case pass. If the transition should deny, the row must be denied.
 - Idempotency is required: replaying the same Stripe event id must not corrupt access.
-- No secrets in repo, logs, or fixtures. Live Test Clocks are opt-in H5 (`docs/live-clock.md`); fixture S1–S6 plus H6 seats/CAPE goldens stay the merge path.
+- No secrets in repo, logs, or fixtures. Live Test Clocks are opt-in H5 (`docs/live-clock.md`); fixture S1–S6 plus H6 seats/CAPE and H7 dispute/unpaid goldens stay the merge path.
 - Do not copy OtoPilot KMP, detekt, iOS, panel, or web paths into this repo.
 
 ## Verify
 
-Named gate: `./ci-local.sh`. It asserts harness integrity, then runs entitlement unit tests, `gatefit adapter-check`, hardened and SQLite S1–S6 goldens (`paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`) plus H6 (`seat_qty_vs_db_cap`, `cancel_at_period_end_keeps_access_until_end`, `upgrade_plus_cape_race`), naive-must-fail, Action sanity (`bin/gatefit.js`), and packaging (`npx`/bin/`npm pack` tarball smoke). Do not invent a second gate.
+Named gate: `./ci-local.sh`. It asserts harness integrity, then runs entitlement unit tests, `gatefit adapter-check`, hardened and SQLite S1–S6 goldens (`paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`) plus H6 (`seat_qty_vs_db_cap`, `cancel_at_period_end_keeps_access_until_end`, `upgrade_plus_cape_race`) and H7 (`dispute_revokes_or_flags`, `unpaid_after_retries_revokes`), naive-must-fail, Action sanity (`bin/gatefit.js`), and packaging (`npx`/bin/`npm pack` tarball smoke). Do not invent a second gate.
