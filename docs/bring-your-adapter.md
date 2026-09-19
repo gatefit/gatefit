@@ -28,6 +28,8 @@ node bin/gatefit.js run --suite tests/entitlements/goldens --adapter /abs/path/t
 
 Exit 0 = all S1–S6 goldens passed. Do not set `GATEFIT_LIVE_CLOCK`. Do not use `sk_live`.
 
+Live clocks: see [docs/live-clock.md](live-clock.md) (`gatefit live`).
+
 ## 3. GitHub Action
 
 ```yaml

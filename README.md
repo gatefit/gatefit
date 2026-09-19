@@ -53,7 +53,9 @@ Nested path from H3 still works:
 
 The Action wraps `gatefit run`. Adapter path is in *your* repo; goldens default to Gatefit’s S1–S6 pack. See [docs/publish.md](docs/publish.md) for tagging / npm publish (manual; CI may lack secrets).
 
-Do not set `GATEFIT_LIVE_CLOCK`. Do not use `sk_live`. Never treat Stripe HTTP 200 as proof of access.
+Do not set `GATEFIT_LIVE_CLOCK` for the named gate. Do not use `sk_live`. Never treat Stripe HTTP 200 as proof of access.
+
+Opt-in live Test Clocks (not default CI): [docs/live-clock.md](docs/live-clock.md).
 
 ## Soft launch (indie pricing)
 
