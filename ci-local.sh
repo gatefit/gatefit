@@ -57,6 +57,11 @@ need_file scripts/action-run.sh
 need_file LICENSE
 need_file docs/publish.md
 need_file bin/gatefit.js
+need_file src/stripe-clock.ts
+need_file src/clock-driver.ts
+need_file src/live-scenarios.ts
+need_file docs/live-clock.md
+need_file .github/workflows/live-clock.yml
 
 if ! grep -q 'bin/gatefit.js' scripts/action-run.sh; then
   fail "Action runner does not invoke bin/gatefit.js"
@@ -65,6 +70,17 @@ if ! grep -q 'run --suite' scripts/action-run.sh; then
   fail "Action runner does not wrap gatefit run --suite"
 fi
 ok "Action wraps gatefit bin"
+
+if grep -q 'GATEFIT_LIVE_CLOCK' .github/workflows/ci.yml; then
+  fail "default ci.yml must not set GATEFIT_LIVE_CLOCK"
+fi
+if ! grep -q 'head.repo.full_name == github.repository' .github/workflows/live-clock.yml; then
+  fail "live-clock workflow must skip fork PRs"
+fi
+if ! grep -q 'GATEFIT_LIVE_CLOCK' .github/workflows/live-clock.yml; then
+  fail "live-clock workflow must opt in with GATEFIT_LIVE_CLOCK"
+fi
+ok "live lane gated (not default CI; forks skip)"
 
 if ! grep -q 'npx gatefit' README.md; then
   fail "README missing npx gatefit DX"
@@ -79,6 +95,8 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 npm install --ignore-scripts >&2
+# Named gate is fixture-first even if a caller exported the live flag.
+unset GATEFIT_LIVE_CLOCK
 npx tsc --noEmit || fail "typecheck"
 # Files share process.env (GATEFIT_LIVE_CLOCK probe); keep the test runner serial.
 npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts || fail "entitlement unit tests"

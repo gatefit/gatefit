@@ -43,3 +43,19 @@ test("publish checklist exists and does not embed tokens", () => {
   assert.doesNotMatch(publishDoc, /npm_[A-Za-z0-9]+/);
   assert.doesNotMatch(publishDoc, /sk_live/);
 });
+
+test("live clock docs and workflow exist and stay opt-in", () => {
+  const liveDoc = fs.readFileSync(path.join(root, "docs/live-clock.md"), "utf8");
+  const workflow = fs.readFileSync(path.join(root, ".github/workflows/live-clock.yml"), "utf8");
+  const ci = fs.readFileSync(path.join(root, ".github/workflows/ci.yml"), "utf8");
+  assert.match(liveDoc, /GATEFIT_LIVE_CLOCK=1/);
+  assert.match(liveDoc, /paid_grants_access/);
+  assert.match(liveDoc, /cancel_revokes_access/);
+  assert.match(liveDoc, /trial_to_paid_grants/);
+  assert.doesNotMatch(liveDoc, /sk_live_[A-Za-z0-9]+/);
+  assert.match(workflow, /GATEFIT_LIVE_CLOCK/);
+  assert.match(workflow, /live-clock/);
+  assert.match(workflow, /head\.repo\.full_name == github\.repository/);
+  assert.doesNotMatch(ci, /GATEFIT_LIVE_CLOCK/);
+  assert.match(readme, /docs\/live-clock\.md/);
+});
