@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createAdapter as createHardened } from "../../src/adapters/hardened.ts";
 import { compareAccess } from "../../src/access-adapter.ts";
 import { applyBillingEvent, emptyStore } from "../../src/access-rules.ts";
 import { advanceUntilReady, withTestClock } from "../../src/clock-driver.ts";
-import { billingEventsFromStripe } from "../../src/live-scenarios.ts";
+import { billingEventsFromStripe, runLiveLane } from "../../src/live-scenarios.ts";
 import {
+  MAX_CUSTOMERS_PER_CLOCK,
+  MAX_SUBSCRIPTIONS_PER_CLOCK,
   STRIPE_API_VERSION,
   assertAdvanceWithinTwoIntervals,
   createStripeClockClient,
@@ -207,4 +210,168 @@ test("trialing maps to locked access even if Stripe returned 200", () => {
   const store = emptyStore();
   for (const event of events) applyBillingEvent(store, event);
   assert.equal(store.rows.get("cus_t")?.locked, true);
+});
+
+type ScriptedOpts = { forceUnpaid?: boolean };
+
+function scriptedStripe(opts: ScriptedOpts = {}): StripeClockClient & {
+  deleted: string[];
+  created: string[];
+} {
+  const clocks = new Map<string, TestClock>();
+  const customersByClock = new Map<string, number>();
+  const subsByClock = new Map<string, number>();
+  const customerClock = new Map<string, string>();
+  const subs = new Map<
+    string,
+    StripeSubscription & { clockId: string; trial: boolean }
+  >();
+  const invoices = new Map<string, StripeInvoice[]>();
+  let n = 0;
+  let cusN = 0;
+  let subN = 0;
+  let invN = 0;
+
+  function invoicesFor(customerId: string): StripeInvoice[] {
+    return invoices.get(customerId) ?? [];
+  }
+
+  const api: StripeClockClient & { deleted: string[]; created: string[] } = {
+    deleted: [],
+    created: [],
+    async createClock(input) {
+      n += 1;
+      const clock: TestClock = { id: `clock_${n}`, status: "ready", frozen_time: input.frozenTime };
+      clocks.set(clock.id, clock);
+      customersByClock.set(clock.id, 0);
+      subsByClock.set(clock.id, 0);
+      api.created.push(clock.id);
+      return { ...clock };
+    },
+    async retrieveClock(id) {
+      const clock = clocks.get(id);
+      if (!clock) throw new Error(`missing clock ${id}`);
+      const snapshot = { ...clock };
+      if (clock.status === "advancing") {
+        for (const sub of subs.values()) {
+          if (sub.clockId !== id || !sub.trial) continue;
+          sub.trial = false;
+          sub.status = "active";
+          if (!opts.forceUnpaid) {
+            invN += 1;
+            const list = invoicesFor(sub.customer);
+            list.push({
+              id: `in_${invN}`,
+              status: "paid",
+              paid: true,
+              customer: sub.customer,
+            });
+            invoices.set(sub.customer, list);
+          }
+        }
+        clock.status = "ready";
+      }
+      return snapshot;
+    },
+    async advanceClock(id, frozenTime) {
+      const clock = clocks.get(id);
+      if (!clock) throw new Error(`missing clock ${id}`);
+      clock.frozen_time = frozenTime;
+      clock.status = "advancing";
+      return { ...clock };
+    },
+    async deleteClock(id) {
+      api.deleted.push(id);
+      clocks.delete(id);
+      return { id, deleted: true };
+    },
+    async createCustomer(input) {
+      const count = (customersByClock.get(input.testClock) ?? 0) + 1;
+      if (count > MAX_CUSTOMERS_PER_CLOCK) {
+        throw new Error("too many customers on this clock");
+      }
+      customersByClock.set(input.testClock, count);
+      cusN += 1;
+      const id = `cus_${cusN}`;
+      customerClock.set(id, input.testClock);
+      invoices.set(id, []);
+      return { id };
+    },
+    async createSubscription(input) {
+      const clockId = customerClock.get(input.customer);
+      if (!clockId) throw new Error("customer is not on a clock");
+      const count = (subsByClock.get(clockId) ?? 0) + 1;
+      if (count > MAX_SUBSCRIPTIONS_PER_CLOCK) {
+        throw new Error("too many subscriptions on this clock");
+      }
+      subsByClock.set(clockId, count);
+      subN += 1;
+      const trial = input.trialPeriodDays !== undefined;
+      const sub: StripeSubscription & { clockId: string; trial: boolean } = {
+        id: `sub_${subN}`,
+        status: trial ? "trialing" : "active",
+        customer: input.customer,
+        clockId,
+        trial,
+      };
+      subs.set(sub.id, sub);
+      if (!trial && !opts.forceUnpaid) {
+        invN += 1;
+        invoicesFor(input.customer).push({
+          id: `in_${invN}`,
+          status: "paid",
+          paid: true,
+          customer: input.customer,
+        });
+      }
+      return { id: sub.id, status: sub.status, customer: sub.customer };
+    },
+    async retrieveSubscription(id) {
+      const sub = subs.get(id);
+      if (!sub) throw new Error(`missing sub ${id}`);
+      return { id: sub.id, status: sub.status, customer: sub.customer };
+    },
+    async cancelSubscription(id) {
+      const sub = subs.get(id);
+      if (!sub) throw new Error(`missing sub ${id}`);
+      sub.status = "canceled";
+      sub.trial = false;
+      return { id: sub.id, status: sub.status, customer: sub.customer };
+    },
+    async listInvoices(customerId) {
+      return [...invoicesFor(customerId)];
+    },
+  };
+  return api;
+}
+
+test("runLiveLane ports paid, cancel, and trial→paid against the access DB", async () => {
+  const stripe = scriptedStripe();
+  const adapter = createHardened();
+  const result = await runLiveLane(adapter, stripe, {
+    now: () => 1_577_836_800,
+    wait: { sleep: async () => {}, intervalMs: 0, timeoutMs: 1_000 },
+  });
+  assert.equal(
+    result.ok,
+    true,
+    result.results.map((r) => `${r.id}:${r.mismatches.join(",")}`).join(" "),
+  );
+  assert.deepEqual(
+    result.results.map((r) => r.id),
+    ["paid_grants_access", "cancel_revokes_access", "trial_to_paid_grants"],
+  );
+  assert.equal(stripe.created.length, stripe.deleted.length);
+});
+
+test("runLiveLane still deletes clocks when a scenario mismatches", async () => {
+  const stripe = scriptedStripe({ forceUnpaid: true });
+  const adapter = createHardened();
+  const result = await runLiveLane(adapter, stripe, {
+    scenarios: ["paid_grants_access"],
+    now: () => 1_577_836_800,
+    wait: { sleep: async () => {}, intervalMs: 0, timeoutMs: 1_000 },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(stripe.created.length, stripe.deleted.length);
 });
