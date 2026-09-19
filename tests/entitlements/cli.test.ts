@@ -114,3 +114,27 @@ test("gatefit adapter-check from another cwd still uses bundled adapters", () =>
   });
   assert.equal(result.status, 0, result.stderr + result.stdout);
 });
+
+test("gatefit bin finds hoisted tsx outside the package directory", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-hoist-"));
+  const prefix = path.join(tmp, "node_modules");
+  const pkgDir = path.join(prefix, "gatefit");
+  fs.mkdirSync(pkgDir, { recursive: true });
+  fs.cpSync(path.join(root, "bin"), path.join(pkgDir, "bin"), { recursive: true });
+  fs.cpSync(path.join(root, "src"), path.join(pkgDir, "src"), { recursive: true });
+  fs.copyFileSync(path.join(root, "package.json"), path.join(pkgDir, "package.json"));
+  fs.cpSync(
+    path.join(root, "tests/entitlements/goldens"),
+    path.join(pkgDir, "tests/entitlements/goldens"),
+    { recursive: true },
+  );
+  fs.symlinkSync(path.join(root, "node_modules/tsx"), path.join(prefix, "tsx"));
+  fs.symlinkSync(path.join(root, "node_modules/yaml"), path.join(prefix, "yaml"));
+  const result = spawnSync(process.execPath, [path.join(pkgDir, "bin/gatefit.js"), "--version"], {
+    cwd: tmp,
+    encoding: "utf8",
+    env: { ...process.env, INIT_CWD: tmp },
+  });
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.match(result.stdout, /gatefit 0\.4\.0/);
+});
