@@ -1,0 +1,46 @@
+id: upgrade_plus_cape_race
+subject: cus_h6_race
+steps:
+  - event:
+      id: evt_h6_race_starter
+      type: invoice.paid
+      customerId: cus_h6_race
+      plan: starter
+      seats: 1
+    expect:
+      locked: false
+      plan: starter
+      seats: 1
+  - event:
+      id: evt_h6_race_cape
+      type: customer.subscription.updated
+      customerId: cus_h6_race
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577836800
+      plan: starter
+      seats: 1
+    expect:
+      locked: false
+      plan: starter
+      seats: 1
+  - event:
+      id: evt_h6_race_upgrade
+      type: invoice.paid
+      customerId: cus_h6_race
+      plan: pro
+      seats: 5
+      paid: true
+    expect:
+      locked: false
+      plan: pro
+      seats: 5
+  - event:
+      id: evt_h6_race_period_end
+      type: customer.subscription.updated
+      customerId: cus_h6_race
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577923200
+    expect:
+      locked: true
