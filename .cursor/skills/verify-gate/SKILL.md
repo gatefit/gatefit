@@ -25,9 +25,10 @@ Exit 0 is green. Treat any non-zero as blocking.
 - Naive directory run must fail.
 - Composite Action wraps `gatefit run` (repo-root `action.yml` plus nested `.github/actions/gatefit/action.yml`) and `docs/bring-your-adapter.md`.
 - Packaging: publishable `gatefit@0.4.0` bin, `npm pack`, tarball `npx gatefit adapter-check`.
+- Starlight `site/` build (`npm ci` + `npm run build` in `site/`) and Polar CTA (`data-polar-checkout`) file check. Site is not access proof.
 - `tests/entitlements/*.test.ts`.
 - Live Test Clock lane is **not** part of this gate. Do not set `GATEFIT_LIVE_CLOCK`. See `docs/live-clock.md`.
 
 ## Merge
 
-GitHub Actions `ci.yml` runs the same script (plus an Action dogfood job). A local green never overrides a GHA red. Never merge unless the user says **Merge it**. Edip OVERRIDE for GATEFIT-H7: GHA billing may skip — do not block this High on Actions.
+GitHub Actions `ci.yml` runs the same script (plus an Action dogfood job). A local green never overrides a GHA red. Never merge unless the user says **Merge it**. Edip OVERRIDE for GATEFIT-H8: GHA billing may skip — do not block this High on Actions. Pages deploy is a separate `pages.yml` workflow.

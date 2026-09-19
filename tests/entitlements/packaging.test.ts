@@ -34,6 +34,8 @@ test("README documents npx, Action, and indie pricing", () => {
   assert.match(readme, /\$29/);
   assert.match(readme, /\$49/);
   assert.match(readme, /\$19/);
+  assert.match(readme, /edipert\.github\.io\/gatefit/);
+  assert.match(readme, /polar/i);
   assert.doesNotMatch(readme, /buy now|limited time|act now/i);
 });
 

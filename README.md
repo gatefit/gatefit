@@ -4,6 +4,8 @@ Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly bil
 
 Fixture-first S1–S6 goldens, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI.
 
+Docs site: [https://edipert.github.io/gatefit/](https://edipert.github.io/gatefit/) (Astro + Starlight). Polar is the merchant of record for the optional indie license.
+
 ## Install / run
 
 After npm publish:
@@ -63,5 +65,6 @@ This is a CI pack, not an ads funnel.
 
 - **Indie license:** $29–$49 once
 - **Optional updates:** ~$19/month
+- **Checkout:** Polar Buy CTA on the [docs site](https://edipert.github.io/gatefit/) (`PUBLIC_POLAR_CHECKOUT_URL`; placeholder until the Polar product exists — [docs/polar.md](docs/polar.md))
 
-No checkout in this repo yet. If the pack saves you a bad access-DB incident, open a GitHub issue on [edipert/gatefit](https://github.com/edipert/gatefit) and say you want a license. Fixture goldens stay free to run either way.
+Fixture goldens, `npx gatefit`, and the GitHub Action stay free either way.
