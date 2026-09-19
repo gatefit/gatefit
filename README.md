@@ -10,7 +10,7 @@ The CLI and GitHub Action in this repository stay free. These three are not live
 
 - **Docs site:** coming soon. Intended URL `https://edipert.github.io/gatefit/` (404 while this repo is private). GitHub Pages needs a public repository or a paid plan. `scripts/deploy-site.sh` publishes the static `site/dist` build to any static host without GitHub Actions.
 - **npm:** coming soon. `gatefit@0.4.0` packs locally. CI runs `npm publish --dry-run` only. The registry package is not published.
-- **Polar checkout:** coming soon. There is no working checkout link. Do not treat a `buy.polar.sh` product path as this checkout.
+- **Polar checkout:** coming soon. There is no working checkout link. The Buy CTA fails closed until `PUBLIC_POLAR_CHECKOUT_URL` is a Checkout Link (`https://buy.polar.sh/polar_cl_…`). A Polar product path is not checkout.
 
 Indie pricing when a checkout exists: **$29–$49** once, optional updates **~$19/month**. Fixture goldens, the CLI, and the Action stay free either way. See [docs/polar.md](docs/polar.md).
 

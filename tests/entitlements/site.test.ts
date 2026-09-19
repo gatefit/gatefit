@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
+import {
+  POLAR_CHECKOUT_HREF_RE,
+  resolvePolarCheckoutUrl,
+} from "../../site/src/lib/polarCheckout.ts";
 
 const root = path.join(import.meta.dirname, "../..");
 
@@ -27,18 +31,40 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   const action = read("site/src/content/docs/action.md");
   const polar = read("site/src/content/docs/polar.md");
   assert.match(index, /PolarBuyCta/);
-  assert.match(index, /\$29/);
   assert.match(index, /\$49/);
+  assert.match(index, /coming soon/i);
   assert.match(quickstart, /npx gatefit/);
   assert.match(quickstart, /adapter/i);
   assert.match(action, /uses: edipert\/gatefit@v0\.4\.0/);
   assert.match(polar, /PUBLIC_POLAR_CHECKOUT_URL/);
+  assert.match(polar, /fail closed|fails closed/i);
+  assert.match(polar, /coming soon/i);
+  assert.match(polar, /\$49/);
 });
 
-test("one Polar Buy CTA uses Polar checkout attributes", () => {
+test("resolvePolarCheckoutUrl fails closed unless Polar Checkout Link", () => {
+  assert.equal(resolvePolarCheckoutUrl(undefined), null);
+  assert.equal(resolvePolarCheckoutUrl(""), null);
+  assert.equal(resolvePolarCheckoutUrl("   "), null);
+  assert.equal(resolvePolarCheckoutUrl("https://polar.sh/"), null);
+  assert.equal(resolvePolarCheckoutUrl("https://polar.sh/edipert/gatefit"), null);
+  assert.equal(resolvePolarCheckoutUrl("http://buy.polar.sh/polar_cl_abc"), null);
+  assert.equal(resolvePolarCheckoutUrl("https://evil.example/polar_cl_abc"), null);
+  assert.equal(resolvePolarCheckoutUrl("https://buy.polar.sh/"), null);
+  assert.equal(resolvePolarCheckoutUrl("https://buy.polar.sh/products/gatefit-one-time"), null);
+  assert.equal(resolvePolarCheckoutUrl("https://buy.polar.sh/products/anything"), null);
+  const live = "https://buy.polar.sh/polar_cl_TESTSHAPEONLY";
+  assert.equal(resolvePolarCheckoutUrl(live), live);
+  assert.equal(resolvePolarCheckoutUrl(` ${live} `), live);
+  assert.match(live, POLAR_CHECKOUT_HREF_RE);
+});
+
+test("Polar CTA has no polar.sh placeholder fallback", () => {
   const cta = read("site/src/components/PolarBuyCta.astro");
+  assert.doesNotMatch(cta, /\|\|\s*['"]https:\/\/polar\.sh\/?['"]/);
+  assert.match(cta, /resolvePolarCheckoutUrl/);
+  assert.match(cta, /data-polar-checkout-pending/);
   assert.match(cta, /data-polar-checkout/);
-  assert.match(cta, /PUBLIC_POLAR_CHECKOUT_URL|polar\.sh/);
   assert.doesNotMatch(cta, /buy now/i);
   assert.doesNotMatch(cta, /gumroad|stripe\.com\/checkout|docusaurus|framer/i);
 });
@@ -51,8 +77,13 @@ test("GitHub Pages workflow builds site/ and stays out of live-clock CI", () => 
   assert.doesNotMatch(workflow, /GATEFIT_LIVE_CLOCK/);
 });
 
-test("repo Polar setup documents the placeholder checkout env", () => {
+test("repo Polar setup documents fail-closed checkout env", () => {
   const polar = read("docs/polar.md");
+  const envExample = read("site/.env.example");
   assert.match(polar, /PUBLIC_POLAR_CHECKOUT_URL/);
-  assert.match(polar, /buy\.polar\.sh|placeholder/i);
+  assert.match(polar, /buy\.polar\.sh/);
+  assert.match(polar, /fail closed|fails closed/i);
+  assert.match(polar, /\$49/);
+  assert.match(envExample, /PUBLIC_POLAR_CHECKOUT_URL=/);
+  assert.doesNotMatch(envExample, /PUBLIC_POLAR_CHECKOUT_URL=https:\/\/polar\.sh/);
 });

@@ -90,7 +90,7 @@ ok "live lane gated (not default CI; forks skip)"
 if ! grep -q 'npx gatefit' README.md; then
   fail "README missing npx gatefit DX"
 fi
-if ! grep -q '\$29' README.md || ! grep -q '\$19' README.md; then
+if ! grep -q '\$49' README.md || ! grep -q '\$19' README.md; then
   fail "README missing indie pricing copy"
 fi
 ok "README DX + pricing"
@@ -288,6 +288,7 @@ rm -f "$publish_log"
 ok "npm publish --dry-run"
 
 need_file site/astro.config.mjs
+need_file site/src/lib/polarCheckout.ts
 need_file site/src/components/PolarBuyCta.astro
 need_file site/src/content/docs/index.mdx
 need_file site/src/content/docs/quickstart.md
@@ -308,6 +309,13 @@ ok "site files + Polar CTA"
   npm run build
 ) || fail "starlight site build"
 ok "starlight site build"
+if ! grep -q 'data-polar-checkout-pending' site/dist/index.html; then
+  fail "unset Polar URL must fail closed (pending CTA) in site build"
+fi
+if grep -q 'href="https://polar.sh' site/dist/index.html; then
+  fail "placeholder polar.sh href leaked into site build"
+fi
+ok "site build Polar CTA fail-closed"
 
 if grep -R -n 'buy.polar.sh/products/' site/dist >/dev/null; then
   fail "built site advertises a buy.polar.sh/products/ URL"

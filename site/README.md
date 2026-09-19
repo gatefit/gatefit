@@ -18,4 +18,4 @@ GATEFIT_DEPLOY_TARGET=local GATEFIT_DEPLOY_DEST=/tmp/gatefit-site \
 
 See `scripts/deploy-site.sh` for `local`, `rsync`, and `s3` inputs.
 
-**Polar checkout:** coming soon. `PUBLIC_POLAR_CHECKOUT_URL` stays a placeholder (`https://polar.sh/`) until a real checkout link exists. See [docs/polar.md](../docs/polar.md).
+**Polar checkout:** coming soon. `PUBLIC_POLAR_CHECKOUT_URL` fails closed when empty. A live CTA requires a Checkout Link (`https://buy.polar.sh/polar_cl_…`), not `https://polar.sh/` and not a product path. See [docs/polar.md](../docs/polar.md).
