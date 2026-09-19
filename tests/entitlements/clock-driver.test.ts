@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { compareAccess } from "../../src/access-adapter.ts";
+import { applyBillingEvent, emptyStore } from "../../src/access-rules.ts";
 import { advanceUntilReady, withTestClock } from "../../src/clock-driver.ts";
+import { billingEventsFromStripe } from "../../src/live-scenarios.ts";
 import {
   STRIPE_API_VERSION,
   assertAdvanceWithinTwoIntervals,
@@ -173,4 +176,35 @@ test("advanceUntilReady polls until status is ready and caps two intervals", asy
     () => advanceUntilReady(stripe, clock.id, clock.frozen_time + 90 * 24 * 60 * 60),
     /two billing intervals/,
   );
+});
+
+test("billingEventsFromStripe maps objects not HTTP 200", () => {
+  const events = billingEventsFromStripe({
+    customerId: "cus_live",
+    plan: "pro",
+    subscription: { id: "sub_1", status: "canceled", customer: "cus_live" },
+    invoices: [{ id: "in_1", status: "paid", paid: true, customer: "cus_live" }],
+    stripeHttpStatus: 200,
+  });
+  assert.equal(
+    events.some((e) => e.stripeHttpStatus === 200 || e.httpStatus === 200),
+    false,
+  );
+  const store = emptyStore();
+  for (const event of events) applyBillingEvent(store, event);
+  const snap = store.rows.get("cus_live") ?? { locked: true };
+  assert.equal(compareAccess(snap, { locked: true }).ok, true);
+});
+
+test("trialing maps to locked access even if Stripe returned 200", () => {
+  const events = billingEventsFromStripe({
+    customerId: "cus_t",
+    plan: "pro",
+    subscription: { id: "sub_t", status: "trialing", customer: "cus_t" },
+    invoices: [],
+    stripeHttpStatus: 200,
+  });
+  const store = emptyStore();
+  for (const event of events) applyBillingEvent(store, event);
+  assert.equal(store.rows.get("cus_t")?.locked, true);
 });
