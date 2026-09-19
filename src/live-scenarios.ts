@@ -30,9 +30,11 @@ export function billingEventsFromStripe(input: {
   subscription: StripeSubscription;
   invoices: StripeInvoice[];
   stripeHttpStatus?: number;
+  now?: number;
 }): BillingEvent[] {
   void input.stripeHttpStatus;
   const events: BillingEvent[] = [];
+  const quantity = input.subscription.items?.data?.[0]?.quantity;
   if (input.subscription.status === "trialing") {
     events.push({
       id: `${input.subscription.id}:trialing`,
@@ -51,6 +53,7 @@ export function billingEventsFromStripe(input: {
         customerId: input.customerId,
         plan: input.plan,
         paid: true,
+        ...(quantity !== undefined ? { seats: quantity } : {}),
       });
     }
   }
@@ -60,6 +63,19 @@ export function billingEventsFromStripe(input: {
       type: "customer.subscription.deleted",
       customerId: input.customerId,
       canceled: true,
+    });
+    return events;
+  }
+  if (input.subscription.cancel_at_period_end === true) {
+    events.push({
+      id: `${input.subscription.id}:cape`,
+      type: "customer.subscription.updated",
+      customerId: input.customerId,
+      plan: input.plan,
+      cancel_at_period_end: true,
+      period_end: input.subscription.current_period_end,
+      now: input.now,
+      ...(quantity !== undefined ? { seats: quantity } : {}),
     });
   }
   return events;
