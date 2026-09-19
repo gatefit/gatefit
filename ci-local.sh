@@ -138,4 +138,26 @@ tgz="$(ls "$pack_dir"/gatefit-*.tgz)"
 ) || fail "tarball adapter-check"
 ok "npx from packed tarball"
 
+need_file site/astro.config.mjs
+need_file site/src/components/PolarBuyCta.astro
+need_file site/src/content/docs/index.mdx
+need_file site/src/content/docs/quickstart.md
+need_file site/src/content/docs/action.md
+need_file site/src/content/docs/polar.md
+need_file docs/polar.md
+need_file .github/workflows/pages.yml
+if ! grep -q 'data-polar-checkout' site/src/components/PolarBuyCta.astro; then
+  fail "Polar CTA missing data-polar-checkout"
+fi
+if grep -q 'GATEFIT_LIVE_CLOCK' .github/workflows/pages.yml; then
+  fail "pages.yml must not set GATEFIT_LIVE_CLOCK"
+fi
+ok "site files + Polar CTA"
+(
+  cd site
+  npm ci
+  npm run build
+) || fail "starlight site build"
+ok "starlight site build"
+
 echo "ci-local: PASS" >&2
