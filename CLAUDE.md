@@ -23,4 +23,4 @@ This file is coding/product policy. Session/merge/Project ops live in `.cursor/H
 
 ## Verify
 
-Named gate: `./ci-local.sh`. It asserts harness integrity, then runs entitlement unit tests, `gatefit adapter-check`, hardened and SQLite S1–S6 goldens (`paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`), naive-must-fail, and Action sanity. Do not invent a second gate.
+Named gate: `./ci-local.sh`. It asserts harness integrity, then runs entitlement unit tests, `gatefit adapter-check`, hardened and SQLite S1–S6 goldens (`paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`), naive-must-fail, Action sanity (`bin/gatefit.js`), and packaging (`npx`/bin/`npm pack` tarball smoke). Do not invent a second gate.
