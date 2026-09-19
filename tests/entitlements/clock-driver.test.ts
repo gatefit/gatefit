@@ -248,6 +248,30 @@ test("billingEventsFromStripe maps cancel_at_period_end using clock now, not HTT
   assert.equal(cape?.now, 1_577_836_800);
   assert.equal(cape?.seats, 5);
   assert.equal(cape?.type, "customer.subscription.updated");
+  const paid = events.find((e) => e.type === "invoice.paid");
+  assert.equal(paid?.seats, 5);
+});
+
+test("mapped CAPE locks when clock now reaches period_end", () => {
+  const events = billingEventsFromStripe({
+    customerId: "cus_cape_end",
+    plan: "pro",
+    now: 1_577_923_200,
+    subscription: {
+      id: "sub_cape_end",
+      status: "active",
+      customer: "cus_cape_end",
+      cancel_at_period_end: true,
+      current_period_end: 1_577_923_200,
+      items: { data: [{ quantity: 2 }] },
+    },
+    invoices: [{ id: "in_cape_end", status: "paid", paid: true, customer: "cus_cape_end" }],
+    stripeHttpStatus: 200,
+  });
+  const store = emptyStore();
+  for (const event of events) applyBillingEvent(store, event);
+  assert.equal(store.rows.get("cus_cape_end")?.locked, true);
+  assert.equal(store.rows.get("cus_cape_end")?.seats, 2);
 });
 
 test("LIVE_SCENARIO_IDS stay the H5 trio (H6 is fixture-first)", () => {

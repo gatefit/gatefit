@@ -126,21 +126,34 @@ export async function runLiveScenario(
       const sub = await client.createSubscription({ customer: customer.id, trialPeriodDays: 14 });
       subscriptions += 1;
       assertSubCap(subscriptions);
-      await applyAndCheck(adapter, client, customer.id, sub, expectedAccess(id, "trial"));
-      await advanceUntilReady(client, clock.id, frozenTime + 15 * 24 * 60 * 60, opts.wait);
+      await applyAndCheck(adapter, client, customer.id, sub, expectedAccess(id, "trial"), {
+        now: clock.frozen_time,
+      });
+      const ready = await advanceUntilReady(client, clock.id, frozenTime + 15 * 24 * 60 * 60, opts.wait);
       const after = await client.retrieveSubscription(sub.id);
-      return applyAndCheck(adapter, client, customer.id, after, expectedAccess(id, "paid"), id);
+      return applyAndCheck(adapter, client, customer.id, after, expectedAccess(id, "paid"), {
+        id,
+        now: ready.frozen_time,
+      });
     }
 
     const sub = await client.createSubscription({ customer: customer.id });
     subscriptions += 1;
     assertSubCap(subscriptions);
     if (id === "paid_grants_access") {
-      return applyAndCheck(adapter, client, customer.id, sub, expectedAccess(id, "paid"), id);
+      return applyAndCheck(adapter, client, customer.id, sub, expectedAccess(id, "paid"), {
+        id,
+        now: clock.frozen_time,
+      });
     }
-    await applyAndCheck(adapter, client, customer.id, sub, expectedAccess(id, "paid"));
+    await applyAndCheck(adapter, client, customer.id, sub, expectedAccess(id, "paid"), {
+      now: clock.frozen_time,
+    });
     const canceled = await client.cancelSubscription(sub.id);
-    return applyAndCheck(adapter, client, customer.id, canceled, expectedAccess(id, "canceled"), id);
+    return applyAndCheck(adapter, client, customer.id, canceled, expectedAccess(id, "canceled"), {
+      id,
+      now: clock.frozen_time,
+    });
   });
 }
 
@@ -156,17 +169,23 @@ async function applyAndCheck(
   customerId: string,
   subscription: StripeSubscription,
   expect: AccessSnapshot,
-  id?: LiveScenarioId,
+  meta: { id?: LiveScenarioId; now?: number } = {},
 ): Promise<LiveScenarioResult> {
   if (adapter.reset) await adapter.reset();
   const invoices = await client.listInvoices(customerId);
-  const events = billingEventsFromStripe({ customerId, plan: "pro", subscription, invoices });
+  const events = billingEventsFromStripe({
+    customerId,
+    plan: "pro",
+    subscription,
+    invoices,
+    now: meta.now,
+  });
   for (const event of events) await adapter.apply(event);
   const actual = await adapter.snapshot(customerId);
   const cmp = compareAccess(actual, expect);
-  if (!id) {
+  if (!meta.id) {
     if (!cmp.ok) throw new Error(cmp.mismatches.join("; "));
     return { id: "paid_grants_access", ok: true, mismatches: [], customerId };
   }
-  return { id, ok: cmp.ok, mismatches: cmp.mismatches, customerId };
+  return { id: meta.id, ok: cmp.ok, mismatches: cmp.mismatches, customerId };
 }
