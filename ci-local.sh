@@ -306,7 +306,8 @@ ok "site files + Polar CTA"
 (
   cd site
   npm ci
-  npm run build
+  # Named gate always asserts fail-closed HTML, even if a developer exported a Checkout Link.
+  PUBLIC_POLAR_CHECKOUT_URL= npm run build
 ) || fail "starlight site build"
 ok "starlight site build"
 if ! grep -q 'data-polar-checkout-pending' site/dist/index.html; then
