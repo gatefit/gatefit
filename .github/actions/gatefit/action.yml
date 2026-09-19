@@ -1,5 +1,5 @@
 name: gatefit
-description: Run Gatefit entitlement goldens against an AccessAdapter
+description: "Compatibility shim — prefer uses: edipert/gatefit@v0.4.0 (repo-root action.yml)"
 inputs:
   adapter:
     description: Path to the AccessAdapter module, relative to the caller workspace
@@ -19,14 +19,4 @@ runs:
       run: |
         set -euo pipefail
         GATEFIT_ROOT="$(cd "${GITHUB_ACTION_PATH}/../../.." && pwd)"
-        ADAPTER="$(cd "${GITHUB_WORKSPACE}" && realpath "${GATEFIT_ADAPTER_INPUT}")"
-        if [[ -n "${GATEFIT_SUITE_INPUT}" && -e "${GITHUB_WORKSPACE}/${GATEFIT_SUITE_INPUT}" ]]; then
-          SUITE="$(cd "${GITHUB_WORKSPACE}" && realpath "${GATEFIT_SUITE_INPUT}")"
-        elif [[ -n "${GATEFIT_SUITE_INPUT}" ]]; then
-          SUITE="${GATEFIT_SUITE_INPUT}"
-        else
-          SUITE="${GATEFIT_ROOT}/tests/entitlements/goldens"
-        fi
-        cd "${GATEFIT_ROOT}"
-        npm install --ignore-scripts
-        npx tsx src/cli.ts run --suite "${SUITE}" --adapter "${ADAPTER}"
+        bash "${GATEFIT_ROOT}/scripts/action-run.sh"
