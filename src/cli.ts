@@ -3,29 +3,35 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { loadAdapter } from "./access-adapter.ts";
 import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
+import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
 
-const GOLDEN_DIR = "tests/entitlements/goldens";
-const S1 = path.join(GOLDEN_DIR, "paid_grants_access.yaml");
-const NAIVE = "src/adapters/naive.ts";
-const HARDENED = "src/adapters/hardened.ts";
+const S1 = () => path.join(goldenDir(), "paid_grants_access.yaml");
+const NAIVE = () => path.join(packageRoot(), "src/adapters/naive.ts");
+const HARDENED = () => path.join(packageRoot(), "src/adapters/hardened.ts");
 
 function usage(): string {
   return [
     "Usage:",
     "  gatefit run --suite <dir|file|id> --adapter <path>",
     "  gatefit adapter-check",
+    "  gatefit --version",
   ].join("\n");
 }
 
 function resolveSuiteFiles(suite: string): string[] {
-  if (fs.existsSync(suite)) return listGoldens(suite);
-  const byId = path.join(GOLDEN_DIR, `${suite}.yaml`);
-  if (fs.existsSync(byId)) return [byId];
+  const candidates = [
+    path.resolve(userCwd(), suite),
+    path.resolve(packageRoot(), suite),
+    path.join(goldenDir(), `${suite}.yaml`),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return listGoldens(candidate);
+  }
   throw new Error(`suite not found: ${suite}`);
 }
 
 async function cmdRun(suite: string, adapterPath: string): Promise<number> {
-  const adapter = await loadAdapter(adapterPath);
+  const adapter = await loadAdapter(resolveUserOrPackage(adapterPath));
   const files = resolveSuiteFiles(suite);
   requireReset(adapter, files.length);
   let failed = 0;
@@ -46,9 +52,9 @@ async function cmdRun(suite: string, adapterPath: string): Promise<number> {
 }
 
 async function cmdAdapterCheck(): Promise<number> {
-  const suite = loadGolden(S1);
-  const naive = await runGolden(await loadAdapter(NAIVE), suite);
-  const hardened = await runGolden(await loadAdapter(HARDENED), suite);
+  const suite = loadGolden(S1());
+  const naive = await runGolden(await loadAdapter(NAIVE()), suite);
+  const hardened = await runGolden(await loadAdapter(HARDENED()), suite);
   const naiveFailed = !naive.ok;
   const hardenedPassed = hardened.ok;
   if (naiveFailed) console.error("gatefit adapter-check: naive failed S1 (expected)");
@@ -58,7 +64,15 @@ async function cmdAdapterCheck(): Promise<number> {
   return naiveFailed && hardenedPassed ? 0 : 1;
 }
 
+function isVersionFlag(arg: string | undefined): boolean {
+  return arg === "--version" || arg === "-v";
+}
+
 async function main(argv: string[]): Promise<number> {
+  if (isVersionFlag(argv[0])) {
+    console.log(`gatefit ${readPackageVersion()}`);
+    return 0;
+  }
   const command = argv[0];
   if (command === "adapter-check") {
     return cmdAdapterCheck();

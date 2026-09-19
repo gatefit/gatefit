@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 import fs from "node:fs";
-import path from "node:path";
+import { resolveUserOrPackage } from "./paths.ts";
 
 export type AccessSnapshot = {
   locked: boolean;
@@ -57,7 +57,7 @@ export function compareAccess(actual: AccessSnapshot, expected: AccessSnapshot):
 }
 
 export async function loadAdapter(spec: string): Promise<AccessAdapter> {
-  const resolved = path.resolve(spec);
+  const resolved = resolveUserOrPackage(spec);
   const source = fs.readFileSync(resolved, "utf8");
   assertNoLiveStripeSecret(source);
   assertNoLiveStripeSecret(JSON.stringify(process.env));

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -59,4 +61,56 @@ test("gatefit run refuses GATEFIT_LIVE_CLOCK", () => {
   );
   assert.notEqual(result.status, 0);
   assert.match(result.stderr + result.stdout, /GATEFIT_LIVE_CLOCK/);
+});
+
+test("gatefit --version prints package version", () => {
+  const result = run(["--version"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /gatefit 0\.4\.0/);
+});
+
+test("gatefit run from another cwd uses bundled suite id and caller adapter", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-npx-"));
+  const adapter = path.join(tmp, "caller-adapter.ts");
+  fs.writeFileSync(
+    adapter,
+    [
+      "const rows = new Map();",
+      "const seen = new Set();",
+      "export function createAdapter() {",
+      "  return {",
+      "    apply(event) {",
+      "      if (seen.has(event.id)) return;",
+      "      seen.add(event.id);",
+      "      if (event.type === 'invoice.paid' || event.paid === true) {",
+      "        rows.set(event.customerId, { locked: false, plan: event.plan });",
+      "      }",
+      "    },",
+      "    snapshot(customerId) { return rows.get(customerId) ?? { locked: true }; },",
+      "    reset() { rows.clear(); seen.clear(); },",
+      "  };",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  const result = spawnSync(
+    process.execPath,
+    [bin, "run", "--suite", "paid_grants_access", "--adapter", "caller-adapter.ts"],
+    {
+      cwd: tmp,
+      encoding: "utf8",
+      env: { ...process.env, INIT_CWD: tmp },
+    },
+  );
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+});
+
+test("gatefit adapter-check from another cwd still uses bundled adapters", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-check-"));
+  const result = spawnSync(process.execPath, [bin, "adapter-check"], {
+    cwd: tmp,
+    encoding: "utf8",
+    env: { ...process.env, INIT_CWD: tmp },
+  });
+  assert.equal(result.status, 0, result.stderr + result.stdout);
 });
