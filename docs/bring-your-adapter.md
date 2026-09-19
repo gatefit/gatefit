@@ -31,6 +31,9 @@ Exit 0 = all S1–S6 goldens passed. Do not set `GATEFIT_LIVE_CLOCK`. Do not use
 ## 3. GitHub Action
 
 ```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: "22"
 - uses: edipert/gatefit@v0.4.0
   with:
     adapter: path/to/your-adapter.ts

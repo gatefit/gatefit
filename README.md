@@ -35,6 +35,9 @@ Bring your own AccessAdapter in ≤30 minutes: [docs/bring-your-adapter.md](docs
 Marketplace-ready Action lives at the repo root (`action.yml`). Pin a version tag after release:
 
 ```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: "22"
 - uses: edipert/gatefit@v0.4.0
   with:
     adapter: src/your-access-adapter.ts

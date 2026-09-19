@@ -25,7 +25,9 @@ function resolveSuiteFiles(suite: string): string[] {
     path.join(goldenDir(), `${suite}.yaml`),
   ];
   for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) return listGoldens(candidate);
+    if (!fs.existsSync(candidate)) continue;
+    const files = listGoldens(candidate);
+    if (files.length > 0) return files;
   }
   throw new Error(`suite not found: ${suite}`);
 }
@@ -33,6 +35,9 @@ function resolveSuiteFiles(suite: string): string[] {
 async function cmdRun(suite: string, adapterPath: string): Promise<number> {
   const adapter = await loadAdapter(resolveUserOrPackage(adapterPath));
   const files = resolveSuiteFiles(suite);
+  if (files.length === 0) {
+    throw new Error(`suite not found: ${suite}`);
+  }
   requireReset(adapter, files.length);
   let failed = 0;
   for (const file of files) {

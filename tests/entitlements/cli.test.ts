@@ -115,6 +115,24 @@ test("gatefit adapter-check from another cwd still uses bundled adapters", () =>
   assert.equal(result.status, 0, result.stderr + result.stdout);
 });
 
+test("empty caller goldens directory does not false-pass; bundled S1–S6 still run", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-empty-goldens-"));
+  fs.mkdirSync(path.join(tmp, "tests/entitlements/goldens"), { recursive: true });
+  const result = spawnSync(
+    process.execPath,
+    [bin, "run", "--suite", "tests/entitlements/goldens", "--adapter", "src/adapters/hardened.ts"],
+    {
+      cwd: tmp,
+      encoding: "utf8",
+      env: { ...process.env, INIT_CWD: tmp },
+    },
+  );
+  const out = result.stderr + result.stdout;
+  assert.equal(result.status, 0, out);
+  assert.match(out, /PASS paid_grants_access/);
+  assert.match(out, /PASS cancel_revokes_access/);
+});
+
 test("gatefit bin finds hoisted tsx outside the package directory", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-hoist-"));
   const prefix = path.join(tmp, "node_modules");
