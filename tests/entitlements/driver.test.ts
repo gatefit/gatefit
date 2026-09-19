@@ -97,6 +97,29 @@ test("CAPE golden uses fixture period_end, not wall clock", () => {
   assert.equal(suite.steps[2]?.event.now, 1_577_923_200);
 });
 
+test("H7 goldens are fixture-first dispute/unpaid (no wall clock, no HTTP 200 grant)", () => {
+  const driverSrc = fs.readFileSync(
+    path.join(import.meta.dirname, "../../src/fixture-driver.ts"),
+    "utf8",
+  );
+  assert.doesNotMatch(driverSrc, /Date\.now/);
+  const dispute = loadGolden(
+    path.join(import.meta.dirname, "goldens/dispute_revokes_or_flags.yaml"),
+  );
+  assert.equal(dispute.id, "dispute_revokes_or_flags");
+  assert.equal(dispute.steps[1]?.event.type, "charge.dispute.created");
+  assert.equal(dispute.steps[1]?.expect.locked, true);
+  assert.deepEqual(dispute.steps[1]?.expect.features, []);
+  assert.equal(dispute.steps[1]?.event.httpStatus, undefined);
+  const unpaid = loadGolden(
+    path.join(import.meta.dirname, "goldens/unpaid_after_retries_revokes.yaml"),
+  );
+  assert.equal(unpaid.steps[1]?.event.status, "past_due");
+  assert.equal(unpaid.steps[2]?.event.status, "unpaid");
+  assert.equal(unpaid.steps[3]?.event.type, "customer.subscription.deleted");
+  assert.equal(unpaid.steps[2]?.expect.locked, true);
+});
+
 test("runGolden refuses GATEFIT_LIVE_CLOCK", async () => {
   const prev = process.env.GATEFIT_LIVE_CLOCK;
   process.env.GATEFIT_LIVE_CLOCK = "1";

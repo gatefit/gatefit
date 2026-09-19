@@ -7,6 +7,8 @@ Not on clocks: `refund_revokes_access` (ACH/dispute poor), `past_due_denies_unti
 
 H6 seats / CAPE / upgrade-race are **fixture goldens** (`period_end` + `now` on YAML events). They are not default `gatefit live` ids. The mapper may attach `cancel_at_period_end` / quantity when those Stripe object fields are present.
 
+H7 dispute / unpaid-exhaust are **fixture goldens**. They are not default `gatefit live` ids. Stripe Test Clocks plus `charge.dispute.created` flake (auto-cancel delay); do not port them to the live lane for merge.
+
 ## Local
 
 ```bash

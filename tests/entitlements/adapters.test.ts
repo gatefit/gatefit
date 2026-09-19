@@ -70,7 +70,12 @@ const h6 = [
   "upgrade_plus_cape_race.yaml",
 ];
 
-for (const name of [...s3s6, ...h6]) {
+const h7 = [
+  "dispute_revokes_or_flags.yaml",
+  "unpaid_after_retries_revokes.yaml",
+];
+
+for (const name of [...s3s6, ...h6, ...h7]) {
   test(`hardened adapter passes ${name}`, async () => {
     const adapter = await loadAdapter(path.join(root, "src/adapters/hardened.ts"));
     const result = await runGolden(adapter, loadGolden(path.join(goldensDir, name)));
