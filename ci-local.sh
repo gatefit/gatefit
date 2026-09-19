@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Named verify gate for Gatefit (edipert/gatefit).
-# Harness integrity plus GATEFIT-H3 entitlement CLI / S1–S6 goldens / Action sanity.
+# Harness integrity plus GATEFIT-H4 packaging / npx / Action, and H3 S1–S6 goldens.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,6 +37,7 @@ fi
 
 need_file package.json
 need_file src/cli.ts
+need_file src/paths.ts
 need_file src/access-adapter.ts
 need_file src/access-rules.ts
 need_file src/fixture-driver.ts
@@ -51,14 +52,27 @@ need_file tests/entitlements/goldens/past_due_denies_until_recovery.yaml
 need_file tests/entitlements/goldens/duplicate_webhook_idempotent.yaml
 need_file .github/actions/gatefit/action.yml
 need_file docs/bring-your-adapter.md
+need_file action.yml
+need_file scripts/action-run.sh
+need_file LICENSE
+need_file docs/publish.md
+need_file bin/gatefit.js
 
-if ! grep -q 'cli.ts' .github/actions/gatefit/action.yml; then
-  fail "Action does not invoke src/cli.ts"
+if ! grep -q 'bin/gatefit.js' scripts/action-run.sh; then
+  fail "Action runner does not invoke bin/gatefit.js"
 fi
-if ! grep -q 'run --suite' .github/actions/gatefit/action.yml; then
-  fail "Action does not wrap gatefit run --suite"
+if ! grep -q 'run --suite' scripts/action-run.sh; then
+  fail "Action runner does not wrap gatefit run --suite"
 fi
-ok "Action wraps gatefit run"
+ok "Action wraps gatefit bin"
+
+if ! grep -q 'npx gatefit' README.md; then
+  fail "README missing npx gatefit DX"
+fi
+if ! grep -q '\$29' README.md || ! grep -q '\$19' README.md; then
+  fail "README missing indie pricing copy"
+fi
+ok "README DX + pricing"
 
 if ! command -v node >/dev/null 2>&1; then
   fail "node is required for entitlement goldens"
@@ -68,14 +82,37 @@ npm install --ignore-scripts >&2
 npx tsc --noEmit || fail "typecheck"
 # Files share process.env (GATEFIT_LIVE_CLOCK probe); keep the test runner serial.
 npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts || fail "entitlement unit tests"
-npx tsx src/cli.ts adapter-check || fail "adapter-check"
-npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/hardened.ts \
+
+ver_out="$(node bin/gatefit.js --version 2>&1)" || fail "gatefit --version"
+echo "$ver_out" | grep -q 'gatefit 0.4.0' || fail "unexpected --version: $ver_out"
+ok "gatefit --version"
+
+node bin/gatefit.js adapter-check || fail "adapter-check via bin"
+node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapters/hardened.ts \
   || fail "hardened goldens"
-npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/sqlite.ts \
+node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapters/sqlite.ts \
   || fail "sqlite goldens"
-naive_out="$(npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter src/adapters/naive.ts 2>&1 || true)"
+naive_out="$(node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapters/naive.ts 2>&1 || true)"
 echo "$naive_out" >&2
 echo "$naive_out" | grep -q 'gatefit: FAIL' || fail "naive did not report FAIL"
 ok "entitlement CLI + S1–S6 goldens (hardened/sqlite pass, naive fails)"
+
+pack_json="$(npm pack --dry-run --json)"
+echo "$pack_json" | grep -q 'bin/gatefit.js' || fail "npm pack missing bin/gatefit.js"
+echo "$pack_json" | grep -q 'src/cli.ts' || fail "npm pack missing src/cli.ts"
+ok "npm pack dry-run"
+
+pack_dir="$(mktemp -d)"
+user_dir="$(mktemp -d)"
+npm pack --pack-destination "$pack_dir" >/dev/null
+tgz="$(ls "$pack_dir"/gatefit-*.tgz)"
+(
+  cd "$user_dir"
+  npm init -y >/dev/null
+  npm install --ignore-scripts "$tgz" >/dev/null
+  npx gatefit --version | grep -q 'gatefit 0.4.0'
+  npx gatefit adapter-check
+) || fail "tarball adapter-check"
+ok "npx from packed tarball"
 
 echo "ci-local: PASS" >&2

@@ -1,0 +1,23 @@
+name: Gatefit
+description: Run Gatefit S1–S6 entitlement goldens against an AccessAdapter (access DB, not Stripe HTTP 200)
+author: edipert
+branding:
+  icon: shield
+  color: green
+inputs:
+  adapter:
+    description: Path to the AccessAdapter module, relative to the caller workspace
+    required: true
+  suite:
+    description: Golden file, directory, or id. Defaults to bundled S1–S6 goldens
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Run gatefit
+      shell: bash
+      env:
+        GATEFIT_ADAPTER_INPUT: ${{ inputs.adapter }}
+        GATEFIT_SUITE_INPUT: ${{ inputs.suite }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/action-run.sh"

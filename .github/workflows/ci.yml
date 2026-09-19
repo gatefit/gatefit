@@ -22,6 +22,6 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-      - uses: ./.github/actions/gatefit
+      - uses: ./
         with:
           adapter: src/adapters/sqlite.ts

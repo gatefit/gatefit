@@ -16,10 +16,14 @@ See `src/adapters/sqlite.ts` (reference) and `src/adapters/naive.ts` (anti-patte
 
 ## 2. Run locally (fixture-first)
 
-From a Gatefit checkout (npm publish is H4):
+```bash
+npx gatefit run --suite tests/entitlements/goldens --adapter /abs/path/to/your-adapter.ts
+```
+
+From a Gatefit clone before registry publish:
 
 ```bash
-npx tsx src/cli.ts run --suite tests/entitlements/goldens --adapter /abs/path/to/your-adapter.ts
+node bin/gatefit.js run --suite tests/entitlements/goldens --adapter /abs/path/to/your-adapter.ts
 ```
 
 Exit 0 = all S1–S6 goldens passed. Do not set `GATEFIT_LIVE_CLOCK`. Do not use `sk_live`.
@@ -27,12 +31,15 @@ Exit 0 = all S1–S6 goldens passed. Do not set `GATEFIT_LIVE_CLOCK`. Do not use
 ## 3. GitHub Action
 
 ```yaml
-- uses: edipert/gatefit/.github/actions/gatefit@main
+- uses: actions/setup-node@v4
+  with:
+    node-version: "22"
+- uses: edipert/gatefit@v0.4.0
   with:
     adapter: path/to/your-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo (example: `path/to/your-adapter.ts`); goldens default to Gatefit’s S1–S6 pack. In this repo, dogfood `src/adapters/sqlite.ts`.
+The Action wraps `gatefit run`. Adapter path is in *your* repo (example: `path/to/your-adapter.ts`); goldens default to Gatefit’s S1–S6 pack. In this repo, dogfood `src/adapters/sqlite.ts`. Nested H3 path `edipert/gatefit/.github/actions/gatefit@v0.4.0` still works.
 
 ## 4. Sanity
 
