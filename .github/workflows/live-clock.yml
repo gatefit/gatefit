@@ -1,0 +1,37 @@
+name: live-clock
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+permissions:
+  contents: read
+jobs:
+  live:
+    name: live-test-clock
+    if: >
+      github.event_name == 'schedule'
+      || github.event_name == 'workflow_dispatch'
+      || (
+        github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+        && contains(join(github.event.pull_request.labels.*.name, ','), 'live-clock')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm install --ignore-scripts
+      - name: Live Test Clock lane
+        if: ${{ secrets.STRIPE_SECRET_KEY != '' }}
+        env:
+          GATEFIT_LIVE_CLOCK: "1"
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: node bin/gatefit.js live --adapter src/adapters/hardened.ts
+      - name: Skip when secret missing
+        if: ${{ secrets.STRIPE_SECRET_KEY == '' }}
+        run: echo "live-clock skipped: STRIPE_SECRET_KEY not configured"

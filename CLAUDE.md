@@ -9,7 +9,7 @@ This file is coding/product policy. Session/merge/Project ops live in `.cursor/H
 - Gatefit is a **CI pack**, not a billing UI and not OtoPilot mobile/panel/web.
 - The unit of truth is the access/entitlement store after a transition, not “Stripe said OK.”
 - Ugly transitions include (non-exhaustive): replayed webhooks, out-of-order events, duplicate `invoice.paid`, subscription canceled then re-paid, customer deleted, pause/resume, quantity collapse, trial→paid, refund/dispute, entitlement revoked while a session is live.
-- Do not implement Stripe webhook handlers or live Stripe calls in the harness High. Later Highs add tests and adapters behind this policy.
+- Live Stripe Test Clocks are opt-in (`GATEFIT_LIVE_CLOCK=1` + `sk_test_` only). They are not default CI and not required for `./ci-local.sh`. `sk_live` is refused. Never assert Stripe HTTP 200 as access.
 
 ## Code
 
@@ -18,7 +18,7 @@ This file is coding/product policy. Session/merge/Project ops live in `.cursor/H
 - Assertions read the access DB (or a fake that matches its contract). Do not assert HTTP 200 from Stripe as proof of access.
 - Tests must not silently “heal” access in fixtures to make the case pass. If the transition should deny, the row must be denied.
 - Idempotency is required: replaying the same Stripe event id must not corrupt access.
-- No secrets in repo, logs, or fixtures. Use Stripe test clocks/fixtures only in later Highs that add them.
+- No secrets in repo, logs, or fixtures. Live Test Clocks are opt-in H5 (`docs/live-clock.md`); fixture S1–S6 stay the merge path.
 - Do not copy OtoPilot KMP, detekt, iOS, panel, or web paths into this repo.
 
 ## Verify

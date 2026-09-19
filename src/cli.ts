@@ -3,7 +3,13 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { loadAdapter } from "./access-adapter.ts";
 import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
+import { LIVE_SCENARIO_IDS, runLiveLane, type LiveScenarioId } from "./live-scenarios.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
+import {
+  createStripeClockClient,
+  requireLiveClockEnabled,
+  requireTestModeSecret,
+} from "./stripe-clock.ts";
 
 const S1 = () => path.join(goldenDir(), "paid_grants_access.yaml");
 const NAIVE = () => path.join(packageRoot(), "src/adapters/naive.ts");
@@ -14,6 +20,7 @@ function usage(): string {
     "Usage:",
     "  gatefit run --suite <dir|file|id> --adapter <path>",
     "  gatefit adapter-check",
+    "  gatefit live --adapter <path> [--scenario <id>]",
     "  gatefit --version",
   ].join("\n");
 }
@@ -95,6 +102,39 @@ async function main(argv: string[]): Promise<number> {
       return 1;
     }
     return cmdRun(values.suite, values.adapter);
+  }
+  if (command === "live") {
+    const { values } = parseArgs({
+      args: argv.slice(1),
+      options: {
+        adapter: { type: "string" },
+        scenario: { type: "string" },
+      },
+    });
+    if (!values.adapter) {
+      console.error(usage());
+      return 1;
+    }
+    requireLiveClockEnabled();
+    const secret = requireTestModeSecret();
+    const adapter = await loadAdapter(resolveUserOrPackage(values.adapter));
+    const client = createStripeClockClient({ secret });
+    let scenarios: LiveScenarioId[] | undefined;
+    if (values.scenario) {
+      if (!(LIVE_SCENARIO_IDS as readonly string[]).includes(values.scenario)) {
+        throw new Error(`unknown live scenario: ${values.scenario}`);
+      }
+      scenarios = [values.scenario as LiveScenarioId];
+    }
+    const result = await runLiveLane(adapter, client, { scenarios });
+    for (const row of result.results) {
+      if (row.ok) console.error(`gatefit live: PASS ${row.id}`);
+      else {
+        console.error(`gatefit live: FAIL ${row.id}`);
+        for (const mismatch of row.mismatches) console.error(`  ${mismatch}`);
+      }
+    }
+    return result.ok ? 0 : 1;
   }
   console.error(usage());
   return 1;
