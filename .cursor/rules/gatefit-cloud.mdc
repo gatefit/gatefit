@@ -7,6 +7,7 @@ alwaysApply: true
 
 - Follow `.cursor/HARNESS.md` (Cursor harness). Do not run Codex/Claude loops or invent a HOW-TO-USE playbook.
 - Coding policy is `CLAUDE.md`. Root `AGENTS.md` is the coding-session entry (product + how agents work here), not a Gemini product-AI spec.
+- Testing (`.cursor/HARNESS.md`): for complex features, prefer E2E as the sole mechanism and end on a repeatable artifact (fixture golden, `./ci-local.sh`, Action smoke). Never write unit tests after you write code. Enumerate and encode failure modes first, then implementation.
 - GHA (`.github/workflows/ci.yml`) is source of truth for merges. Before opening or updating a PR, run `./ci-local.sh`. A local green never overrides a GHA red.
 - Never merge unless the user says "Merge it".
 - Cloud Agent PRs need two independent verdicts (correctness + security) **or** an explicit `human-review` label / “human review substitutes” note. Cursor does not start Codex fleet reviewers.

@@ -20,7 +20,10 @@ This file is coding/product policy. Session/merge/Project ops live in `.cursor/H
 - Idempotency is required: replaying the same Stripe event id must not corrupt access.
 - No secrets in repo, logs, or fixtures. Live Test Clocks are opt-in H5 (`docs/live-clock.md`); fixture S1–S6 plus H6 seats/CAPE and H7 dispute/unpaid goldens stay the merge path.
 - Do not copy OtoPilot KMP, detekt, iOS, panel, or web paths into this repo.
+- Testing (same rules as `.cursor/HARNESS.md`): for complex features, prefer E2E as the sole testing mechanism and end on a verifiable, repeatable artifact (fixture golden, `./ci-local.sh`, or Action smoke). NEVER write unit tests after you write code. Isolation testing enumerates and encodes all failure modes first, then implementation.
 
 ## Verify
 
 Named gate: `./ci-local.sh`. It asserts harness integrity, then runs entitlement unit tests, `gatefit adapter-check`, hardened and SQLite S1–S6 goldens (`paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`) plus H6 (`seat_qty_vs_db_cap`, `cancel_at_period_end_keeps_access_until_end`, `upgrade_plus_cape_race`) and H7 (`dispute_revokes_or_flags`, `unpaid_after_retries_revokes`), naive-must-fail, Action sanity (`bin/gatefit.js`), packaging (`npx`/bin/`npm pack` tarball smoke), and a cheap Starlight `site/` build plus Polar CTA file check. Do not invent a second gate. Live Test Clocks stay opt-in. The docs site is not access proof.
+
+Future complex work is fail-modes-first, then that E2E artifact (fixture golden on this gate, or Action smoke). Do not add unit tests after the implementation. The golden names above stay the merge-path inventory.
