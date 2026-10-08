@@ -21,7 +21,7 @@ Longer contract: [bring-your-adapter.md](https://github.com/edipert/gatefit/blob
 
 ## 2. Run
 
-After npm publish:
+npm is coming soon. After npm publish:
 
 ```bash
 npx gatefit --version

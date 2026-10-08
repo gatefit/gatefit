@@ -15,7 +15,8 @@
     "action.yml",
     "scripts/action-run.sh",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=22"
