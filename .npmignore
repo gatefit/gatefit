@@ -1,0 +1,7 @@
+# GATEFIT-H11: the docs site and secret material stay out of the npm tarball.
+site/
+.env
+.env.*
+*.pem
+id_rsa
+id_rsa.*

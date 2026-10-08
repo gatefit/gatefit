@@ -24,7 +24,8 @@ Exit 0 is green. Treat any non-zero as blocking.
 - H7 fixture goldens: `dispute_revokes_or_flags`, `unpaid_after_retries_revokes` (dispute+clocks flake; fixtures only).
 - Naive directory run must fail.
 - Composite Action wraps `gatefit run` (repo-root `action.yml` plus nested `.github/actions/gatefit/action.yml`) and `docs/bring-your-adapter.md`.
-- Packaging: publishable `gatefit@0.4.0` bin, `npm pack`, tarball `npx gatefit adapter-check`.
+- Packaging: publishable `gatefit@0.4.0` bin, `npm pack`, tarball `npx gatefit adapter-check`, `npm publish --dry-run` (no registry write; tarball has `bin/gatefit.js`, no `site/`, no secrets).
+- Distribution honesty: README, docs, and the built site say site, npm, and Polar checkout are coming soon. `scripts/deploy-site.sh` copies `site/dist` locally. Tag `v0.4.0` is draft-only (`CHANGELOG.md`, `docs/release-v0.4.0.md`); the gate does not create a git tag or GitHub Release.
 - Starlight `site/` build (`npm ci` + `npm run build` in `site/`) and Polar CTA (`data-polar-checkout`) file check. Site is not access proof.
 - `tests/entitlements/*.test.ts`.
 - Live Test Clock lane is **not** part of this gate. Do not set `GATEFIT_LIVE_CLOCK`. See `docs/live-clock.md`.

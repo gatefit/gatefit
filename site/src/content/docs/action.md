@@ -3,7 +3,7 @@ title: GitHub Action
 description: Run Gatefit goldens from a composite Action. The Action stays free.
 ---
 
-The marketplace-ready Action lives at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. The Action is **free**; do not treat Marketplace listing as a paid product.
+The marketplace-ready Action lives at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. The Action is **free**; do not treat Marketplace listing as a paid product. The `v0.4.0` tag is coming soon. The paths below are what callers use once that tag exists.
 
 ## Use it
 

@@ -329,10 +329,11 @@ deploy_dest="$(mktemp -d)"
 GATEFIT_SITE_DIST="$ROOT/site/dist" GATEFIT_DEPLOY_TARGET=local \
   GATEFIT_DEPLOY_DEST="$deploy_dest" \
   bash scripts/deploy-site.sh || fail "deploy-site local copy"
-find "$deploy_dest" -name 'index.html' -type f | grep -q . || fail "deploy-site local copy has no index.html"
-cmp "$ROOT/site/dist/gatefit/index.html" "$deploy_dest/gatefit/index.html" >/dev/null 2>&1 \
-  || cmp "$ROOT/site/dist/index.html" "$deploy_dest/index.html" >/dev/null \
-  || fail "deploy-site local copy does not match site/dist index"
+src_index="$(find "$ROOT/site/dist" -name 'index.html' -type f -print -quit)"
+[[ -n "$src_index" ]] || fail "site/dist has no index.html"
+rel="${src_index#"$ROOT/site/dist"/}"
+[[ -f "$deploy_dest/$rel" ]] || fail "deploy-site local copy missing ${rel}"
+cmp "$src_index" "$deploy_dest/$rel" >/dev/null || fail "deploy-site local copy does not match ${rel}"
 ok "deploy-site local"
 
 echo "ci-local: PASS" >&2

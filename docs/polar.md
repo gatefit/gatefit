@@ -17,4 +17,4 @@ Until Edip creates the Polar product, the CTA href is `https://polar.sh/`. That 
 
 No Polar API tokens belong in this repo, in logs, or in fixtures.
 
-Site: https://edipert.github.io/gatefit/
+Docs site: coming soon (`https://edipert.github.io/gatefit/`). GitHub Pages needs a public repository or a paid plan. Polar checkout is coming soon; there is no working checkout link.

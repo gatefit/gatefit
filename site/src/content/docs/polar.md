@@ -3,9 +3,9 @@ title: Polar checkout
 description: Wire the Gatefit Polar Buy CTA after the product exists.
 ---
 
-The landing page has **one** Polar Buy CTA (`Get indie license`). Polar is the merchant of record.
+Polar checkout is coming soon. The landing page has **one** Polar Buy CTA. Polar is the merchant of record. There is no working checkout link yet.
 
-A live `buy.polar.sh` checkout link is not required to ship the site. The High allows a placeholder until the Polar product exists.
+A live `buy.polar.sh` checkout link is not required to build the site. The CTA stays a placeholder until the Polar product exists.
 
 ## Placeholder
 
