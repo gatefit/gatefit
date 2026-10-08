@@ -32,20 +32,27 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   const polar = read("site/src/content/docs/polar.md");
   assert.match(index, /PolarBuyCta/);
   assert.match(index, /\$49/);
+  assert.match(index, /Indie License/);
   assert.match(index, /coming soon/i);
+  assert.match(index, /checkout is live/i);
   assert.match(quickstart, /npx gatefit/);
   assert.match(quickstart, /adapter/i);
   assert.match(action, /uses: edipert\/gatefit@v0\.4\.0/);
   assert.match(polar, /PUBLIC_POLAR_CHECKOUT_URL/);
   assert.match(polar, /fail closed|fails closed/i);
-  assert.match(polar, /coming soon/i);
+  assert.match(polar, /checkout is live/i);
+  assert.match(polar, /polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0/);
   assert.match(polar, /\$49/);
 });
 
+const GATEFIT_CHECKOUT_URL =
+  "https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0";
+
 test("resolvePolarCheckoutUrl fails closed unless Polar Checkout Link", () => {
-  assert.equal(resolvePolarCheckoutUrl(undefined), null);
-  assert.equal(resolvePolarCheckoutUrl(""), null);
-  assert.equal(resolvePolarCheckoutUrl("   "), null);
+  assert.equal(resolvePolarCheckoutUrl(undefined), GATEFIT_CHECKOUT_URL);
+  assert.equal(resolvePolarCheckoutUrl(""), GATEFIT_CHECKOUT_URL);
+  assert.equal(resolvePolarCheckoutUrl("   "), GATEFIT_CHECKOUT_URL);
+  assert.match(GATEFIT_CHECKOUT_URL, POLAR_CHECKOUT_HREF_RE);
   assert.equal(resolvePolarCheckoutUrl("https://polar.sh/"), null);
   assert.equal(resolvePolarCheckoutUrl("https://polar.sh/edipert/gatefit"), null);
   assert.equal(resolvePolarCheckoutUrl("http://buy.polar.sh/polar_cl_abc"), null);
@@ -83,6 +90,8 @@ test("repo Polar setup documents fail-closed checkout env", () => {
   assert.match(polar, /PUBLIC_POLAR_CHECKOUT_URL/);
   assert.match(polar, /buy\.polar\.sh/);
   assert.match(polar, /fail closed|fails closed/i);
+  assert.match(polar, /checkout is live/i);
+  assert.match(polar, /polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0/);
   assert.match(polar, /\$49/);
   assert.match(envExample, /PUBLIC_POLAR_CHECKOUT_URL=/);
   assert.doesNotMatch(envExample, /PUBLIC_POLAR_CHECKOUT_URL=https:\/\/polar\.sh/);

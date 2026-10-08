@@ -89,6 +89,11 @@ fi
 [[ -d "$DIST" ]] || fail "site dist missing: $DIST (build site/ first)"
 index_found="$(find "$DIST" -name 'index.html' -type f -print -quit || true)"
 [[ -n "$index_found" ]] || fail "site dist has no index.html: $DIST"
+landing="${DIST}/index.html"
+[[ -f "$landing" ]] || fail "site dist missing landing index.html: $landing"
+if ! grep -q 'href="https://buy.polar.sh/polar_cl_' "$landing"; then
+  fail "landing CTA is not a Polar Checkout Link; build site/ so the committed link or a polar_cl_ override is in the CTA"
+fi
 
 if [[ "$TARGET" == "local" ]]; then
   dist_real="$(realpath "$DIST")"

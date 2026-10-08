@@ -31,13 +31,17 @@ test("package is publishable as gatefit 0.4.0", () => {
 test("README documents npx, Action, and indie pricing", () => {
   assert.match(readme, /npx gatefit/);
   assert.match(readme, /uses: edipert\/gatefit@v0\.4\.0/);
-  assert.match(readme, /\$29/);
   assert.match(readme, /\$49/);
   assert.match(readme, /\$19/);
   assert.match(readme, /coming soon/i);
   assert.match(readme, /edipert\.github\.io\/gatefit/);
   assert.match(readme, /polar/i);
+  assert.match(readme, /\*\*Polar checkout:\*\* live/);
+  assert.match(readme, /polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0/);
+  assert.match(readme, /Indie License/);
   assert.match(readme, /fail closed|fails closed|not live/i);
+  assert.match(readme, /\*\*Docs site:\*\* coming soon/);
+  assert.match(readme, /\*\*npm:\*\* coming soon/);
   assert.doesNotMatch(readme, /buy now|limited time|act now/i);
 });
 
