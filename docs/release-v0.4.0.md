@@ -6,7 +6,7 @@ Draft GitHub Release notes for tag `v0.4.0`. Do not create the tag or the Releas
 
 Gatefit is a CI pack that asserts an access database survives ugly billing transitions. The CLI and the composite GitHub Action stay free.
 
-Docs site, npm, and Polar checkout are **coming soon**. Nothing in this draft is a live publish.
+Docs site and npm are **coming soon**. Polar checkout is live (Gatefit Indie License, $49 one-time). Nothing in this draft publishes npm or the docs site.
 
 ## Install
 
@@ -50,4 +50,4 @@ Coming soon. Intended URL: `https://edipert.github.io/gatefit/`. GitHub Pages ne
 
 - Making the repository public.
 - A real npm publish.
-- A working Polar checkout. There is no checkout link yet.
+- Docs site deploy and npm publish. Polar checkout is the committed Checkout Link in [docs/polar.md](polar.md).

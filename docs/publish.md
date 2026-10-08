@@ -6,7 +6,7 @@ CI does **not** publish. There is no npm token in this repo. Do not paste tokens
 
 **Docs site:** coming soon (`https://edipert.github.io/gatefit/`). GitHub Pages needs a public repository or a paid plan. `scripts/deploy-site.sh` copies `site/dist` to any static host.
 
-**Polar checkout:** coming soon. No working checkout link.
+**Polar checkout:** live. Gatefit Indie License, **$49** one-time: `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`.
 
 **Tag:** `v0.4.0` must match `package.json` `version`. Do not create the git tag or the GitHub Release from CI. Draft notes: [release-v0.4.0.md](release-v0.4.0.md).
 

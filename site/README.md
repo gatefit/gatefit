@@ -18,4 +18,4 @@ GATEFIT_DEPLOY_TARGET=local GATEFIT_DEPLOY_DEST=/tmp/gatefit-site \
 
 See `scripts/deploy-site.sh` for `local`, `rsync`, and `s3` inputs.
 
-**Polar checkout:** coming soon. `PUBLIC_POLAR_CHECKOUT_URL` stays a placeholder (`https://polar.sh/`) until a real checkout link exists. See [docs/polar.md](../docs/polar.md).
+**Polar checkout:** live. A plain `npm run build` uses the committed Gatefit Indie License link (`https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`, **$49** one-time). `scripts/deploy-site.sh` publishes that build. Empty `PUBLIC_POLAR_CHECKOUT_URL` keeps the committed link; any other non-Checkout-Link value fails closed. See [docs/polar.md](../docs/polar.md).

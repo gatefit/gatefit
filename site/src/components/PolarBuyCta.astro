@@ -1,32 +1,39 @@
 ---
-const checkoutUrl = import.meta.env.PUBLIC_POLAR_CHECKOUT_URL || 'https://polar.sh/';
-const isCheckoutLink = /^https:\/\/buy\.polar\.sh\//.test(checkoutUrl);
+import { resolvePolarCheckoutUrl } from '../lib/polarCheckout';
+
+const checkoutUrl = resolvePolarCheckoutUrl(import.meta.env.PUBLIC_POLAR_CHECKOUT_URL);
 ---
 
-<p>
-	<a
-		class="gatefit-polar-cta"
-		href={checkoutUrl}
-		data-polar-checkout
-		data-polar-checkout-theme="light">Indie license (coming soon)</a
-	>
-</p>
 {
-	isCheckoutLink && (
-		<script
-			is:inline
-			defer
-			data-auto-init
-			src="https://cdn.jsdelivr.net/npm/@polar-sh/checkout@latest/dist/embed.global.js"
-		></script>
+	checkoutUrl ? (
+		<>
+			<p>
+				<a
+					class="gatefit-polar-cta"
+					href={checkoutUrl}
+					data-polar-checkout
+					data-polar-checkout-theme="light">Get indie license</a
+				>
+			</p>
+			<script
+				is:inline
+				defer
+				data-auto-init
+				src="https://cdn.jsdelivr.net/npm/@polar-sh/checkout@latest/dist/embed.global.js"
+			></script>
+			<p>
+				Polar checkout is live: Gatefit Indie License, $49 one-time. Polar is the merchant of
+				record. npm and the GitHub Action stay free.
+			</p>
+		</>
+	) : (
+		<p role="status" data-polar-checkout-pending>
+			This <code>PUBLIC_POLAR_CHECKOUT_URL</code> is not a Checkout Link, so the Buy CTA stays
+			closed. Product paths, polar.sh home, and other hosts fail closed. npm and the GitHub Action
+			stay free.
+		</p>
 	)
 }
-<p>
-	Polar checkout is coming soon. Polar is the merchant of record. Until a
-	Gatefit checkout link exists, this points at Polar; set
-	<code>PUBLIC_POLAR_CHECKOUT_URL</code> to a <code>buy.polar.sh</code> link
-	after the product is created. npm and the GitHub Action stay free.
-</p>
 
 <style>
 	.gatefit-polar-cta {

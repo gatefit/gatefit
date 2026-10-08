@@ -1,22 +1,15 @@
 ---
 title: Polar checkout
-description: Wire the Gatefit Polar Buy CTA after the product exists.
+description: Gatefit Indie License Checkout Link, $49 one-time.
 ---
 
-Polar checkout is coming soon. The landing page has **one** Polar Buy CTA. Polar is the merchant of record. There is no working checkout link yet.
+Polar checkout is live. The landing page has **one** Buy CTA for the Gatefit Indie License at **$49** one-time. Polar is the merchant of record. npm and the GitHub Action stay free.
 
-A live `buy.polar.sh` checkout link is not required to build the site. The CTA stays a placeholder until the Polar product exists.
+The committed Checkout Link is `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain site build uses it. `scripts/deploy-site.sh` publishes that build. Leave `PUBLIC_POLAR_CHECKOUT_URL` empty to keep this link. Set it only to replace the link with another Checkout Link.
 
-## Placeholder
+Checkout **fails closed** when that variable is anything other than `https://buy.polar.sh/polar_cl_…`. A product path, polar.sh home, or another host stays pending.
 
-Default href is `https://polar.sh/` via `PUBLIC_POLAR_CHECKOUT_URL`.
-
-When the product exists:
-
-1. Create a Polar product at **$29–$49** once (optional ~$19/month updates as a second price if you want it — still **one** Buy CTA).
-2. Create a Checkout Link in Polar.
-3. Set `PUBLIC_POLAR_CHECKOUT_URL` to that `https://buy.polar.sh/polar_cl_…` URL (GitHub Actions variable on this repo, or `site/.env` locally).
-4. If you want the overlay embed, add `edipert.github.io` to Polar Settings → Preferences → Embedding.
+Docs site and npm are coming soon.
 
 Do not commit Polar access tokens. Do not add Gumroad, Framer checkout, or DIY Stripe Tax.
 

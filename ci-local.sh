@@ -90,7 +90,7 @@ ok "live lane gated (not default CI; forks skip)"
 if ! grep -q 'npx gatefit' README.md; then
   fail "README missing npx gatefit DX"
 fi
-if ! grep -q '\$29' README.md || ! grep -q '\$19' README.md; then
+if ! grep -q '\$49' README.md || ! grep -q '\$19' README.md; then
   fail "README missing indie pricing copy"
 fi
 ok "README DX + pricing"
@@ -180,7 +180,10 @@ grep -q 'scripts/action-run.sh' .github/actions/gatefit/action.yml || dist_fail 
 
 grep -q '\*\*Docs site:\*\* coming soon' README.md || dist_fail "README docs site is not marked coming soon"
 grep -q '\*\*npm:\*\* coming soon' README.md || dist_fail "README npm is not marked coming soon"
-grep -q '\*\*Polar checkout:\*\* coming soon' README.md || dist_fail "README Polar checkout is not marked coming soon"
+grep -q '\*\*Polar checkout:\*\* live' README.md || dist_fail "README Polar checkout is not marked live"
+grep -q 'https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0' README.md \
+  || dist_fail "README missing the Gatefit Indie License Checkout Link"
+grep -q '\$49' README.md || dist_fail "README missing \$49 Indie License price"
 grep -q 'GitHub Pages needs a public repository or a paid plan' README.md || dist_fail "README missing GitHub Pages public-or-paid requirement"
 
 if [[ -f scripts/deploy-site.sh ]]; then
@@ -204,7 +207,7 @@ done < <(find README.md docs site/README.md site/src -type f \( -name '*.md' -o 
 
 if grep -R -n --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.astro \
   'buy.polar.sh/products/' README.md docs site >/dev/null; then
-  dist_fail "docs advertise a buy.polar.sh/products/ URL (no working checkout)"
+  dist_fail "docs advertise a buy.polar.sh/products/ URL (not the Checkout Link)"
 fi
 
 if [[ "$dist_fails" -ne 0 ]]; then
@@ -288,6 +291,7 @@ rm -f "$publish_log"
 ok "npm publish --dry-run"
 
 need_file site/astro.config.mjs
+need_file site/src/lib/polarCheckout.ts
 need_file site/src/components/PolarBuyCta.astro
 need_file site/src/content/docs/index.mdx
 need_file site/src/content/docs/quickstart.md
@@ -302,18 +306,68 @@ if grep -q 'GATEFIT_LIVE_CLOCK' .github/workflows/pages.yml; then
   fail "pages.yml must not set GATEFIT_LIVE_CLOCK"
 fi
 ok "site files + Polar CTA"
+POLAR_CHECKOUT_URL='https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0'
+assert_live_cta() {
+  local html="$1" expected="$2"
+  grep -q "href=\"${expected}\"" "$html" || fail "CTA href != ${expected} in ${html}"
+  grep -q 'data-polar-checkout' "$html" || fail "missing data-polar-checkout in ${html}"
+  if grep -q 'data-polar-checkout-pending' "$html"; then
+    fail "live CTA marked pending in ${html}"
+  fi
+}
+assert_pending_cta() {
+  local html="$1" bad="$2"
+  grep -q 'data-polar-checkout-pending' "$html" || fail "override ${bad} did not stay pending in ${html}"
+  if grep -q "href=\"${bad}\"" "$html"; then
+    fail "override ${bad} leaked into CTA href"
+  fi
+  if grep -q "href=\"${POLAR_CHECKOUT_URL}\"" "$html"; then
+    fail "invalid override fell back to the committed Checkout Link"
+  fi
+  if grep -q 'href="https://polar.sh' "$html"; then
+    fail "polar.sh home href leaked into ${html}"
+  fi
+  if grep -q 'buy.polar.sh/products/' "$html"; then
+    fail "product path leaked into ${html}"
+  fi
+}
 (
   cd site
   npm ci
-  npm run build
+  # Empty override falls back to the committed Checkout Link.
+  PUBLIC_POLAR_CHECKOUT_URL= npm run build
 ) || fail "starlight site build"
 ok "starlight site build"
-
+assert_live_cta site/dist/index.html "$POLAR_CHECKOUT_URL"
 if grep -R -n 'buy.polar.sh/products/' site/dist >/dev/null; then
   fail "built site advertises a buy.polar.sh/products/ URL"
 fi
-grep -R -q 'coming soon' site/dist || fail "built site does not say coming soon"
-ok "built site honesty"
+grep -q '\$49' site/dist/index.html || fail "built landing missing \$49"
+grep -q 'Indie License' site/dist/index.html || fail "built landing missing Indie License"
+grep -R -q 'coming soon' site/dist || fail "built site does not say docs site or npm coming soon"
+ok "built site default Checkout Link"
+
+build_polar_override() {
+  (cd site && PUBLIC_POLAR_CHECKOUT_URL="$1" npm run build) || fail "site rebuild for Polar override"
+}
+assert_pending_override() {
+  build_polar_override "$1"
+  assert_pending_cta site/dist/index.html "$1"
+}
+assert_pending_override 'https://buy.polar.sh/products/gatefit-one-time'
+assert_pending_override 'https://polar.sh/'
+assert_pending_override 'https://evil.example/checkout'
+ok "invalid Polar overrides stay pending"
+POLAR_OVERRIDE_URL='https://buy.polar.sh/polar_cl_TESTSHAPEONLY'
+build_polar_override "$POLAR_OVERRIDE_URL"
+assert_live_cta site/dist/index.html "$POLAR_OVERRIDE_URL"
+if grep -q "href=\"${POLAR_CHECKOUT_URL}\"" site/dist/index.html; then
+  fail "valid override did not replace the committed Checkout Link"
+fi
+ok "PUBLIC_POLAR_CHECKOUT_URL overrides the committed Checkout Link"
+# Restore the default build so deploy-site publishes the committed link.
+build_polar_override ''
+assert_live_cta site/dist/index.html "$POLAR_CHECKOUT_URL"
 
 if GATEFIT_SITE_DIST="/tmp/gatefit-missing-dist-$$" GATEFIT_DEPLOY_TARGET=local \
   GATEFIT_DEPLOY_DEST="/tmp/gatefit-deploy-should-not-matter-$$" \
@@ -329,11 +383,11 @@ deploy_dest="$(mktemp -d)"
 GATEFIT_SITE_DIST="$ROOT/site/dist" GATEFIT_DEPLOY_TARGET=local \
   GATEFIT_DEPLOY_DEST="$deploy_dest" \
   bash scripts/deploy-site.sh || fail "deploy-site local copy"
-src_index="$(find "$ROOT/site/dist" -name 'index.html' -type f -print -quit)"
-[[ -n "$src_index" ]] || fail "site/dist has no index.html"
-rel="${src_index#"$ROOT/site/dist"/}"
-[[ -f "$deploy_dest/$rel" ]] || fail "deploy-site local copy missing ${rel}"
-cmp "$src_index" "$deploy_dest/$rel" >/dev/null || fail "deploy-site local copy does not match ${rel}"
+src_index="$ROOT/site/dist/index.html"
+[[ -f "$src_index" ]] || fail "site/dist has no landing index.html"
+[[ -f "$deploy_dest/index.html" ]] || fail "deploy-site local copy missing index.html"
+cmp "$src_index" "$deploy_dest/index.html" >/dev/null || fail "deploy-site local copy does not match index.html"
+assert_live_cta "$deploy_dest/index.html" "$POLAR_CHECKOUT_URL"
 ok "deploy-site local"
 
 echo "ci-local: PASS" >&2

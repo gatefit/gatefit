@@ -1,20 +1,17 @@
-# Polar Buy CTA (GATEFIT-H8)
+# Polar Buy CTA (GATEFIT-H9)
 
-Polar is the merchant of record for the optional indie license. npm `gatefit` and the GitHub Action stay free.
+Polar is the merchant of record for the Gatefit Indie License. npm `gatefit` and the GitHub Action stay free.
 
-The Starlight landing CTA reads `PUBLIC_POLAR_CHECKOUT_URL`.
+Polar checkout is live: **$49** one-time, benefit “Gatefit License Key”.
 
-## Placeholder (allowed)
+Committed Checkout Link (public, not a secret):
 
-Until Edip creates the Polar product, the CTA href is `https://polar.sh/`. That is intentional. Do not invent a fake `polar_cl_` id.
+`https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`
 
-## After the product exists
+A plain `site` build bakes that link into the Buy CTA. `scripts/deploy-site.sh` publishes that built `site/dist`. An empty `PUBLIC_POLAR_CHECKOUT_URL` uses the committed link. A set value overrides it.
 
-1. In Polar, create the Gatefit product ($29–$49 once; optional ~$19/month updates).
-2. Create a **Checkout Link** (dashboard → Checkout Links). Copy the `https://buy.polar.sh/polar_cl_…` URL — never a short-lived Checkout Session URL.
-3. Set repo Actions variable `PUBLIC_POLAR_CHECKOUT_URL` to that link (Pages workflow forwards it as a public Astro env). Locally: `site/.env` from `site/.env.example`.
-4. Optional overlay: allow `edipert.github.io` under Polar Settings → Preferences → Embedding.
+Checkout **fails closed** for any value that is not `https://buy.polar.sh/polar_cl_…`. Product paths, `https://polar.sh/`, and other hosts stay pending and do not fall back to the committed link.
 
-No Polar API tokens belong in this repo, in logs, or in fixtures.
+Docs site: coming soon (`https://edipert.github.io/gatefit/`). GitHub Pages needs a public repository or a paid plan. npm is coming soon.
 
-Docs site: coming soon (`https://edipert.github.io/gatefit/`). GitHub Pages needs a public repository or a paid plan. Polar checkout is coming soon; there is no working checkout link.
+No Polar API tokens belong in this repo, in logs, or in fixtures. No Gumroad, Framer checkout, Next, or DIY Stripe Tax.
