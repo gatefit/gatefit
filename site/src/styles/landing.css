@@ -169,7 +169,7 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 
 .hero {
 	position: relative;
-	min-height: 100dvh;
+	min-height: 100svh;
 	display: grid;
 	align-items: center;
 	overflow: hidden;
@@ -348,7 +348,7 @@ h1 {
 #leak { position: relative; }
 #leak-track { position: relative; }
 #leak-stage {
-	min-height: 100dvh;
+	min-height: 100svh;
 	display: grid;
 	align-content: center;
 	padding: 72px 0 32px;
@@ -713,8 +713,8 @@ details[open] .faq-body > div { opacity: 1; }
 @supports (animation-timeline: view()) {
 	@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
 		html { scroll-snap-type: y proximity; }
-		#leak-track { height: 400vh; view-timeline: --leak block; }
-		#leak-stage { position: sticky; top: 0; height: 100dvh; }
+		#leak-track { height: 400svh; view-timeline: --leak block; }
+		#leak-stage { position: sticky; top: 0; height: 100svh; }
 		.leak-snap { scroll-snap-align: start; }
 		.leak-grid,
 		.leak-kicker,
@@ -773,9 +773,13 @@ details[open] .faq-body > div { opacity: 1; }
 	}
 }
 
-@media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
-	.vconn { transform: scaleY(0); animation: fill-y linear both; animation-timeline: view(); animation-range: entry 10% cover 45%; }
-	.m-node .red { animation: fade-in linear both; animation-timeline: view(); animation-range: cover 45% cover 70%; }
+@media (max-width: 899px) {
+	.vconn, .how-bar { transform: none; }
+	.m-node .red { opacity: 1; }
+	.how-line { overflow: visible; }
+	.dispute-line { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+	.chips { flex-wrap: wrap; row-gap: 8px; }
+	.chips i { flex: 0 0 10px; width: 10px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -823,12 +827,29 @@ details[open] .faq-body > div { opacity: 1; }
 	.chip-track i { animation: fill 300ms linear infinite; }
 	.dispute-visual .got { animation: blink 6s linear infinite; }
 	.dispute-visual .pass-line { animation: pass-in 6s linear infinite; }
-	.final-band { animation: land linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
-	.price-card { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 36%; }
-	.price-indie { animation-range: entry 8% cover 46%; }
 	.lit .indie-glow { opacity: 0.7; animation: glow-settle 600ms var(--ease) both, breathe 3.2s var(--ease-io) 4.6s infinite alternate; }
 	.lit .orbit { opacity: 1; animation: spin 4s linear 1; }
 	.offscreen, .offscreen * { animation-play-state: paused !important; }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+	.final-band { animation: land linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+	.price-card { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 36%; }
+	.price-indie { animation-range: entry 8% cover 46%; }
+}
+
+@media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
+	html.motion .pane[data-pane='workflow'] .how-inner,
+	html.motion .out-cmd span,
+	html.motion .tile,
+	.price-card,
+	.final-band {
+		animation: none;
+		transform: none;
+	}
+	html.motion .out-ok,
+	html.motion .uses-layer,
+	html.motion .tile { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
