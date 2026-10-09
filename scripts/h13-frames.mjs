@@ -20,6 +20,8 @@
 // points of the 4s spin, and the orbit opacity is 0 once the spin ends.
 // During the spin, gold more than 4px inside the card border fails.
 // The Buy button is excluded. Mobile stays a static edge with no cone.
+// With prefers-reduced-motion at 1280 and 1440 the dial centre shows one
+// label, the end-state readout (9 pass / 1 leak), never the 0 / 10 counter.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -1374,31 +1376,73 @@ async function checkDial() {
     await page.close();
   }
 
-  const reduced = await browser.newPage();
-  await reduced.emulateMedia({ reducedMotion: 'reduce' });
-  await reduced.setViewportSize({ width: 1280, height: 900 });
-  await reduced.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(reduced);
-  note('dial reduced', await reduced.evaluate(() => {
-    const found = [];
-    const track = document.querySelector('#dial-track');
-    if (!track) return ['dial track missing'];
-    if (track.offsetHeight > window.innerHeight * 1.25) found.push(`reduced motion still pins (${track.offsetHeight}px)`);
-    const used = (el) => {
-      if (!el) return 0;
-      let opacity = 1;
-      for (let node = el; node; node = node.parentElement) {
-        const style = getComputedStyle(node);
-        if (style.display === 'none' || style.visibility === 'hidden') return 0;
-        opacity *= Number.parseFloat(style.opacity);
+  const reducedProfiles = [
+    { width: 1280, height: 900, shot: null },
+    { width: 1440, height: 900, shot: 'dial-reduced-1440.png' },
+  ];
+  for (const profile of reducedProfiles) {
+    const reduced = await browser.newPage();
+    await reduced.emulateMedia({ reducedMotion: 'reduce' });
+    await reduced.setViewportSize({ width: profile.width, height: profile.height });
+    await reduced.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+    await settle(reduced);
+    note(`dial reduced ${profile.width}`, await reduced.evaluate(() => {
+      const found = [];
+      const track = document.querySelector('#dial-track');
+      if (!track) return ['dial track missing'];
+      if (track.offsetHeight > window.innerHeight * 1.25) found.push(`reduced motion still pins (${track.offsetHeight}px)`);
+      const used = (el) => {
+        if (!el || el.getClientRects().length === 0) return 0;
+        let opacity = 1;
+        for (let node = el; node; node = node.parentElement) {
+          const style = getComputedStyle(node);
+          if (style.display === 'none' || style.visibility === 'hidden') return 0;
+          opacity *= Number.parseFloat(style.opacity);
+          if (Number.isNaN(opacity)) return 0;
+        }
+        return opacity;
+      };
+      if (used(document.querySelector('.dial-badge-pass')) < 0.5) found.push('reduced motion is not the end state');
+      if (used(document.querySelector('.dial-leak')) < 0.5) found.push('reduced motion hides the leak');
+      const labels = [...document.querySelectorAll('#access-dial .dial-center-label')].filter((el) => used(el) > 0.1);
+      if (labels.length !== 1) {
+        const shown = labels.map((el) => `${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 32)}@${used(el).toFixed(2)}`);
+        found.push(`center labels ${labels.length} [${shown.join(' | ')}]`);
+      } else {
+        const text = labels[0].textContent.trim().replace(/\s+/g, ' ');
+        const endState = text.includes('9 pass') && text.includes('1 leak') && !text.includes('0 / 10');
+        if (!endState) found.push(`center readout is not 9 pass / 1 leak ("${text.slice(0, 48)}")`);
       }
-      return opacity;
-    };
-    if (used(document.querySelector('.dial-badge-pass')) < 0.5) found.push('reduced motion is not the end state');
-    if (used(document.querySelector('.dial-leak')) < 0.5) found.push('reduced motion hides the leak');
-    return found;
-  }));
-  await reduced.close();
+      return found;
+    }));
+    if (profile.shot) {
+      await reduced.evaluate(() => {
+        const el = document.querySelector('#scenarios');
+        if (!el) return;
+        const nav = document.querySelector('.site-nav')?.getBoundingClientRect().height ?? 0;
+        const top = el.getBoundingClientRect().top + window.scrollY - nav;
+        window.scrollTo(0, Math.max(0, top));
+      });
+      await settle(reduced);
+      await reduced.screenshot({ path: shotDial(profile.shot), fullPage: false });
+    }
+    await reduced.close();
+  }
+  const reducedMobile = await browser.newPage();
+  await reducedMobile.emulateMedia({ reducedMotion: 'reduce' });
+  await reducedMobile.setViewportSize({ width: 390, height: 844 });
+  await reducedMobile.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(reducedMobile);
+  await reducedMobile.evaluate(() => {
+    const el = document.querySelector('.dial-mobile-wrap');
+    if (!el) return;
+    const nav = document.querySelector('.site-nav')?.getBoundingClientRect().height ?? 0;
+    const top = el.getBoundingClientRect().top + window.scrollY - nav;
+    window.scrollTo(0, Math.max(0, top));
+  });
+  await settle(reducedMobile);
+  await reducedMobile.screenshot({ path: shotDial('dial-reduced-390.png'), fullPage: false });
+  await reducedMobile.close();
   await checkDialSteps();
 }
 
