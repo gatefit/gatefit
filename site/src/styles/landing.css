@@ -185,7 +185,8 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .hero .wrap {
 	position: relative;
 	display: grid;
-	grid-template-columns: minmax(0, 33.5rem) minmax(0, 1fr);
+	width: min(1240px, calc(100% - 40px));
+	grid-template-columns: minmax(0, 33rem) minmax(0, 1fr);
 	gap: 48px;
 	align-items: center;
 	padding: 5.5rem 0 3rem;
@@ -233,7 +234,8 @@ h1 {
 .replaying-dot {
 	width: 8px; height: 8px; border-radius: 999px; background: var(--amber);
 }
-.sim-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(168px, 10.5rem); gap: 14px; align-items: stretch; }
+.sim-grid { display: grid; grid-template-columns: minmax(19.5rem, 1fr) minmax(19rem, 1fr); gap: 14px; align-items: stretch; }
+.token { white-space: nowrap; }
 .sim-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
 .sim-row {
 	width: 100%;
@@ -281,7 +283,8 @@ h1 {
 .db h3, .node h3 { font-size: 0.72rem; letter-spacing: 0.04em; color: var(--faint); font-weight: 560; }
 .db-line { justify-content: flex-start; align-items: baseline; gap: 8px; min-width: 0; }
 .db-line .k { flex: none; width: 8ch; }
-.db-line > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.db-line > span:last-child { min-width: 0; overflow-wrap: normal; }
+.leak-callout { overflow-wrap: normal; }
 .db .swap { display: inline-grid; min-width: 5ch; }
 .db .swap > span, .node .swap > span { grid-area: 1 / 1; }
 .node .swap { display: grid; width: 100%; }
@@ -667,6 +670,10 @@ details[open] .faq-body > div { opacity: 1; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
 	.tile:hover::before, .price-card:hover::before { opacity: 1; }
 	.copy:hover { transform: scale(1.1); }
+}
+
+@media (max-width: 1359px) {
+	.sim-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 899px) {

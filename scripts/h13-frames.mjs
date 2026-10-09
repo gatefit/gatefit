@@ -3,6 +3,8 @@
 // The landing also must not scroll sideways at 390px, and the hero
 // headline must not leave a one-word line at desktop widths.
 // Stripe event names in the hero panel must not split inside a word.
+// A hero-panel token (event name, chip, or access value) must stay
+// one line tall in every replay state.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -270,6 +272,41 @@ async function checkEventNames(width) {
   await page.close();
 }
 
+async function checkHeroTokens(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  for (const state of heroStates) {
+    await page.evaluate((next) => {
+      document.querySelector('#sim')?.setAttribute('data-state', next);
+    }, state);
+    await settle(page);
+    note(`tokens ${state} ${width}`, await page.evaluate(() => {
+      const found = [];
+      const tokens = document.querySelectorAll('#sim .token');
+      if (!tokens.length) return ['no hero tokens'];
+      for (const el of tokens) {
+        const style = getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') continue;
+        const fontSize = Number.parseFloat(style.fontSize);
+        let line = Number.parseFloat(style.lineHeight);
+        if (!Number.isFinite(line)) line = fontSize * 1.35;
+        const pad = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom);
+        const border = Number.parseFloat(style.borderTopWidth) + Number.parseFloat(style.borderBottomWidth);
+        const box = el.getBoundingClientRect();
+        if (box.width < 1 || box.height < 1) continue;
+        const content = box.height - pad - border;
+        const label = (el.textContent ?? '').trim().replace(/\s+/g, ' ');
+        if (content > line + 1) found.push(`wrapped "${label}"`);
+        if (el.scrollWidth > el.clientWidth + 1) found.push(`clipped "${label}"`);
+      }
+      return found;
+    }));
+  }
+  await page.close();
+}
+
 async function checkHeroLines(width) {
   const page = await browser.newPage();
   await page.setViewportSize({ width, height: 900 });
@@ -326,6 +363,10 @@ await checkHeroLines(1920);
 await checkEventNames(1280);
 await checkEventNames(1440);
 await checkEventNames(1920);
+await checkHeroTokens(1280, 900);
+await checkHeroTokens(1440, 900);
+await checkHeroTokens(1920, 900);
+await checkHeroTokens(390, 844);
 
 await browser.close();
 server.close();

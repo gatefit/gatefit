@@ -110,37 +110,37 @@ const story = [
 					<div class="hero-sim">
 						<section class="sim" id="sim" data-state="refund" aria-label="Replay of sub_1Pq7 against the access DB">
 							<div class="sim-top">
-								<span>sub_1Pq7 replayed against your access DB</span>
+								<span><span class="token">sub_1Pq7</span> replayed against your access DB</span>
 								<span class="replaying-dot" aria-hidden="true"></span>
 								<button type="button" class="replay">Replay</button>
 							</div>
 							<div class="sim-grid">
 								<ol class="sim-rows">
-									<li><button type="button" class="sim-row" data-sim-jump="created"><span class="name">customer.<wbr />subscription.<wbr />created</span><span class="chip">trialing</span></button></li>
-									<li><button type="button" class="sim-row" data-sim-jump="paid"><span class="name">invoice.<wbr />paid</span><span class="chip">active</span></button></li>
+									<li><button type="button" class="sim-row" data-sim-jump="created"><span class="token name">customer.<wbr />subscription.<wbr />created</span><span class="token chip">trialing</span></button></li>
+									<li><button type="button" class="sim-row" data-sim-jump="paid"><span class="token name">invoice.<wbr />paid</span><span class="token chip">active</span></button></li>
 									<li>
 										<button type="button" class="sim-row" data-sim-jump="refund">
 											<span class="row-hl"></span><span class="row-sweep"></span>
-											<span class="name">charge.<wbr />refunded</span><span class="chip">refunded</span>
+											<span class="token name">charge.<wbr />refunded</span><span class="token chip">refunded</span>
 										</button>
 									</li>
-									<li><button type="button" class="sim-row" data-sim-jump="dispute"><span class="name">charge.<wbr />dispute.<wbr />created</span><span class="chip">disputed</span></button></li>
-									<li><button type="button" class="sim-row" data-sim-jump="past_due"><span class="name">invoice.<wbr />payment_<wbr />failed</span><span class="chip">past_due</span></button></li>
+									<li><button type="button" class="sim-row" data-sim-jump="dispute"><span class="token name">charge.<wbr />dispute.<wbr />created</span><span class="token chip">disputed</span></button></li>
+									<li><button type="button" class="sim-row" data-sim-jump="past_due"><span class="token name">invoice.<wbr />payment_<wbr />failed</span><span class="token chip">past_due</span></button></li>
 								</ol>
 								<div class="db">
 									<h3>Access DB</h3>
-									<p class="db-line"><span class="k">plan</span><span class="swap"><span class="plan-trial">trial</span><span class="plan-pro">pro</span></span></p>
-									<p class="db-line"><span class="k">locked</span><span>false</span></p>
+									<p class="db-line"><span class="k">plan</span><span class="swap"><span class="token plan-trial">trial</span><span class="token plan-pro">pro</span></span></p>
+									<p class="db-line"><span class="k">locked</span><span class="token">false</span></p>
 									<div class="db-leak">
-										<p class="db-line"><span class="k">expected</span><span>locked: true</span></p>
-										<p class="db-line"><span class="k">actual</span><span class="db-false">locked: false</span></p>
+										<p class="db-line"><span class="k">expected</span><span class="token">locked: true</span></p>
+										<p class="db-line"><span class="k">actual</span><span class="token db-false">locked: false</span></p>
 										<p class="leak-callout">Refunded customer still has Pro.</p>
 									</div>
 								</div>
 							</div>
 							<ul class="verdicts">
-								<li class="verdict" data-v="paid"><Icon name="check" size={14} /> paid_grants_access</li>
-								<li class="verdict bad" data-v="refund"><Icon name="x" size={14} /> refund_revokes_access expected locked: true, got false</li>
+								<li class="verdict" data-v="paid"><Icon name="check" size={14} /> <span class="token">paid_grants_access</span></li>
+								<li class="verdict bad" data-v="refund"><Icon name="x" size={14} /> <span class="token">refund_revokes_access</span> expected <span class="token">locked: true</span>, got false</li>
 								<li class="verdict bad" data-v="block"><Icon name="x" size={14} /> gatefit: 1 golden failed. Build blocked.</li>
 							</ul>
 							<button type="button" class="sim-next">Show next state</button>
