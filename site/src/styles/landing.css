@@ -185,7 +185,7 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .hero .wrap {
 	position: relative;
 	display: grid;
-	grid-template-columns: minmax(0, 36rem) minmax(0, 1fr);
+	grid-template-columns: minmax(0, 33.5rem) minmax(0, 1fr);
 	gap: 48px;
 	align-items: center;
 	padding: 5.5rem 0 3rem;
@@ -233,7 +233,7 @@ h1 {
 .replaying-dot {
 	width: 8px; height: 8px; border-radius: 999px; background: var(--amber);
 }
-.sim-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 0.92fr); gap: 14px; align-items: stretch; }
+.sim-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(168px, 10.5rem); gap: 14px; align-items: stretch; }
 .sim-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
 .sim-row {
 	width: 100%;
@@ -247,7 +247,7 @@ h1 {
 	overflow: hidden;
 	align-items: flex-start;
 }
-.sim-row .name { position: relative; z-index: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
+.sim-row .name { position: relative; z-index: 1; min-width: 0; overflow-wrap: normal; word-break: normal; line-height: 1.35; }
 .chip {
 	position: relative;
 	z-index: 1;

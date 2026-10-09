@@ -2,6 +2,7 @@
 // Settled hero and leak frames must not stack text or clip it.
 // The landing also must not scroll sideways at 390px, and the hero
 // headline must not leave a one-word line at desktop widths.
+// Stripe event names in the hero panel must not split inside a word.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -217,6 +218,58 @@ async function checkNavOverflow() {
   await page.close();
 }
 
+async function checkEventNames(width) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  note(`event names ${width}`, await page.evaluate(() => {
+    const found = [];
+    for (const el of document.querySelectorAll('#sim .sim-row .name')) {
+      const label = (el.textContent ?? '').replace(/\s+/g, '');
+      if (!label) {
+        found.push('empty event name');
+        continue;
+      }
+      if (el.scrollWidth > el.clientWidth + 1) found.push(`clipped "${label}"`);
+      const parts = [];
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        const value = node.textContent ?? '';
+        for (let i = 0; i < value.length; i += 1) {
+          const range = document.createRange();
+          range.setStart(node, i);
+          range.setEnd(node, i + 1);
+          const rect = range.getClientRects()[0];
+          if (!rect || rect.width < 0.2) continue;
+          parts.push({ ch: value[i], top: rect.top });
+        }
+        node = walker.nextNode();
+      }
+      let word = [];
+      const flush = () => {
+        if (word.length < 2) {
+          word = [];
+          return;
+        }
+        const top = word[0].top;
+        if (word.some((part) => Math.abs(part.top - top) > 2)) {
+          found.push(`mid-word "${word.map((part) => part.ch).join('')}" in "${label}"`);
+        }
+        word = [];
+      };
+      for (const part of parts) {
+        if (/[A-Za-z0-9]/.test(part.ch)) word.push(part);
+        else flush();
+      }
+      flush();
+    }
+    return found;
+  }));
+  await page.close();
+}
+
 async function checkHeroLines(width) {
   const page = await browser.newPage();
   await page.setViewportSize({ width, height: 900 });
@@ -270,6 +323,9 @@ await checkNavOverflow();
 await checkHeroLines(1280);
 await checkHeroLines(1440);
 await checkHeroLines(1920);
+await checkEventNames(1280);
+await checkEventNames(1440);
+await checkEventNames(1920);
 
 await browser.close();
 server.close();
