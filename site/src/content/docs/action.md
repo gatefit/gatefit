@@ -1,9 +1,9 @@
 ---
 title: GitHub Action
-description: Run Gatefit goldens from a composite Action. The Action stays free.
+description: Run the Gatefit access checks from a composite Action. The Action stays free.
 ---
 
-The marketplace-ready Action lives at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. The Action is **free**; do not treat Marketplace listing as a paid product. The `v0.4.0` tag is coming soon. The paths below are what callers use once that tag exists.
+The Action is at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. The Action is free.
 
 ## Use it
 
@@ -16,7 +16,7 @@ The marketplace-ready Action lives at the Gatefit repo root (`action.yml`). It w
     adapter: src/your-access-adapter.ts
 ```
 
-Nested path from earlier Highs still works:
+The nested path also works:
 
 ```yaml
 - uses: edipert/gatefit/.github/actions/gatefit@v0.4.0
@@ -24,7 +24,7 @@ Nested path from earlier Highs still works:
     adapter: src/your-access-adapter.ts
 ```
 
-`adapter` is a path in **your** repo. Goldens default to Gatefit’s bundled pack (S1-S6 plus later fixture goldens).
+`adapter` is a path in **your** repo. The bundled access checks are the default suite.
 
 ## Rules
 

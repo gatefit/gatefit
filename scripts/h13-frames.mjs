@@ -9,8 +9,8 @@
 // sideways or stack text, at 390 and 360, including after the URL bar
 // changes the viewport height. Layout heights use svh or dvh, never vh.
 // The Indie [data-count] digits stay the large price, and the "$" glyph
-// uses that same font size. Desktop scenario titles stay inside the tile
-// and break only at "_". The Indie orbit stays behind the card text. The
+// uses that same font size. Desktop scenario names stay inside the dial
+// label and break only at "_". The Indie orbit stays behind the card text. The
 // hero headline has no one-word line at 360 or 390 either. An open mobile
 // menu at 360 and 390 is an opaque sheet whose links do not cover the hero.
 // Under 900px the Indie glow must not paint across the title, price, or
@@ -452,13 +452,13 @@ async function checkScenarioTitles(width) {
   await settle(page);
   note(`scenario ${width}`, await page.evaluate(() => {
     const name = 'cancel_at_period_end_keeps_access_until_end';
-    const headings = [...document.querySelectorAll('#scenarios .tile h3')];
+    const headings = [...document.querySelectorAll('#scenarios .dial-name')].filter((el) => el.getClientRects().length);
     const target = headings.find((el) => (el.textContent ?? '').replace(/\s+/g, '') === name);
     if (!target) return [`missing ${name}`];
     const found = [];
     for (const h3 of headings) {
       const label = (h3.textContent ?? '').replace(/\s+/g, '');
-      const tile = h3.closest('.tile');
+      const tile = h3.closest('.dial-label');
       if (!tile) continue;
       const box = tile.getBoundingClientRect();
       const style = getComputedStyle(tile);
@@ -1103,6 +1103,390 @@ await checkHeroTokens(1920, 900);
 await checkHeroTokens(390, 844);
 note('viewport units', bareViewportUnits(dist));
 await checkMobileScroll();
+note('status copy', statusPhrases(dist));
+await checkDial();
+await shotPricing(390, 844, 'dial-price-390.png');
+await shotPricing(1440, 900, 'dial-price-1440.png');
+
+function statusPhrases(root) {
+  const banned = [
+    /coming soon/i,
+    /polar checkout is live/i,
+    /checkout is live/i,
+    /merchant of record/i,
+    /names match the goldens/i,
+    /docs live at/i,
+    /fixture goldens/i,
+  ];
+  const found = [];
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const file = join(dir, name);
+      if (statSync(file).isDirectory()) {
+        walk(file);
+        continue;
+      }
+      if (!name.endsWith('.html')) continue;
+      const text = readFileSync(file, 'utf8');
+      for (const re of banned) {
+        if (re.test(text)) found.push(`${name} matches /${re.source}/`);
+      }
+    }
+  };
+  walk(root);
+  return found;
+}
+
+async function shotPricing(width, height, file) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.locator('#pricing .price-indie .buy').scrollIntoViewIfNeeded();
+  await page.evaluate(() => {
+    const buy = document.querySelector('#pricing .price-indie .buy');
+    if (!buy) return;
+    const rect = buy.getBoundingClientRect();
+    window.scrollTo(0, Math.max(0, window.scrollY + rect.bottom - window.innerHeight * 0.42));
+  });
+  await settle(page);
+  const text = await page.locator('#pricing').innerText();
+  const found = [];
+  if (/polar checkout is live/i.test(text)) found.push('Polar checkout is live still on the price card');
+  if (/coming soon/i.test(text)) found.push('coming soon still on the price card');
+  if (/merchant of record/i.test(text)) found.push('merchant of record still on the price card');
+  note(`price ${width}`, found);
+  mkdirSync(shotDir, { recursive: true });
+  await page.screenshot({ path: join(shotDir, file), fullPage: false });
+  await page.close();
+}
+
+function shotDial(name) {
+  return join(shotDir, name);
+}
+
+async function scrollPin(page, selector, fraction) {
+  await page.evaluate(({ selector, fraction }) => {
+    const track = document.querySelector(selector);
+    if (!track) return;
+    const top = track.getBoundingClientRect().top + window.scrollY;
+    const pin = Math.max(track.offsetHeight - window.innerHeight, 0);
+    window.scrollTo(0, top + pin * fraction);
+  }, { selector, fraction });
+  await settle(page);
+}
+
+async function scrollCover(page, selector, fraction) {
+  await page.evaluate(({ selector, fraction }) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    const docTop = el.getBoundingClientRect().top + window.scrollY;
+    const start = docTop - window.innerHeight;
+    const end = docTop + el.offsetHeight;
+    window.scrollTo(0, start + (end - start) * fraction);
+  }, { selector, fraction });
+  await settle(page);
+}
+
+async function dialProbe(page) {
+  return page.evaluate(() => {
+    const found = [];
+    const doc = document.documentElement;
+    const extra = doc.scrollWidth - doc.clientWidth;
+    if (extra > 1) found.push(`horizontal overflow ${extra}px`);
+    const root = document.querySelector('#scenarios');
+    if (!root) {
+      found.push('scenarios section missing');
+      return { found, angle: null, count: 0, qty: 0, disputeChip: 0, leak: 0, pass: 0, seats: 0, cancel: 0, scrubberOpacity: 0, race: false };
+    }
+    if (root.querySelector('.bento')) found.push('scenario bento still mounted');
+    const text = root.innerText || '';
+    if (text.includes('upgrade_plus_cape_race')) found.push('cape typo still on the dial');
+    if (!text.includes('upgrade_plus_cancel_race')) found.push('upgrade_plus_cancel_race missing');
+    const dial = document.querySelector('#access-dial, #access-dial-mobile');
+    const visibleDial = [...document.querySelectorAll('#access-dial, #access-dial-mobile')].find((el) => getComputedStyle(el).display !== 'none' && el.getClientRects().length);
+    if (!visibleDial) found.push('access dial missing');
+    else if (visibleDial.querySelectorAll('.dial-station').length !== 10) found.push('dial does not have 10 stations');
+    const used = (el) => {
+      let opacity = 1;
+      for (let node = el; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden') return 0;
+        opacity *= Number.parseFloat(style.opacity);
+        if (Number.isNaN(opacity)) return 0;
+      }
+      return opacity;
+    };
+    const scope = visibleDial ? visibleDial.closest('#scenarios') : root;
+    const leaves = [];
+    for (const el of scope.querySelectorAll('.dial-chip, .dial-name, .dial-card-chip, .dial-card-name, .dial-center-chip, .dial-count, .dial-badge span, .dial-kicker, .dial-card-kicker')) {
+      if (used(el) < 0.3) continue;
+      const textLeaf = el.textContent.trim().replace(/\s+/g, ' ').slice(0, 80);
+      if (!textLeaf) continue;
+      for (const rect of el.getClientRects()) {
+        if (rect.width < 1 || rect.height < 1) continue;
+        if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) continue;
+        leaves.push({ text: textLeaf, rect, el });
+      }
+    }
+    for (let i = 0; i < leaves.length; i += 1) {
+      for (let j = i + 1; j < leaves.length; j += 1) {
+        const a = leaves[i];
+        const b = leaves[j];
+        if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
+        const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
+        const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
+        if (x > 2 && y > 2) found.push(`overlap "${a.text}" ∩ "${b.text}"`);
+      }
+    }
+    const opacityOf = (selector) => {
+      const els = [...document.querySelectorAll(selector)];
+      if (!els.length) return 0;
+      return Math.max(...els.map((el) => used(el)));
+    };
+    let angle = null;
+    const target = [...document.querySelectorAll('.dial-scrubber')].find((el) => used(el) > 0.05);
+    if (target) {
+      const style = getComputedStyle(target);
+      const match = style.transform.match(/matrix\(([^)]+)\)/);
+      if (match) {
+        const parts = match[1].split(',').map((n) => Number.parseFloat(n));
+        angle = Math.atan2(parts[1], parts[0]) * 180 / Math.PI;
+        if (angle < 0) angle += 360;
+      } else if (style.transform === 'none') angle = 0;
+    }
+    return {
+      found,
+      angle,
+      count: opacityOf('.dial-count'),
+      qty: opacityOf('.dial-center-chip[data-id="seats"]'),
+      disputeChip: opacityOf('.dial-center-chip[data-id="dispute"], .dial-card-face[data-id="dispute"] .dial-card-chip'),
+      leak: opacityOf('.dial-leak'),
+      pass: opacityOf('.dial-badge-pass'),
+      seats: opacityOf('.dial-station[data-id="seats"] .dial-lit'),
+      cancel: opacityOf('.dial-station[data-id="cancel"] .dial-lit'),
+      scrubberOpacity: target ? used(target) : 0,
+      race: text.includes('upgrade_plus_cancel_race'),
+    };
+  });
+}
+
+function near(angle, expect, slack) {
+  if (angle == null || Number.isNaN(angle)) return false;
+  const delta = Math.abs(((angle - expect + 540) % 360) - 180);
+  return delta <= slack;
+}
+
+async function checkDial() {
+  mkdirSync(shotDir, { recursive: true });
+  const shots = new Set([
+    'dial-1280-000.png',
+    'dial-1280-035.png',
+    'dial-1280-075.png',
+    'dial-1280-100.png',
+    'dial-1440-000.png',
+    'dial-1440-035.png',
+    'dial-1440-075.png',
+    'dial-1440-100.png',
+    'dial-390-000.png',
+    'dial-390-100.png',
+    'dial-360-100.png',
+  ]);
+  const profiles = [
+    { label: '1280', width: 1280, height: 900, mobile: false },
+    { label: '1440', width: 1440, height: 900, mobile: false },
+    { label: '390', width: 390, height: 844, mobile: true },
+    { label: '360', width: 360, height: 740, mobile: true },
+  ];
+  const fractions = [0, 0.35, 0.75, 1];
+  for (const profile of profiles) {
+    const page = await browser.newPage();
+    await page.setViewportSize({ width: profile.width, height: profile.height });
+    await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+    await page.addStyleTag({ content: 'html { scroll-snap-type: none !important; }' });
+    await settle(page);
+    if (!profile.mobile) {
+      note(`dial pin ${profile.label}`, await page.evaluate(() => {
+        const track = document.querySelector('#dial-track');
+        if (!track) return ['dial track missing'];
+        const pin = track.offsetHeight - window.innerHeight;
+        const ratio = pin / window.innerHeight;
+        if (ratio < 2 || ratio > 2.4) return [`pin is ${ratio.toFixed(2)} viewport heights`];
+        return [];
+      }));
+    } else {
+      note(`dial mobile ${profile.label}`, await page.evaluate(() => {
+        const found = [];
+        const track = document.querySelector('#dial-track');
+        if (track) {
+          const style = getComputedStyle(track);
+          if (style.display !== 'none' && track.offsetHeight > window.innerHeight * 1.25) {
+            found.push(`dial track is a tall scrub (${track.offsetHeight}px)`);
+          }
+        }
+        if (document.querySelector('.pin-spacer')) found.push('pin spacer present');
+        if (!document.querySelector('.dial-mobile-wrap')) found.push('mobile readout missing');
+        return found;
+      }));
+    }
+    let holdAngle = null;
+    for (const fraction of fractions) {
+      if (profile.mobile) await scrollPin(page, '.dial-mobile-wrap', fraction);
+      else await scrollPin(page, '#dial-track', fraction);
+      const pct = String(Math.round(fraction * 100)).padStart(3, '0');
+      const probe = await dialProbe(page);
+      const where = `dial ${profile.label} ${pct}`;
+      note(where, probe.found);
+      if (fraction === 0) {
+        if (probe.count < 0.5) note(where, ['center is not 0 / 10 events']);
+        if (probe.pass > 0.2) note(where, ['9 pass is visible at the start']);
+        if (probe.leak > 0.2) note(where, ['leak caught is visible at the start']);
+        if (!profile.mobile && !near(probe.angle, 0, 18)) note(where, [`scrubber angle ${probe.angle}`]);
+      }
+      if (fraction === 0.35) {
+        if (probe.qty < 0.5 && probe.seats < 0.5) note(where, ['seats station is not the active stop']);
+        if (probe.cancel > 0.35) note(where, ['cancel is lit too early']);
+        if (probe.pass > 0.2) note(where, ['9 pass is visible at 35%']);
+        if (!profile.mobile && !near(probe.angle, 134, 18)) note(where, [`scrubber angle ${probe.angle}`]);
+      }
+      if (fraction === 0.75) {
+        if (probe.leak < 0.5) note(where, ['leak caught is hidden at dispute']);
+        if (probe.disputeChip < 0.5) note(where, ['dispute chip is hidden']);
+        if (probe.pass > 0.2) note(where, ['9 pass is visible during the hold']);
+        holdAngle = probe.angle;
+        if (!profile.mobile && !near(probe.angle, 288, 18)) note(where, [`scrubber angle ${probe.angle}`]);
+      }
+      if (fraction === 1) {
+        if (probe.pass < 0.5) note(where, ['9 pass is hidden at the end']);
+        if (probe.leak < 0.5) note(where, ['leak caught is hidden at the end']);
+        if (!profile.mobile && probe.scrubberOpacity > 0.2) note(where, [`scrubber still visible (${probe.scrubberOpacity.toFixed(2)})`]);
+      }
+      const file = `dial-${profile.label}-${pct}.png`;
+      if (shots.has(file)) await page.screenshot({ path: shotDial(file), fullPage: false });
+    }
+    if (!profile.mobile) {
+      await scrollPin(page, '#dial-track', 0.81);
+      const mid = await dialProbe(page);
+      if (holdAngle == null || mid.angle == null || !near(mid.angle, holdAngle, 8)) {
+        note(`dial ${profile.label} hold`, [`hold broke ${holdAngle} -> ${mid.angle}`]);
+      }
+    }
+    await page.close();
+  }
+
+  const reduced = await browser.newPage();
+  await reduced.emulateMedia({ reducedMotion: 'reduce' });
+  await reduced.setViewportSize({ width: 1280, height: 900 });
+  await reduced.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(reduced);
+  note('dial reduced', await reduced.evaluate(() => {
+    const found = [];
+    const track = document.querySelector('#dial-track');
+    if (!track) return ['dial track missing'];
+    if (track.offsetHeight > window.innerHeight * 1.25) found.push(`reduced motion still pins (${track.offsetHeight}px)`);
+    const used = (el) => {
+      if (!el) return 0;
+      let opacity = 1;
+      for (let node = el; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden') return 0;
+        opacity *= Number.parseFloat(style.opacity);
+      }
+      return opacity;
+    };
+    if (used(document.querySelector('.dial-badge-pass')) < 0.5) found.push('reduced motion is not the end state');
+    if (used(document.querySelector('.dial-leak')) < 0.5) found.push('reduced motion hides the leak');
+    return found;
+  }));
+  await reduced.close();
+  await checkDialSteps();
+}
+
+async function checkDialSteps() {
+  const profiles = [
+    { width: 1280, height: 800 },
+    { width: 1280, height: 900 },
+    { width: 1440, height: 900 },
+  ];
+  for (const profile of profiles) {
+    const page = await browser.newPage();
+    await page.setViewportSize(profile);
+    await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+    await settle(page);
+    for (let step = 0; step <= 10; step += 1) {
+      const fraction = step / 10;
+      await scrollPin(page, '#dial-track', fraction);
+      note(`dial step ${profile.width}x${profile.height} ${step * 10}`, await page.evaluate((pct) => {
+        const found = [];
+        const used = (el) => {
+          if (!el || el.getClientRects().length === 0) return 0;
+          let opacity = 1;
+          for (let node = el; node; node = node.parentElement) {
+            const style = getComputedStyle(node);
+            if (style.display === 'none' || style.visibility === 'hidden') return 0;
+            opacity *= Number.parseFloat(style.opacity);
+            if (Number.isNaN(opacity)) return 0;
+          }
+          return opacity;
+        };
+        const box = (el) => {
+          const rect = el.getBoundingClientRect();
+          return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height };
+        };
+        const hits = (a, b) => {
+          const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          return x > 0.5 && y > 0.5;
+        };
+        const labels = [...document.querySelectorAll('#access-dial .dial-center-label')].filter((el) => used(el) > 0.1);
+        if (labels.length !== 1) {
+          const shown = labels.map((el) => `${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 32)}@${used(el).toFixed(2)}`);
+          found.push(`center labels ${labels.length} [${shown.join(' | ')}]`);
+        }
+        const texts = [...document.querySelectorAll('#access-dial .dial-chip, #access-dial .dial-name')].filter((el) => used(el) > 0.05);
+        const icons = [...document.querySelectorAll('#access-dial .dial-station, #access-dial .dial-halo, #access-dial .dial-center-halo')].filter((el) => {
+          if (el.getClientRects().length === 0) return false;
+          if (el.classList.contains('dial-halo') || el.classList.contains('dial-center-halo')) return used(el) > 0.1;
+          return true;
+        });
+        for (const text of texts) {
+          const a = box(text);
+          if (a.width < 1 || a.height < 1) continue;
+          for (const icon of icons) {
+            const b = box(icon);
+            if (b.width < 1 || b.height < 1) continue;
+            if (hits(a, b)) {
+              const name = text.textContent.trim().replace(/\s+/g, ' ').slice(0, 42);
+              found.push(`"${name}" intersects a station`);
+            }
+          }
+        }
+        if (pct === 0) {
+          const headline = document.querySelector('#dial-stage h2');
+          const range = document.createRange();
+          if (headline) range.selectNodeContents(headline);
+          const lines = headline ? new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size : 0;
+          if (lines !== 2) found.push(`headline lines ${lines}`);
+          const copy = (headline?.innerText ?? '').replace(/\s+/g, ' ').trim();
+          if (copy !== 'Ten transitions, one access row.') found.push(`headline copy "${copy}"`);
+        }
+        if (pct === 80 || pct === 100) {
+          const halo = document.querySelector('#access-dial .dial-center-halo');
+          if (used(halo) <= 0.1) found.push('center leak halo missing');
+          const pill = [...document.querySelectorAll('#access-dial .dial-leak')].find((el) => used(el) > 0.1);
+          if (!pill) found.push('leak pill missing');
+          else {
+            const style = getComputedStyle(pill);
+            const border = Number.parseFloat(style.borderTopWidth);
+            if (border < 1 || style.borderTopStyle === 'none') found.push('leak pill has no border');
+          }
+        }
+        return found;
+      }, step * 10));
+    }
+    await page.close();
+  }
+}
 
 await browser.close();
 server.close();

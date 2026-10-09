@@ -1,5 +1,6 @@
 @import '@fontsource-variable/geist';
 @import '@fontsource-variable/geist-mono';
+@import './dial.css';
 
 :root {
 	--bg: #0a0a0b;
@@ -547,22 +548,7 @@ h2 {
 .out-cmd { overflow: hidden; color: var(--muted); }
 .out-ok { color: var(--green); display: inline-flex; align-items: center; gap: 6px; }
 
-.bento {
-	margin-top: 28px;
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	gap: 12px;
-}
-.tile {
-	position: relative;
-	overflow: hidden;
-	background: var(--surface);
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	border-radius: var(--r-card);
-	padding: 16px;
-	min-height: 148px;
-}
-.tile::before, .price-card::before {
+.price-card::before {
 	content: '';
 	position: absolute;
 	inset: 0;
@@ -571,27 +557,6 @@ h2 {
 	transition: opacity 220ms var(--ease);
 	pointer-events: none;
 }
-.tile h3 { font-family: var(--mono); font-size: 0.78rem; color: var(--text); font-weight: 500; }
-.tile p { margin-top: 8px; color: var(--muted); font-size: 0.92rem; line-height: 1.4; }
-.tile-wide { grid-column: span 2; }
-.tile-refund { background: #161013; }
-.tile-paid { background: #0e1613; }
-.chips { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
-.chips i { flex: 1; height: 2px; background: rgba(255, 255, 255, 0.16); transform: scaleX(0); transform-origin: left; }
-.pchip {
-	font-family: var(--mono);
-	font-size: 0.72rem;
-	padding: 4px 8px;
-	border-radius: var(--r-btn);
-	border: 1px solid var(--line);
-	color: var(--muted);
-	opacity: 0.35;
-}
-.lock-pop { color: var(--red); opacity: 0; }
-.dispute-line { margin-top: 18px; font-family: var(--mono); font-size: 0.8rem; }
-.got { color: var(--red); }
-.pass-line { color: var(--green); opacity: 0; }
-
 .prices { margin-top: 28px; display: grid; grid-template-columns: 1fr 1.08fr; gap: 16px; align-items: stretch; }
 .price-card {
 	position: relative;
@@ -664,8 +629,6 @@ h2 {
 .amount-figure { white-space: nowrap; }
 .amount-note { font-size: 1rem; color: var(--muted); letter-spacing: 0; }
 .price-card ul { margin: 0 0 20px; padding-left: 18px; color: var(--muted); display: grid; gap: 8px; }
-.live-note { margin-top: 14px; color: var(--faint); font-size: 0.92rem; }
-
 .faq { display: grid; gap: 0; margin-top: 20px; max-width: 720px; }
 .faq details { border-top: 1px solid rgba(255, 255, 255, 0.1); }
 .faq details:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
@@ -706,7 +669,7 @@ details[open] .faq-body > div { opacity: 1; }
 .foot-links { display: flex; gap: 16px; align-items: center; }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-	.tile:hover::before, .price-card:hover::before { opacity: 1; }
+	.price-card:hover::before { opacity: 1; }
 	.copy:hover { transform: scale(1.1); }
 }
 
@@ -716,8 +679,6 @@ details[open] .faq-body > div { opacity: 1; }
 
 @media (max-width: 899px) {
 	.hero .wrap, .how-grid, .prices, .sim-grid, .pipeline { grid-template-columns: 1fr; }
-	.bento { grid-template-columns: 1fr; }
-	.tile-wide { grid-column: auto; }
 	.conn { display: none; }
 	.how-window pre { overflow-x: auto; }
 	#leak-track { height: auto; }
@@ -725,8 +686,8 @@ details[open] .faq-body > div { opacity: 1; }
 	.leak-mobile { display: flex; }
 	.site-nav { position: static; }
 	html { scroll-padding-top: 0; }
-	.tile, .m-node, .stack-card { overflow: visible; }
-	.tile h3, .tile p, .m-node p, .price-card li { overflow-wrap: anywhere; }
+	.m-node, .stack-card { overflow: visible; }
+	.m-node p, .price-card li { overflow-wrap: anywhere; }
 	.leak-stack { display: none; }
 	.final-band { padding: 32px 20px; }
 }
@@ -842,9 +803,6 @@ details[open] .faq-body > div { opacity: 1; }
 	.vconn, .how-bar { transform: none; }
 	.m-node .red { opacity: 1; }
 	.how-line { overflow: visible; }
-	.dispute-line { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-	.chips { flex-wrap: wrap; row-gap: 8px; }
-	.chips i { flex: 0 0 10px; width: 10px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -864,7 +822,6 @@ details[open] .faq-body > div { opacity: 1; }
 	html.motion .pane[data-pane='workflow'] .how-inner,
 	html.motion .out-cmd span { transform: translateX(-100%); }
 	html.motion .out-ok, html.motion .uses-layer { opacity: 0; }
-	html.motion .tile { opacity: 0; transform: translateY(24px) scale(0.98); }
 	.sim:not(.sim-js) .sim-row[data-sim-jump='created'] { animation: row-created 9.6s linear infinite; }
 	.sim:not(.sim-js) .sim-row[data-sim-jump='paid'] { animation: row-paid 9.6s linear infinite; }
 	.sim:not(.sim-js) .sim-row[data-sim-jump='refund'] { animation: row-refund 9.6s linear infinite; }
@@ -884,14 +841,6 @@ details[open] .faq-body > div { opacity: 1; }
 	.sim.sim-js .sim-row, .sim.sim-js .row-hl, .sim.sim-js .row-sweep, .sim.sim-js .plan-pro,
 	.sim.sim-js .plan-trial, .sim.sim-js .db-leak, .sim.sim-js .leak-callout, .sim.sim-js .verdict, .sim.sim-js .replaying-dot { animation: none; }
 	html.frames .sim, html.frames .sim * { animation: none !important; }
-	.chip-track .pchip { animation: chip-on 6s linear infinite; }
-	.chip-track .pchip:nth-child(1) { animation-delay: 0s; }
-	.chip-track .pchip:nth-child(3) { animation-delay: 0.7s; }
-	.chip-track .pchip:nth-child(5) { animation-delay: 1.4s; }
-	.chip-track .pchip:nth-child(7) { animation-delay: 2.1s; }
-	.chip-track i { animation: fill 300ms linear infinite; }
-	.dispute-visual .got { animation: blink 6s linear infinite; }
-	.dispute-visual .pass-line { animation: pass-in 6s linear infinite; }
 	.lit .indie-glow { opacity: 0.7; animation: glow-settle 600ms var(--ease) both, breathe 3.2s var(--ease-io) 4.6s infinite alternate; }
 	.lit .orbit { animation: spin 4s linear 1 forwards; }
 	.offscreen, .offscreen * { animation-play-state: paused !important; }
@@ -906,15 +855,13 @@ details[open] .faq-body > div { opacity: 1; }
 @media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
 	html.motion .pane[data-pane='workflow'] .how-inner,
 	html.motion .out-cmd span,
-	html.motion .tile,
 	.price-card,
 	.final-band {
 		animation: none;
 		transform: none;
 	}
 	html.motion .out-ok,
-	html.motion .uses-layer,
-	html.motion .tile { opacity: 1; }
+	html.motion .uses-layer { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -923,7 +870,7 @@ details[open] .faq-body > div { opacity: 1; }
 	#leak-stage, .leak-snaps { display: none; }
 	.leak-stack { display: grid; }
 	.sim-row, .row-hl, .row-sweep, .plan-pro, .plan-trial, .db-leak, .leak-callout, .verdict, .replaying-dot,
-	.hero-field, .pchip, .chips i, .got, .pass-line, .orbit, .indie-glow { animation: none !important; }
+	.hero-field, .orbit, .indie-glow { animation: none !important; }
 	.sim-row { opacity: 0.35; transform: none; }
 	.sim[data-state='created'] .sim-row,
 	.sim[data-state='paid'] .sim-row,
@@ -937,7 +884,7 @@ details[open] .faq-body > div { opacity: 1; }
 	.sim[data-state='past_due'] .sim-row[data-sim-jump='past_due'] { opacity: 1; }
 	.sim-next { display: inline-flex; margin-top: 10px; }
 	.indie-glow { opacity: 0.8; }
-	.how-inner, .out-cmd span, .tile, .price-card, .final-band { transform: none; opacity: 1; }
+	.how-inner, .out-cmd span, .price-card, .final-band { transform: none; opacity: 1; }
 	.faq-body, .faq-plus, .faq-body > div { transition: none; }
 	.m-node .red { opacity: 1; }
 }
@@ -1015,10 +962,6 @@ details[open] .faq-body > div { opacity: 1; }
 @keyframes pop-paid { 0%, 12% { opacity: 0; transform: scale(0.6); } 16%, 87% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
 @keyframes pop-refund { 0%, 34% { opacity: 0; transform: scale(0.6); } 38%, 87% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
 @keyframes pop-block { 0%, 55% { opacity: 0; transform: translateX(-8px); } 62%, 87% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
-@keyframes chip-on { 0%, 8% { opacity: 0.35; transform: scale(0.96); } 18%, 70% { opacity: 1; transform: none; } 100% { opacity: 0.35; transform: scale(0.96); } }
-@keyframes blink { 0%, 20% { opacity: 1; } 30% { opacity: 0.2; } 40% { opacity: 1; } 50% { opacity: 0.2; } 60%, 100% { opacity: 0; } }
-@keyframes pass-in { 0%, 58% { opacity: 0; } 70%, 100% { opacity: 1; } }
-
 @media (max-width: 899px) {
 	.price-indie .orbit {
 		display: none;

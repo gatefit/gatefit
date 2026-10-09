@@ -183,8 +183,6 @@ grep -q 'https://gatefit.io' README.md || dist_fail "README missing https://gate
 if grep -q '\*\*Docs site:\*\* coming soon' README.md; then
   dist_fail "README still marks the docs site coming soon"
 fi
-grep -q '\*\*npm:\*\* coming soon' README.md || dist_fail "README npm is not marked coming soon"
-grep -q '\*\*Polar checkout:\*\* live' README.md || dist_fail "README Polar checkout is not marked live"
 grep -q 'https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0' README.md \
   || dist_fail "README missing the Gatefit Indie License Checkout Link"
 grep -q '\$49' README.md || dist_fail "README missing \$49 Indie License price"
@@ -344,9 +342,8 @@ assert_h13_dist() {
     'fonts\.googleapis\.com|fonts\.gstatic\.com|use\.typekit\.net|api\.fontshare\.com' site/dist >/dev/null; then
     fail "built site loads an external font CDN"
   fi
-  grep -R -q 'npm is coming soon' site/dist || fail "built site does not say npm is coming soon"
-  if grep -R -i -n -E 'docs site[^.]{0,40}coming soon|coming soon[^.]{0,24}docs site' site/dist >/dev/null; then
-    fail "built site still says the docs site is coming soon"
+  if grep -R -i -n -E 'coming soon|polar checkout is live|checkout is live|merchant of record|names match the goldens|docs live at|fixture goldens' site/dist >/dev/null; then
+    fail "built site still has internal status copy"
   fi
   [[ -f site/dist/polar/index.html ]] || fail "built /polar/ is missing"
   if grep -q 'import PolarRedirect\|<PolarRedirect' site/dist/polar/index.html; then

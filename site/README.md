@@ -7,7 +7,7 @@ npm ci
 npm run build
 ```
 
-**Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`.
+Docs: https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`.
 
 Deploy from this directory:
 
@@ -28,6 +28,4 @@ GATEFIT_DEPLOY_TARGET=local GATEFIT_DEPLOY_DEST=/tmp/gatefit-site \
 
 See `scripts/deploy-site.sh` for `local`, `rsync`, `s3`, and `cloudflare`.
 
-**Polar checkout:** live. A plain `npm run build` uses the committed Gatefit Indie License link (`https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`, **$49** one-time). `scripts/deploy-site.sh` publishes that build. Empty `PUBLIC_POLAR_CHECKOUT_URL` keeps the committed link; any other non-Checkout-Link value fails closed. See [docs/polar.md](../docs/polar.md).
-
-npm is coming soon.
+A plain `npm run build` uses the committed Gatefit Indie License link (`https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`, **$49** one-time). `scripts/deploy-site.sh` publishes that build. Empty `PUBLIC_POLAR_CHECKOUT_URL` keeps the committed link; any other non-Checkout-Link value fails closed. See [docs/polar.md](../docs/polar.md).

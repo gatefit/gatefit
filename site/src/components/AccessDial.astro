@@ -1,0 +1,265 @@
+---
+interface Props {
+	uid: string;
+	labels?: boolean;
+	card?: boolean;
+}
+
+const { uid, labels = false, card = false } = Astro.props;
+
+const icons: Record<string, string> = {
+	hourglass: 'M200,75.64V40a16,16,0,0,0-16-16H72A16,16,0,0,0,56,40V76a16.08,16.08,0,0,0,6.41,12.8L114.67,128,62.4,167.2A16.07,16.07,0,0,0,56,180v36a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V180.36a16,16,0,0,0-6.36-12.77L141.26,128l52.38-39.59A16.05,16.05,0,0,0,200,75.64Z',
+	card: 'M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM136,176H120a8,8,0,0,1,0-16h16a8,8,0,0,1,0,16Zm64,0H168a8,8,0,0,1,0-16h32a8,8,0,0,1,0,16ZM32,88V64H224V88Z',
+	copy: 'M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32Zm-8,128H176V88a8,8,0,0,0-8-8H96V48H208Z',
+	users: 'M164.47,195.63a8,8,0,0,1-6.7,12.37H10.23a8,8,0,0,1-6.7-12.37,95.83,95.83,0,0,1,47.22-37.71,60,60,0,1,1,66.5,0A95.83,95.83,0,0,1,164.47,195.63Zm87.91-.15a95.87,95.87,0,0,0-47.13-37.56A60,60,0,0,0,144.7,54.59a4,4,0,0,0-1.33,6A75.83,75.83,0,0,1,147,150.53a4,4,0,0,0,1.07,5.53,112.32,112.32,0,0,1,29.85,30.83,23.92,23.92,0,0,1,3.65,16.47,4,4,0,0,0,3.95,4.64h60.3a8,8,0,0,0,7.73-5.93A8.22,8.22,0,0,0,252.38,195.48Z',
+	bolt: 'M213.85,125.46l-112,120a8,8,0,0,1-13.69-7l14.66-73.33L45.19,143.49a8,8,0,0,1-3-13l112-120a8,8,0,0,1,13.69,7L153.18,90.9l57.63,21.61a8,8,0,0,1,3,12.95Z',
+	calendar: 'M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM157.66,170.34a8,8,0,0,1-11.32,11.32L128,163.31l-18.34,18.35a8,8,0,0,1-11.32-11.32L116.69,152,98.34,133.66a8,8,0,0,1,11.32-11.32L128,140.69l18.34-18.35a8,8,0,0,1,11.32,11.32L139.31,152ZM208,80H48V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24Z',
+	prohibit: 'M200,128a71.69,71.69,0,0,1-15.78,44.91L83.09,71.78A71.95,71.95,0,0,1,200,128ZM56,128a71.95,71.95,0,0,0,116.91,56.22L71.78,83.09A71.69,71.69,0,0,0,56,128Zm180,0A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-20,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z',
+	refund: 'M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L60.63,81.29l17,17A8,8,0,0,1,72,112H24a8,8,0,0,1-8-8V56A8,8,0,0,1,29.66,50.3L49.31,70,60.25,60A96,96,0,0,1,224,128Z',
+	gavel: 'M52.69,99.31a16,16,0,0,1,0-22.63l64-64a16,16,0,0,1,22.63,22.63l-64,64a16,16,0,0,1-22.63,0Zm190.63,17.37a16,16,0,0,0-22.63,0l-64,64a16,16,0,0,0,0,22.63h0a16,16,0,0,0,22.63,0l64-64A16,16,0,0,0,243.32,116.68Zm-35.11-15.8L155.12,47.79a4,4,0,0,0-5.66,0L87.8,109.45a4,4,0,0,0,0,5.66L103,130.34,28.69,204.69a16,16,0,0,0,22.62,22.62L125.66,153l15.23,15.23a4,4,0,0,0,5.66,0l61.66-61.66A4,4,0,0,0,208.21,100.88Z',
+	warning: 'M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z',
+	lock: 'M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z',
+	open: 'M224,96V208a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V96A16,16,0,0,1,48,80H80V56A48.05,48.05,0,0,1,128,8c23.2,0,43.32,16.15,47.84,38.41a8,8,0,0,1-15.68,3.18C157.2,35,143.37,24,128,24A32,32,0,0,0,96,56V80H208A16,16,0,0,1,224,96Z',
+	check: 'M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z',
+	x: 'M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z',
+};
+
+const stations = [
+	{ id: 'trial', name: 'trial_to_paid_grants', chip: 'trialing', open: true, app: true, icon: 'hourglass', lx: 40.476, ly: 8.158, align: 'center', sx: 47.976, sy: 17.5 },
+	{ id: 'paid', name: 'paid_grants_access', chip: 'invoice.paid', open: true, app: true, icon: 'card', lx: 68.179, ly: 18.368, align: 'start', sx: 64.071, sy: 23.276 },
+	{ id: 'duplicate', name: 'duplicate_webhook_idempotent', chip: 'evt_1Qx9 ×2', open: true, app: true, icon: 'copy', lx: 79.857, ly: 36.132, align: 'start', sx: 74.012, sy: 38.408 },
+	{ id: 'seats', name: 'seat_qty_vs_db_cap', chip: 'quantity: 3', open: true, app: true, icon: 'users', lx: 79.857, ly: 58.079, align: 'start', sx: 74.012, sy: 57.118 },
+	{ id: 'race', name: 'upgrade_plus_cancel_race', chip: 'upgrade + cancel', open: true, app: true, icon: 'bolt', lx: 68.179, ly: 75.842, align: 'start', sx: 64.071, sy: 72.25 },
+	{ id: 'period', name: 'cancel_at_period_end_keeps_access_until_end', chip: 'cancel_at_period_end', open: true, app: true, icon: 'calendar', lx: 40.476, ly: 84.737, align: 'center', sx: 47.976, sy: 78.026 },
+	{ id: 'cancel', name: 'cancel_revokes_access', chip: 'subscription.deleted', open: false, app: false, icon: 'prohibit', lx: 12.774, ly: 75.842, align: 'end', sx: 31.881, sy: 72.25 },
+	{ id: 'refund', name: 'refund_revokes_access', chip: 'charge.refunded', open: false, app: false, icon: 'refund', lx: 1.095, ly: 58.079, align: 'end', sx: 21.94, sy: 57.118 },
+	{ id: 'dispute', name: 'dispute_revokes_or_flags', chip: 'charge.dispute.created', open: false, app: true, leak: true, icon: 'gavel', lx: 1.095, ly: 36.132, align: 'end', sx: 21.94, sy: 38.408 },
+	{ id: 'due', name: 'past_due_denies_until_recovery', chip: 'payment_failed', open: false, app: false, recover: true, icon: 'warning', lx: 12.774, ly: 18.368, align: 'end', sx: 31.881, sy: 23.276 },
+];
+
+const CX = 420;
+const CY = 380;
+const RO = 230;
+const RI = 202;
+
+function xy(r: number, deg: number) {
+	const a = (deg * Math.PI) / 180;
+	return [CX + r * Math.sin(a), CY - r * Math.cos(a)];
+}
+
+function arc(r: number, a0: number, a1: number) {
+	const [x0, y0] = xy(r, a0);
+	const [x1, y1] = xy(r, a1);
+	const large = a1 - a0 > 180 ? 1 : 0;
+	const n = (v: number) => v.toFixed(1);
+	return `M ${n(x0)} ${n(y0)} A ${r} ${r} 0 ${large} 1 ${n(x1)} ${n(y1)}`;
+}
+
+const segments = stations.flatMap((station, i) => {
+	const a0 = i * 36 + 6;
+	const a1 = (i + 1) * 36 - 6;
+	const expected = station.open ? '#3fcf8e' : '#f2555a';
+	const app = station.app ? '#3fcf8e' : '#f2555a';
+	const parts: { d: string; stroke: string; width: number; opacity: number }[] = [];
+	if (station.recover) {
+		parts.push({ d: arc(RO, a0, a0 + 16), stroke: '#f2555a', width: 16, opacity: 1 });
+		parts.push({ d: arc(RI, a0, a0 + 16), stroke: '#f2555a', width: 4, opacity: 0.8 });
+		parts.push({ d: arc(RO, a0 + 16, a1), stroke: '#3fcf8e', width: 16, opacity: 1 });
+		parts.push({ d: arc(RI, a0 + 16, a1), stroke: '#3fcf8e', width: 4, opacity: 0.8 });
+		return parts;
+	}
+	parts.push({ d: arc(RO, a0, a1), stroke: expected, width: 16, opacity: 1 });
+	if (station.leak) {
+		parts.push({ d: arc(RI, a0, a1), stroke: '#f2555a', width: 12, opacity: 0.35 });
+		parts.push({ d: arc(RI, a0, a1), stroke: '#3fcf8e', width: 4, opacity: 1 });
+	} else {
+		parts.push({ d: arc(RI, a0, a1), stroke: app, width: 4, opacity: 0.8 });
+	}
+	return parts;
+});
+
+const scrubber = arc(RO, -8, 8);
+const leftPie = 'M 420 80 A 300 300 0 0 0 420 680 L 420 380 Z';
+const rightPie = 'M 420 80 A 300 300 0 0 1 420 680 L 420 380 Z';
+
+function glyph(name: string) {
+	return `<svg viewBox="0 0 256 256" width="100%" height="100%" aria-hidden="true" focusable="false"><path d="${icons[name]}"/></svg>`;
+}
+
+function nameParts(name: string) {
+	return name.split('_');
+}
+---
+
+<div class:list={['dial-block', card && 'is-mobile']} id={card ? 'access-dial-mobile' : undefined}>
+	<div class:list={['access-dial', labels ? 'is-stage' : 'is-mobile']} id={labels ? 'access-dial' : undefined}>
+		<svg class="dial-svg" viewBox="0 0 840 760" aria-hidden="true">
+			<circle cx="420" cy="380" r="230" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="16" />
+			<circle cx="420" cy="380" r="202" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="4" />
+			<mask id={`${uid}-outer`} maskUnits="userSpaceOnUse" x="0" y="0" width="840" height="760">
+				<rect width="840" height="760" fill="#000" />
+				<g class="dial-mask-spin dial-spin">
+					<path d={leftPie} fill="#fff" />
+				</g>
+				<path class="dial-mask-cover" d={leftPie} fill="#000" />
+				<path class="dial-mask-fill" d={rightPie} fill="#fff" />
+			</mask>
+			<mask id={`${uid}-inner`} maskUnits="userSpaceOnUse" x="0" y="0" width="840" height="760">
+				<rect width="840" height="760" fill="#000" />
+				<g class="dial-mask-spin dial-spin-lag">
+					<path d={leftPie} fill="#fff" />
+				</g>
+				<path class="dial-mask-cover-lag" d={leftPie} fill="#000" />
+				<path class="dial-mask-fill-lag" d={rightPie} fill="#fff" />
+			</mask>
+			<g mask={`url(#${uid}-outer)`}>
+				{segments.filter((seg) => seg.width > 8).map((seg) => (
+					<path d={seg.d} fill="none" stroke={seg.stroke} stroke-width={seg.width} stroke-opacity={seg.opacity} stroke-linecap="round" />
+				))}
+			</g>
+			<g mask={`url(#${uid}-inner)`}>
+				{segments.filter((seg) => seg.width < 8 || seg.opacity < 0.5).map((seg) => (
+					<path d={seg.d} fill="none" stroke={seg.stroke} stroke-width={seg.width} stroke-opacity={seg.opacity} stroke-linecap="round" />
+				))}
+			</g>
+			<g class="dial-scrubber">
+				<path d={scrubber} fill="none" stroke="#f5b83d" stroke-width="16" stroke-linecap="round" />
+			</g>
+		</svg>
+
+		<span class="dial-halo" aria-hidden="true"></span>
+
+		{stations.map((station, i) => (
+			<span
+				class="dial-station"
+				data-id={station.id}
+				data-i={i}
+				style={`left:${station.sx}%;top:${station.sy}%;--dial-color:${station.open ? '#3fcf8e' : '#f2555a'}`}
+				aria-hidden="true"
+			>
+				<span class="dial-ico" set:html={glyph(station.icon)} />
+				<span class="dial-lit">
+					<span class="dial-ico" set:html={glyph(station.icon)} />
+				</span>
+			</span>
+		))}
+
+		{labels && stations.map((station, i) => {
+			const parts = nameParts(station.name);
+			const wrap = station.align === 'end' && parts.length >= 4;
+			const gap = station.leak ? '3.4cqw' : '2.4cqw';
+			const style = station.align === 'end'
+				? `top:${station.ly}%;left:auto;right:calc(${(100 - station.sx).toFixed(3)}% + ${gap} + 12px);width:max-content`
+				: station.align === 'start'
+					? `top:${station.ly}%;left:calc(${station.sx}% + 2.4cqw + 12px);width:max-content;max-width:calc(100% - ${station.sx}% - 2.4cqw - 24px)`
+					: `left:${station.lx}%;top:${station.ly}%`;
+			return (
+				<span
+					class:list={['dial-label', `is-${station.align}`]}
+					data-id={station.id}
+					data-i={i}
+					style={style}
+				>
+					<span class="dial-chip">{station.chip}</span>
+					<span class="dial-name">
+						{wrap ? (
+							<>
+								{parts.slice(0, -1).join('_')}_<br />{parts[parts.length - 1]}
+							</>
+						) : parts.map((part, index, all) => (
+							<>
+								{part}
+								{index < all.length - 1 && <>_<wbr /></>}
+							</>
+						))}
+					</span>
+					{station.leak && (
+						<span class="dial-leak dial-leak-label">
+							<span class="dial-ico" set:html={glyph('x')} />
+							<span>leak caught</span>
+						</span>
+					)}
+				</span>
+			);
+		})}
+
+		<div class="dial-center">
+			<div class="dial-locks" aria-hidden="true">
+				<span class="dial-center-halo" aria-hidden="true"></span>
+				<span class="dial-lock dial-lock-idle" set:html={glyph('lock')} />
+				<span class="dial-lock dial-lock-open" set:html={glyph('open')} />
+				<span class="dial-lock dial-lock-shut" set:html={glyph('lock')} />
+			</div>
+			<span class="dial-kicker">access_row</span>
+			<div class="dial-readout">
+				<div class="dial-swap">
+					<span class="dial-center-label dial-count">0 / 10 events</span>
+					{stations.map((station, i) => (
+						<span class="dial-center-label" data-id={station.id} data-i={i}>
+							<span class="dial-center-chip" data-id={station.id} data-i={i}>{station.chip}</span>
+							{station.leak && (
+								<span class="dial-leak dial-leak-center">
+									<span class="dial-ico" set:html={glyph('x')} />
+									<span>leak caught</span>
+								</span>
+							)}
+						</span>
+					))}
+					<span class="dial-center-label dial-badges">
+						<span class="dial-badge dial-badge-pass">
+							<span class="dial-ico" set:html={glyph('check')} />
+							<span>9 pass</span>
+						</span>
+						<span class="dial-badge dial-badge-fail">
+							<span class="dial-ico" set:html={glyph('x')} />
+							<span>1 leak</span>
+						</span>
+					</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{card && (
+		<div class="dial-card">
+			<span class="dial-card-alert" aria-hidden="true"></span>
+			<div class="dial-card-face dial-card-idle">
+				<span class="dial-card-kicker">0 / 10 events</span>
+			</div>
+			{stations.map((station, i) => (
+				<div class="dial-card-face" data-id={station.id} data-i={i}>
+					<div class="dial-card-head">
+						<span class="dial-card-mark" style={`--dial-color:${station.open ? '#3fcf8e' : '#f2555a'}`} set:html={glyph(station.icon)} />
+						<span class="dial-card-copy">
+							<span class="dial-card-chip">{station.chip}</span>
+							<span class="dial-card-name">
+								{nameParts(station.name).map((part, index, all) => (
+									<>
+										{part}
+										{index < all.length - 1 && <>_<wbr /></>}
+									</>
+								))}
+							</span>
+						</span>
+					</div>
+					<div class="dial-card-rows">
+						<span class="dial-card-row">
+							<span class="dial-card-kicker">expected</span>
+							<span class:list={['dial-mini', station.open ? 'is-open' : 'is-locked']} set:html={glyph(station.open ? 'open' : 'lock')} />
+						</span>
+						<span class="dial-card-row">
+							<span class="dial-card-kicker">your app</span>
+							<span class:list={['dial-mini', station.app ? 'is-open' : 'is-locked']} set:html={glyph(station.app ? 'open' : 'lock')} />
+						</span>
+					</div>
+					{station.leak && (
+						<span class="dial-leak dial-leak-label">
+							<span class="dial-ico" set:html={glyph('x')} />
+							<span>leak caught</span>
+						</span>
+					)}
+				</div>
+			))}
+		</div>
+	)}
+</div>

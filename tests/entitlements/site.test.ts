@@ -35,8 +35,10 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(index, /\$49/);
   assert.match(index, /Buy for \$49/);
   assert.match(index, /Indie License/);
-  assert.match(index, /npm is coming soon/i);
-  assert.match(index, /checkout is live/i);
+  assert.doesNotMatch(index, /coming soon/i);
+  assert.doesNotMatch(index, /checkout is live/i);
+  assert.doesNotMatch(index, /merchant of record/i);
+  assert.doesNotMatch(index, /docs live at/i);
   assert.doesNotMatch(index, /\/gatefit\//);
   assert.match(quickstart, /npx gatefit/);
   assert.match(quickstart, /adapter/i);
@@ -95,7 +97,6 @@ test("repo Polar setup documents fail-closed checkout env", () => {
   assert.match(polar, /PUBLIC_POLAR_CHECKOUT_URL/);
   assert.match(polar, /buy\.polar\.sh/);
   assert.match(polar, /fail closed|fails closed/i);
-  assert.match(polar, /checkout is live/i);
   assert.match(polar, /polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0/);
   assert.match(polar, /\$49/);
   assert.match(envExample, /PUBLIC_POLAR_CHECKOUT_URL=/);
