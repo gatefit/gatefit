@@ -8,6 +8,13 @@
 // Mobile scroll through every scroll-driven section must not overflow
 // sideways or stack text, at 390 and 360, including after the URL bar
 // changes the viewport height. Layout heights use svh or dvh, never vh.
+// The Indie [data-count] digits stay the large price, and the "$" glyph
+// uses that same font size. Desktop scenario titles stay inside the tile
+// and break only at "_". The Indie orbit stays behind the card text. The
+// hero headline has no one-word line at 360 or 390 either. An open mobile
+// menu at 360 and 390 is an opaque sheet whose links do not cover the hero.
+// Under 900px the Indie glow must not paint across the title, price, or
+// bullets, including halfway through the orbit spin.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -16,6 +23,7 @@ import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { inflateSync } from 'node:zlib';
 
 const dist = process.argv[2];
 if (!dist || !existsSync(join(dist, 'index.html'))) {
@@ -353,6 +361,335 @@ async function checkHeroLines(width) {
   await page.close();
 }
 
+async function checkPriceDigits(width) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  note(`price ${width}`, await page.evaluate(() => {
+    const count = document.querySelector('.price-indie [data-count]');
+    const amount = count?.closest('.amount');
+    if (!count || !amount) return ['indie amount missing'];
+    const found = [];
+    const digits = (count.textContent ?? '').trim();
+    if (!/^\d+$/.test(digits)) found.push(`data-count is "${digits}"`);
+    if (digits.includes('$')) found.push('dollar sign is inside data-count');
+    const countSize = Number.parseFloat(getComputedStyle(count).fontSize);
+    const amountSize = Number.parseFloat(getComputedStyle(amount).fontSize);
+    if (!(countSize >= amountSize - 0.5)) found.push(`digits ${countSize}px under amount ${amountSize}px`);
+    let dollarSize = null;
+    const walker = document.createTreeWalker(amount, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      if ((node.textContent ?? '').includes('$')) {
+        dollarSize = Number.parseFloat(getComputedStyle(node.parentElement).fontSize);
+        break;
+      }
+      node = walker.nextNode();
+    }
+    if (dollarSize == null) found.push('dollar glyph missing');
+    else if (Math.abs(dollarSize - countSize) > 0.5) found.push(`$ ${dollarSize}px vs 49 ${countSize}px`);
+    for (const el of amount.querySelectorAll('span')) {
+      if ((el.textContent ?? '').trim() === '$' && el.hasAttribute('data-count')) {
+        found.push('dollar span is data-count');
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
+async function checkMobileMenu(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  const toggle = page.locator('.nav-toggle');
+  await toggle.click();
+  await settle(page);
+  note(`menu ${width}`, await page.evaluate(() => {
+    const found = [];
+    const panel = document.querySelector('#nav-links');
+    const button = document.querySelector('.nav-toggle');
+    if (!panel || !button) return ['menu missing'];
+    if (button.getAttribute('aria-expanded') !== 'true') found.push('aria-expanded is not true');
+    const style = getComputedStyle(panel);
+    if (style.display === 'none' || style.visibility === 'hidden') found.push('panel hidden while open');
+    const color = style.backgroundColor;
+    const parts = color.match(/[\d.]+/g)?.map(Number) ?? [];
+    const alpha = parts.length >= 4 ? parts[3] : (color === 'transparent' ? 0 : 1);
+    if (!(alpha >= 0.99)) found.push(`panel background ${color}`);
+    const heroes = [document.querySelector('.eyebrow'), document.querySelector('#hero-title')].filter(Boolean);
+    for (const link of panel.querySelectorAll('a')) {
+      const linkBox = link.getBoundingClientRect();
+      if (linkBox.width < 1 || linkBox.height < 1) {
+        found.push(`link missing "${link.textContent.trim()}"`);
+        continue;
+      }
+      for (const hero of heroes) {
+        const heroBox = hero.getBoundingClientRect();
+        const x = Math.min(linkBox.right, heroBox.right) - Math.max(linkBox.left, heroBox.left);
+        const y = Math.min(linkBox.bottom, heroBox.bottom) - Math.max(linkBox.top, heroBox.top);
+        if (x > 2 && y > 2) found.push(`link overlaps hero "${link.textContent.trim()}"`);
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
+async function checkScenarioTitles(width) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.evaluate(() => document.querySelector('#scenarios')?.scrollIntoView());
+  await settle(page);
+  note(`scenario ${width}`, await page.evaluate(() => {
+    const name = 'cancel_at_period_end_keeps_access_until_end';
+    const headings = [...document.querySelectorAll('#scenarios .tile h3')];
+    const target = headings.find((el) => (el.textContent ?? '').replace(/\s+/g, '') === name);
+    if (!target) return [`missing ${name}`];
+    const found = [];
+    for (const h3 of headings) {
+      const label = (h3.textContent ?? '').replace(/\s+/g, '');
+      const tile = h3.closest('.tile');
+      if (!tile) continue;
+      const box = tile.getBoundingClientRect();
+      const style = getComputedStyle(tile);
+      const clip = {
+        left: box.left + Number.parseFloat(style.borderLeftWidth),
+        right: box.right - Number.parseFloat(style.borderRightWidth),
+        top: box.top + Number.parseFloat(style.borderTopWidth),
+        bottom: box.bottom - Number.parseFloat(style.borderBottomWidth),
+      };
+      if (h3.scrollWidth > h3.clientWidth + 1 || h3.scrollHeight > h3.clientHeight + 1) {
+        found.push(`overflow "${label}"`);
+      }
+      const walker = document.createTreeWalker(h3, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        const text = node.textContent ?? '';
+        const re = /[A-Za-z0-9]+/g;
+        let match = re.exec(text);
+        while (match) {
+          const range = document.createRange();
+          range.setStart(node, match.index);
+          range.setEnd(node, match.index + match[0].length);
+          const rects = [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0);
+          const tops = new Set(rects.map((rect) => Math.round(rect.top)));
+          if (tops.size > 1) found.push(`mid-word "${match[0]}" in "${label}"`);
+          for (const rect of rects) {
+            if (rect.left < clip.left - 1 || rect.right > clip.right + 1 || rect.top < clip.top - 1 || rect.bottom > clip.bottom + 1) {
+              found.push(`clip "${label}"`);
+            }
+          }
+          match = re.exec(text);
+        }
+        node = walker.nextNode();
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
+function decodePng(buf) {
+  const png = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+  const sig = [137, 80, 78, 71, 13, 10, 26, 10];
+  for (let i = 0; i < sig.length; i += 1) {
+    if (png[i] !== sig[i]) throw new Error('png signature');
+  }
+  let pos = 8;
+  let width = 0;
+  let height = 0;
+  let colorType = 0;
+  const idat = [];
+  while (pos < png.length) {
+    const len = png.readUInt32BE(pos);
+    pos += 4;
+    const type = png.toString('ascii', pos, pos + 4);
+    pos += 4;
+    const data = png.subarray(pos, pos + len);
+    pos += len + 4;
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      colorType = data[9];
+      if (data[8] !== 8 || data[12] !== 0) throw new Error('unsupported png');
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+  }
+  const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : 0;
+  if (!channels) throw new Error(`png color ${colorType}`);
+  const inflated = inflateSync(Buffer.concat(idat));
+  const stride = width * channels;
+  const rgb = Buffer.alloc(width * height * 3);
+  let src = 0;
+  let prev = Buffer.alloc(stride);
+  for (let y = 0; y < height; y += 1) {
+    const filter = inflated[src];
+    src += 1;
+    const row = Buffer.from(inflated.subarray(src, src + stride));
+    src += stride;
+    for (let i = 0; i < stride; i += 1) {
+      const left = i >= channels ? row[i - channels] : 0;
+      const up = prev[i];
+      const ul = i >= channels ? prev[i - channels] : 0;
+      let value = row[i];
+      if (filter === 1) value = (value + left) & 255;
+      else if (filter === 2) value = (value + up) & 255;
+      else if (filter === 3) value = (value + ((left + up) >> 1)) & 255;
+      else if (filter === 4) {
+        const paeth = left + up - ul;
+        const pa = Math.abs(paeth - left);
+        const pb = Math.abs(paeth - up);
+        const pc = Math.abs(paeth - ul);
+        const pred = pa <= pb && pa <= pc ? left : pb <= pc ? up : ul;
+        value = (value + pred) & 255;
+      }
+      row[i] = value;
+    }
+    for (let x = 0; x < width; x += 1) {
+      const from = x * channels;
+      const to = (y * width + x) * 3;
+      rgb[to] = row[from];
+      rgb[to + 1] = row[from + 1];
+      rgb[to + 2] = row[from + 2];
+    }
+    prev = row;
+  }
+  return { width, height, rgb };
+}
+
+function amberInside(img, box, scaleX, scaleY) {
+  const x0 = Math.max(0, Math.floor((box.x + 3) * scaleX));
+  const y0 = Math.max(0, Math.floor((box.y + 3) * scaleY));
+  const x1 = Math.min(img.width, Math.ceil((box.x + box.w - 3) * scaleX));
+  const y1 = Math.min(img.height, Math.ceil((box.y + box.h - 3) * scaleY));
+  let count = 0;
+  for (let y = y0; y < y1; y += 1) {
+    for (let x = x0; x < x1; x += 1) {
+      const i = (y * img.width + x) * 3;
+      const r = img.rgb[i];
+      const g = img.rgb[i + 1];
+      const b = img.rgb[i + 2];
+      if (r > 140 && g > 80 && b < 170 && r > b + 40 && g > b + 25) count += 1;
+    }
+  }
+  return count;
+}
+
+async function seekIndieGlow(page, fraction) {
+  await page.evaluate((fraction) => {
+    document.querySelector('#pricing')?.classList.add('lit');
+    const card = document.querySelector('.price-indie');
+    card?.classList.add('lit');
+    const orbit = card?.querySelector('.orbit');
+    const glow = card?.querySelector('.indie-glow');
+    for (const anim of document.getAnimations()) {
+      const target = anim.effect?.target;
+      if (target !== orbit && target !== glow) continue;
+      anim.pause();
+      const dur = anim.effect.getComputedTiming().duration;
+      if (typeof dur === 'number' && dur > 0) anim.currentTime = dur * fraction;
+    }
+  }, fraction);
+}
+
+async function checkOrbitCone(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.locator('.price-indie').scrollIntoViewIfNeeded();
+  await settle(page);
+  const fractions = [0, 0.25, 0.5, 0.75];
+  for (const fraction of fractions) {
+    await seekIndieGlow(page, fraction);
+    await settle(page);
+    const card = page.locator('.price-indie');
+    const cardBox = await card.boundingBox();
+    if (!cardBox) {
+      note(`cone ${width} ${fraction}`, ['indie card missing']);
+      continue;
+    }
+    const png = await card.screenshot();
+    const img = decodePng(png);
+    const scaleX = img.width / cardBox.width;
+    const scaleY = img.height / cardBox.height;
+    const regions = await page.evaluate(() => {
+      const root = document.querySelector('.price-indie');
+      const card = root.getBoundingClientRect();
+      const pick = (sel) => {
+        const el = root.querySelector(sel);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return {
+          sel,
+          text: (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 32),
+          x: rect.left - card.left,
+          y: rect.top - card.top,
+          w: rect.width,
+          h: rect.height,
+        };
+      };
+      return [pick('h3'), pick('.amount'), pick('li')].filter(Boolean);
+    });
+    const found = [];
+    for (const region of regions) {
+      if (region.w < 4 || region.h < 4) {
+        found.push(`missing "${region.text}"`);
+        continue;
+      }
+      const amber = amberInside(img, region, scaleX, scaleY);
+      if (amber > 24) found.push(`cone over "${region.text}" at ${fraction} (${amber}px)`);
+    }
+    note(`cone ${width} ${fraction}`, found);
+  }
+  await page.close();
+}
+
+async function checkOrbitBehindText(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.evaluate(() => document.querySelector('.price-indie')?.scrollIntoView({ block: 'center' }));
+  await settle(page);
+  note(`orbit ${width}`, await page.evaluate(() => {
+    const card = document.querySelector('.price-indie');
+    const orbit = card?.querySelector('.orbit');
+    const glow = card?.querySelector('.indie-glow');
+    if (!card || !orbit) return ['indie orbit missing'];
+    card.classList.add('lit');
+    for (const el of [orbit, glow]) {
+      if (!el) continue;
+      el.style.pointerEvents = 'auto';
+      el.style.opacity = '1';
+    }
+    const probes = [card.querySelector('[data-count]'), card.querySelector('h3')].filter(Boolean);
+    if (!probes.length) return ['indie text missing'];
+    const found = [];
+    for (const el of probes) {
+      const rect = el.getBoundingClientRect();
+      const x = Math.min(Math.max(rect.left + Math.min(rect.width / 2, 12), 0), window.innerWidth - 1);
+      const y = rect.top + rect.height / 2;
+      const label = (el.textContent ?? '').trim().slice(0, 40);
+      if (y < 0 || y > window.innerHeight) {
+        found.push(`probe offscreen "${label}"`);
+        continue;
+      }
+      const hit = document.elementFromPoint(x, y);
+      if (hit === orbit || hit === glow || hit?.closest('.orbit') || hit?.closest('.indie-glow')) {
+        found.push(`glow covers "${label}"`);
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
 const scrollSections = ['#leak', '#how', '#scenarios', '#pricing', '#final'];
 const scrollFractions = [0, 0.25, 0.5, 0.75, 1];
 const shotDir = '/cursor/stores/bc-0e25cb1c-5f8c-45e6-887e-4641b51f68a8/media';
@@ -590,6 +927,20 @@ await checkNavOverflow();
 await checkHeroLines(1280);
 await checkHeroLines(1440);
 await checkHeroLines(1920);
+await checkHeroLines(360);
+await checkHeroLines(390);
+await checkPriceDigits(360);
+await checkPriceDigits(390);
+await checkPriceDigits(1440);
+await checkMobileMenu(390, 844);
+await checkMobileMenu(360, 740);
+await checkScenarioTitles(1280);
+await checkScenarioTitles(1440);
+await checkScenarioTitles(1920);
+await checkOrbitBehindText(360, 740);
+await checkOrbitBehindText(390, 844);
+await checkOrbitCone(360, 740);
+await checkOrbitCone(390, 844);
 await checkEventNames(1280);
 await checkEventNames(1440);
 await checkEventNames(1920);
