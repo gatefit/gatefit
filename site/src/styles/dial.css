@@ -13,7 +13,12 @@
 	gap: 28px;
 	align-items: center;
 }
-.dial-copy h2 { max-width: 12ch; }
+.dial-copy h2 {
+	max-width: none;
+	font-size: clamp(1.75rem, 2.35vw, 2.2rem);
+	line-height: 1.05;
+	white-space: nowrap;
+}
 .dial-copy .lede { max-width: 36ch; }
 .access-dial.is-stage {
 	width: min(840px, 100%, calc((100svh - 96px) * 840 / 760));
@@ -122,8 +127,8 @@
 	opacity: 0.3;
 }
 .dial-label.is-center { align-items: center; text-align: center; }
-.dial-label.is-start { align-items: flex-start; text-align: left; }
-.dial-label.is-end { align-items: flex-end; text-align: right; }
+.dial-label.is-start { align-items: flex-start; text-align: left; width: max-content; }
+.dial-label.is-end { align-items: flex-end; text-align: right; width: max-content; }
 .dial-chip,
 .dial-center-chip {
 	font-family: var(--mono);
@@ -163,7 +168,21 @@
 	pointer-events: none;
 }
 .dial-locks { position: relative; width: 4.4cqw; height: 4.4cqw; }
-.dial-lock { position: absolute; inset: 0; }
+.dial-center-halo {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	z-index: 0;
+	width: 9.2cqw;
+	height: 9.2cqw;
+	border-radius: 50%;
+	border: 1.5px solid rgba(242, 85, 90, 0.9);
+	background: radial-gradient(circle, rgba(242, 85, 90, 0.55) 0%, rgba(242, 85, 90, 0.14) 58%, transparent 72%);
+	transform: translate(-50%, -50%);
+	opacity: 0;
+	pointer-events: none;
+}
+.dial-lock { position: absolute; inset: 0; z-index: 1; }
 .dial-lock-idle { color: var(--faint); opacity: 1; }
 .dial-lock-open { color: var(--green); opacity: 0; transform: translateY(4px); }
 .dial-lock-shut { color: var(--red); opacity: 0; transform: translateY(-4px); }
@@ -182,17 +201,20 @@
 	color: var(--text);
 	opacity: 1;
 }
-.dial-center-chip { opacity: 0; }
-.dial-center .dial-leak,
-.dial-badges {
-	position: absolute;
-	left: 50%;
-	top: calc(100% + 0.5cqw);
-	transform: translateX(-50%);
+.dial-swap > .dial-center-label {
+	grid-area: 1 / 1;
+	justify-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.45cqw;
+	opacity: 0;
 }
-.dial-center .dial-leak { font-size: 1.35cqw; white-space: nowrap; }
+.dial-center-label.dial-count { opacity: 1; }
+.dial-center .dial-leak { font-size: 1.35cqw; white-space: nowrap; opacity: 1; }
 .dial-center .dial-leak .dial-ico { width: 1.35cqw; height: 1.35cqw; }
 .dial-badges { display: flex; gap: 0.8cqw; opacity: 0; }
+.dial-swap > .dial-badges { flex-direction: row; }
 .dial-badge {
 	display: inline-flex;
 	align-items: center;
@@ -210,6 +232,10 @@
 	gap: 0.35cqw;
 	color: var(--red);
 	font-family: var(--mono);
+	border: 1px solid var(--red);
+	border-radius: 999px;
+	padding: 0.16cqw 0.55cqw;
+	background: rgba(242, 85, 90, 0.12);
 	opacity: 0;
 }
 
@@ -342,52 +368,57 @@
 @keyframes dial-lit-0 { 0%, 3.4% { opacity: 0; } 4%, 100% { opacity: 1; } }
 @keyframes dial-label-0 { 0%, 3.4% { opacity: 0.3; } 4%, 100% { opacity: 1; } }
 @keyframes dial-chip-0 { 0%, 3.4% { transform: scale(0.96); } 4%, 100% { transform: none; } }
-@keyframes dial-center-0 { 0%, 3.4% { opacity: 0; } 4%, 8.9% { opacity: 1; } 9.4%, 100% { opacity: 0; } }
+@keyframes dial-center-0 { 0% { opacity: 0; } 4% { opacity: 1; } 9.4% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-0 { 0%, 3.4% { opacity: 0; } 4%, 8.9% { opacity: 1; } 9.4%, 100% { opacity: 0; } }
 @keyframes dial-lit-1 { 0%, 8.8% { opacity: 0; } 9.4%, 100% { opacity: 1; } }
 @keyframes dial-label-1 { 0%, 8.8% { opacity: 0.3; } 9.4%, 100% { opacity: 1; } }
 @keyframes dial-chip-1 { 0%, 8.8% { transform: scale(0.96); } 9.4%, 100% { transform: none; } }
-@keyframes dial-center-1 { 0%, 8.8% { opacity: 0; } 9.4%, 18.3% { opacity: 1; } 18.8%, 100% { opacity: 0; } }
+@keyframes dial-center-1 { 0% { opacity: 0; } 9.4% { opacity: 1; } 18.8% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-1 { 0%, 8.8% { opacity: 0; } 9.4%, 18.3% { opacity: 1; } 18.8%, 100% { opacity: 0; } }
 @keyframes dial-lit-2 { 0%, 18.2% { opacity: 0; } 18.8%, 100% { opacity: 1; } }
 @keyframes dial-label-2 { 0%, 18.2% { opacity: 0.3; } 18.8%, 100% { opacity: 1; } }
 @keyframes dial-chip-2 { 0%, 18.2% { transform: scale(0.96); } 18.8%, 100% { transform: none; } }
-@keyframes dial-center-2 { 0%, 18.2% { opacity: 0; } 18.8%, 27.6% { opacity: 1; } 28.1%, 100% { opacity: 0; } }
+@keyframes dial-center-2 { 0% { opacity: 0; } 18.8% { opacity: 1; } 28.1% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-2 { 0%, 18.2% { opacity: 0; } 18.8%, 27.6% { opacity: 1; } 28.1%, 100% { opacity: 0; } }
 @keyframes dial-lit-3 { 0%, 27.5% { opacity: 0; } 28.1%, 100% { opacity: 1; } }
 @keyframes dial-label-3 { 0%, 27.5% { opacity: 0.3; } 28.1%, 100% { opacity: 1; } }
 @keyframes dial-chip-3 { 0%, 27.5% { transform: scale(0.96); } 28.1%, 100% { transform: none; } }
-@keyframes dial-center-3 { 0%, 27.5% { opacity: 0; } 28.1%, 37% { opacity: 1; } 37.5%, 100% { opacity: 0; } }
+@keyframes dial-center-3 { 0% { opacity: 0; } 28.1% { opacity: 1; } 37.5% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-3 { 0%, 27.5% { opacity: 0; } 28.1%, 37% { opacity: 1; } 37.5%, 100% { opacity: 0; } }
 @keyframes dial-lit-4 { 0%, 36.9% { opacity: 0; } 37.5%, 100% { opacity: 1; } }
 @keyframes dial-label-4 { 0%, 36.9% { opacity: 0.3; } 37.5%, 100% { opacity: 1; } }
 @keyframes dial-chip-4 { 0%, 36.9% { transform: scale(0.96); } 37.5%, 100% { transform: none; } }
-@keyframes dial-center-4 { 0%, 36.9% { opacity: 0; } 37.5%, 46.4% { opacity: 1; } 46.9%, 100% { opacity: 0; } }
+@keyframes dial-center-4 { 0% { opacity: 0; } 37.5% { opacity: 1; } 46.9% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-4 { 0%, 36.9% { opacity: 0; } 37.5%, 46.4% { opacity: 1; } 46.9%, 100% { opacity: 0; } }
 @keyframes dial-lit-5 { 0%, 46.3% { opacity: 0; } 46.9%, 100% { opacity: 1; } }
 @keyframes dial-label-5 { 0%, 46.3% { opacity: 0.3; } 46.9%, 100% { opacity: 1; } }
 @keyframes dial-chip-5 { 0%, 46.3% { transform: scale(0.96); } 46.9%, 100% { transform: none; } }
-@keyframes dial-center-5 { 0%, 46.3% { opacity: 0; } 46.9%, 55.8% { opacity: 1; } 56.3%, 100% { opacity: 0; } }
+@keyframes dial-center-5 { 0% { opacity: 0; } 46.9% { opacity: 1; } 56.3% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-5 { 0%, 46.3% { opacity: 0; } 46.9%, 55.8% { opacity: 1; } 56.3%, 100% { opacity: 0; } }
 @keyframes dial-lit-6 { 0%, 55.7% { opacity: 0; } 56.3%, 100% { opacity: 1; } }
 @keyframes dial-label-6 { 0%, 55.7% { opacity: 0.3; } 56.3%, 100% { opacity: 1; } }
 @keyframes dial-chip-6 { 0%, 55.7% { transform: scale(0.96); } 56.3%, 100% { transform: none; } }
-@keyframes dial-center-6 { 0%, 55.7% { opacity: 0; } 56.3%, 65.1% { opacity: 1; } 65.6%, 100% { opacity: 0; } }
+@keyframes dial-center-6 { 0% { opacity: 0; } 56.3% { opacity: 1; } 65.6% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-6 { 0%, 55.7% { opacity: 0; } 56.3%, 65.1% { opacity: 1; } 65.6%, 100% { opacity: 0; } }
 @keyframes dial-lit-7 { 0%, 65% { opacity: 0; } 65.6%, 100% { opacity: 1; } }
 @keyframes dial-label-7 { 0%, 65% { opacity: 0.3; } 65.6%, 100% { opacity: 1; } }
 @keyframes dial-chip-7 { 0%, 65% { transform: scale(0.96); } 65.6%, 100% { transform: none; } }
-@keyframes dial-center-7 { 0%, 65% { opacity: 0; } 65.6%, 74.5% { opacity: 1; } 75%, 100% { opacity: 0; } }
+@keyframes dial-center-7 { 0% { opacity: 0; } 65.6% { opacity: 1; } 74.5% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-7 { 0%, 65% { opacity: 0; } 65.6%, 74.5% { opacity: 1; } 75%, 100% { opacity: 0; } }
 @keyframes dial-lit-8 { 0%, 74.4% { opacity: 0; } 75%, 100% { opacity: 1; } }
 @keyframes dial-label-8 { 0%, 74.4% { opacity: 0.3; } 75%, 100% { opacity: 1; } }
 @keyframes dial-chip-8 { 0%, 74.4% { transform: scale(0.96); } 75%, 100% { transform: none; } }
-@keyframes dial-center-8 { 0%, 74.4% { opacity: 0; } 75%, 93% { opacity: 1; } 93.6%, 100% { opacity: 0; } }
+@keyframes dial-center-8 { 0% { opacity: 0; } 74.5% { opacity: 1; } 93.5% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes dial-card-8 { 0%, 74.4% { opacity: 0; } 75%, 100% { opacity: 1; } }
 @keyframes dial-lit-9 { 0%, 92.9% { opacity: 0; } 93.5%, 100% { opacity: 1; } }
 @keyframes dial-label-9 { 0%, 92.9% { opacity: 0.3; } 93.5%, 100% { opacity: 1; } }
 @keyframes dial-chip-9 { 0%, 92.9% { transform: scale(0.96); } 93.5%, 100% { transform: none; } }
-@keyframes dial-center-9 { 0%, 93.2% { opacity: 0; } 93.8%, 96.2% { opacity: 1; } 96.8%, 100% { opacity: 0; } }
+@keyframes dial-center-9 { 0% { opacity: 0; } 93.5% { opacity: 1; } 97% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes dial-center-halo {
+	0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+	74.5% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 @keyframes dial-card-9 { 0%, 100% { opacity: 0; } }
 
 @supports (animation-timeline: view()) {
@@ -410,49 +441,49 @@
 		#access-dial .dial-lock-open { animation-name: dial-lock-open; }
 		#access-dial .dial-lock-shut { animation-name: dial-lock-shut; }
 		#access-dial .dial-leak-label { animation-name: dial-leak-in; }
-		#access-dial .dial-leak-center { animation-name: dial-leak-center; }
 		#access-dial .dial-halo { animation-name: dial-halo; }
+		#access-dial .dial-center-halo { animation-name: dial-center-halo; }
 		#access-dial .dial-badges { animation-name: dial-badges-in; }
 		#access-dial .dial-label[data-i="0"] { animation-name: dial-label-0; }
 		#access-dial .dial-station[data-i="0"] .dial-lit { animation-name: dial-lit-0; }
 		#access-dial .dial-label[data-i="0"] .dial-chip { animation-name: dial-chip-0; }
-		#access-dial .dial-center-chip[data-i="0"] { animation-name: dial-center-0; }
+		#access-dial .dial-center-label[data-i="0"] { animation-name: dial-center-0; }
 		#access-dial .dial-label[data-i="1"] { animation-name: dial-label-1; }
 		#access-dial .dial-station[data-i="1"] .dial-lit { animation-name: dial-lit-1; }
 		#access-dial .dial-label[data-i="1"] .dial-chip { animation-name: dial-chip-1; }
-		#access-dial .dial-center-chip[data-i="1"] { animation-name: dial-center-1; }
+		#access-dial .dial-center-label[data-i="1"] { animation-name: dial-center-1; }
 		#access-dial .dial-label[data-i="2"] { animation-name: dial-label-2; }
 		#access-dial .dial-station[data-i="2"] .dial-lit { animation-name: dial-lit-2; }
 		#access-dial .dial-label[data-i="2"] .dial-chip { animation-name: dial-chip-2; }
-		#access-dial .dial-center-chip[data-i="2"] { animation-name: dial-center-2; }
+		#access-dial .dial-center-label[data-i="2"] { animation-name: dial-center-2; }
 		#access-dial .dial-label[data-i="3"] { animation-name: dial-label-3; }
 		#access-dial .dial-station[data-i="3"] .dial-lit { animation-name: dial-lit-3; }
 		#access-dial .dial-label[data-i="3"] .dial-chip { animation-name: dial-chip-3; }
-		#access-dial .dial-center-chip[data-i="3"] { animation-name: dial-center-3; }
+		#access-dial .dial-center-label[data-i="3"] { animation-name: dial-center-3; }
 		#access-dial .dial-label[data-i="4"] { animation-name: dial-label-4; }
 		#access-dial .dial-station[data-i="4"] .dial-lit { animation-name: dial-lit-4; }
 		#access-dial .dial-label[data-i="4"] .dial-chip { animation-name: dial-chip-4; }
-		#access-dial .dial-center-chip[data-i="4"] { animation-name: dial-center-4; }
+		#access-dial .dial-center-label[data-i="4"] { animation-name: dial-center-4; }
 		#access-dial .dial-label[data-i="5"] { animation-name: dial-label-5; }
 		#access-dial .dial-station[data-i="5"] .dial-lit { animation-name: dial-lit-5; }
 		#access-dial .dial-label[data-i="5"] .dial-chip { animation-name: dial-chip-5; }
-		#access-dial .dial-center-chip[data-i="5"] { animation-name: dial-center-5; }
+		#access-dial .dial-center-label[data-i="5"] { animation-name: dial-center-5; }
 		#access-dial .dial-label[data-i="6"] { animation-name: dial-label-6; }
 		#access-dial .dial-station[data-i="6"] .dial-lit { animation-name: dial-lit-6; }
 		#access-dial .dial-label[data-i="6"] .dial-chip { animation-name: dial-chip-6; }
-		#access-dial .dial-center-chip[data-i="6"] { animation-name: dial-center-6; }
+		#access-dial .dial-center-label[data-i="6"] { animation-name: dial-center-6; }
 		#access-dial .dial-label[data-i="7"] { animation-name: dial-label-7; }
 		#access-dial .dial-station[data-i="7"] .dial-lit { animation-name: dial-lit-7; }
 		#access-dial .dial-label[data-i="7"] .dial-chip { animation-name: dial-chip-7; }
-		#access-dial .dial-center-chip[data-i="7"] { animation-name: dial-center-7; }
+		#access-dial .dial-center-label[data-i="7"] { animation-name: dial-center-7; }
 		#access-dial .dial-label[data-i="8"] { animation-name: dial-label-8; }
 		#access-dial .dial-station[data-i="8"] .dial-lit { animation-name: dial-lit-8; }
 		#access-dial .dial-label[data-i="8"] .dial-chip { animation-name: dial-chip-8; }
-		#access-dial .dial-center-chip[data-i="8"] { animation-name: dial-center-8; }
+		#access-dial .dial-center-label[data-i="8"] { animation-name: dial-center-8; }
 		#access-dial .dial-label[data-i="9"] { animation-name: dial-label-9; }
 		#access-dial .dial-station[data-i="9"] .dial-lit { animation-name: dial-lit-9; }
 		#access-dial .dial-label[data-i="9"] .dial-chip { animation-name: dial-chip-9; }
-		#access-dial .dial-center-chip[data-i="9"] { animation-name: dial-center-9; }
+		#access-dial .dial-center-label[data-i="9"] { animation-name: dial-center-9; }
 		#access-dial .dial-spin,
 		#access-dial .dial-spin-lag,
 		#access-dial .dial-mask-cover,
@@ -470,6 +501,13 @@
 		#access-dial .dial-lit,
 		#access-dial .dial-center-chip {
 			animation-timing-function: linear;
+			animation-fill-mode: both;
+			animation-timeline: --dial;
+			animation-range: entry 100% exit 0%;
+		}
+		#access-dial .dial-center-label,
+		#access-dial .dial-center-halo {
+			animation-timing-function: step-end;
 			animation-fill-mode: both;
 			animation-timeline: --dial;
 			animation-range: entry 100% exit 0%;
@@ -493,40 +531,40 @@
 		#access-dial-mobile .dial-lock-open { animation-name: dial-lock-open; }
 		#access-dial-mobile .dial-lock-shut { animation-name: dial-lock-shut; }
 		#access-dial-mobile .dial-leak-label { animation-name: dial-leak-in; }
-		#access-dial-mobile .dial-leak-center { animation-name: dial-leak-center; }
 		#access-dial-mobile .dial-halo { animation-name: dial-halo; }
+		#access-dial-mobile .dial-center-halo { animation-name: dial-center-halo; }
 		#access-dial-mobile .dial-badges { animation-name: dial-badges-in; }
 		#access-dial-mobile .dial-card-idle { animation-name: dial-card-idle-out; }
 		#access-dial-mobile .dial-card-alert { animation-name: dial-card-alert; }
 		#access-dial-mobile .dial-station[data-i="0"] .dial-lit { animation-name: dial-lit-0; }
-		#access-dial-mobile .dial-center-chip[data-i="0"] { animation-name: dial-center-0; }
+		#access-dial-mobile .dial-center-label[data-i="0"] { animation-name: dial-center-0; }
 		#access-dial-mobile .dial-card-face[data-i="0"] { animation-name: dial-card-0; }
 		#access-dial-mobile .dial-station[data-i="1"] .dial-lit { animation-name: dial-lit-1; }
-		#access-dial-mobile .dial-center-chip[data-i="1"] { animation-name: dial-center-1; }
+		#access-dial-mobile .dial-center-label[data-i="1"] { animation-name: dial-center-1; }
 		#access-dial-mobile .dial-card-face[data-i="1"] { animation-name: dial-card-1; }
 		#access-dial-mobile .dial-station[data-i="2"] .dial-lit { animation-name: dial-lit-2; }
-		#access-dial-mobile .dial-center-chip[data-i="2"] { animation-name: dial-center-2; }
+		#access-dial-mobile .dial-center-label[data-i="2"] { animation-name: dial-center-2; }
 		#access-dial-mobile .dial-card-face[data-i="2"] { animation-name: dial-card-2; }
 		#access-dial-mobile .dial-station[data-i="3"] .dial-lit { animation-name: dial-lit-3; }
-		#access-dial-mobile .dial-center-chip[data-i="3"] { animation-name: dial-center-3; }
+		#access-dial-mobile .dial-center-label[data-i="3"] { animation-name: dial-center-3; }
 		#access-dial-mobile .dial-card-face[data-i="3"] { animation-name: dial-card-3; }
 		#access-dial-mobile .dial-station[data-i="4"] .dial-lit { animation-name: dial-lit-4; }
-		#access-dial-mobile .dial-center-chip[data-i="4"] { animation-name: dial-center-4; }
+		#access-dial-mobile .dial-center-label[data-i="4"] { animation-name: dial-center-4; }
 		#access-dial-mobile .dial-card-face[data-i="4"] { animation-name: dial-card-4; }
 		#access-dial-mobile .dial-station[data-i="5"] .dial-lit { animation-name: dial-lit-5; }
-		#access-dial-mobile .dial-center-chip[data-i="5"] { animation-name: dial-center-5; }
+		#access-dial-mobile .dial-center-label[data-i="5"] { animation-name: dial-center-5; }
 		#access-dial-mobile .dial-card-face[data-i="5"] { animation-name: dial-card-5; }
 		#access-dial-mobile .dial-station[data-i="6"] .dial-lit { animation-name: dial-lit-6; }
-		#access-dial-mobile .dial-center-chip[data-i="6"] { animation-name: dial-center-6; }
+		#access-dial-mobile .dial-center-label[data-i="6"] { animation-name: dial-center-6; }
 		#access-dial-mobile .dial-card-face[data-i="6"] { animation-name: dial-card-6; }
 		#access-dial-mobile .dial-station[data-i="7"] .dial-lit { animation-name: dial-lit-7; }
-		#access-dial-mobile .dial-center-chip[data-i="7"] { animation-name: dial-center-7; }
+		#access-dial-mobile .dial-center-label[data-i="7"] { animation-name: dial-center-7; }
 		#access-dial-mobile .dial-card-face[data-i="7"] { animation-name: dial-card-7; }
 		#access-dial-mobile .dial-station[data-i="8"] .dial-lit { animation-name: dial-lit-8; }
-		#access-dial-mobile .dial-center-chip[data-i="8"] { animation-name: dial-center-8; }
+		#access-dial-mobile .dial-center-label[data-i="8"] { animation-name: dial-center-8; }
 		#access-dial-mobile .dial-card-face[data-i="8"] { animation-name: dial-card-8; }
 		#access-dial-mobile .dial-station[data-i="9"] .dial-lit { animation-name: dial-lit-9; }
-		#access-dial-mobile .dial-center-chip[data-i="9"] { animation-name: dial-center-9; }
+		#access-dial-mobile .dial-center-label[data-i="9"] { animation-name: dial-center-9; }
 		#access-dial-mobile .dial-card-face[data-i="9"] { animation-name: dial-card-9; }
 		#access-dial-mobile .dial-spin,
 		#access-dial-mobile .dial-spin-lag,
@@ -545,6 +583,13 @@
 		#access-dial-mobile .dial-card-face,
 		#access-dial-mobile .dial-card-alert {
 			animation-timing-function: linear;
+			animation-fill-mode: both;
+			animation-timeline: --dial-m;
+			animation-range: entry 100% exit 0%;
+		}
+		#access-dial-mobile .dial-center-label,
+		#access-dial-mobile .dial-center-halo {
+			animation-timing-function: step-end;
 			animation-fill-mode: both;
 			animation-timeline: --dial-m;
 			animation-range: entry 100% exit 0%;
@@ -588,23 +633,22 @@
 	.dial-mask-fill-lag { opacity: 1; }
 	.dial-scrubber,
 	.dial-count,
-	.dial-center-chip,
+	.dial-center-label,
 	.dial-lock-idle,
 	.dial-lock-shut,
 	.dial-card-idle,
-	.dial-leak-center,
+	.dial-center-halo,
 	.dial-card-face:not(.dial-card-idle):not([data-id="dispute"]) { opacity: 0; }
 	.dial-lit,
 	.dial-label,
 	.dial-lock-open,
-	.dial-badges,
+	.dial-swap > .dial-badges,
 	.dial-leak-label,
 	.dial-card-face[data-id="dispute"],
 	.dial-card-alert { opacity: 1; }
 	.dial-chip,
 	.dial-lock-open { transform: none; }
 	.dial-halo { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-	.dial-leak-center { transform: translateX(-50%); }
 }
 
 @supports not (animation-timeline: view()) {
@@ -620,16 +664,16 @@
 		.dial-mask-fill-lag { opacity: 1; }
 		.dial-scrubber,
 		.dial-count,
-		.dial-center-chip,
+		.dial-center-label,
 		.dial-lock-idle,
 		.dial-lock-shut,
 		.dial-card-idle,
-		.dial-leak-center,
+		.dial-center-halo,
 		.dial-card-face:not(.dial-card-idle):not([data-id="dispute"]) { opacity: 0; }
 		.dial-lit,
 		.dial-label,
 		.dial-lock-open,
-		.dial-badges,
+		.dial-swap > .dial-badges,
 		.dial-leak-label,
 		.dial-card-face[data-id="dispute"],
 		.dial-card-alert { opacity: 1; }

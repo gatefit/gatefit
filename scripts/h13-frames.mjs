@@ -1284,6 +1284,9 @@ async function checkDial() {
     'dial-1280-035.png',
     'dial-1280-075.png',
     'dial-1280-100.png',
+    'dial-1440-000.png',
+    'dial-1440-035.png',
+    'dial-1440-075.png',
     'dial-1440-100.png',
     'dial-390-000.png',
     'dial-390-100.png',
@@ -1396,6 +1399,93 @@ async function checkDial() {
     return found;
   }));
   await reduced.close();
+  await checkDialSteps();
+}
+
+async function checkDialSteps() {
+  const profiles = [
+    { width: 1280, height: 800 },
+    { width: 1280, height: 900 },
+    { width: 1440, height: 900 },
+  ];
+  for (const profile of profiles) {
+    const page = await browser.newPage();
+    await page.setViewportSize(profile);
+    await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+    await settle(page);
+    for (let step = 0; step <= 10; step += 1) {
+      const fraction = step / 10;
+      await scrollPin(page, '#dial-track', fraction);
+      note(`dial step ${profile.width}x${profile.height} ${step * 10}`, await page.evaluate((pct) => {
+        const found = [];
+        const used = (el) => {
+          if (!el || el.getClientRects().length === 0) return 0;
+          let opacity = 1;
+          for (let node = el; node; node = node.parentElement) {
+            const style = getComputedStyle(node);
+            if (style.display === 'none' || style.visibility === 'hidden') return 0;
+            opacity *= Number.parseFloat(style.opacity);
+            if (Number.isNaN(opacity)) return 0;
+          }
+          return opacity;
+        };
+        const box = (el) => {
+          const rect = el.getBoundingClientRect();
+          return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height };
+        };
+        const hits = (a, b) => {
+          const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          return x > 0.5 && y > 0.5;
+        };
+        const labels = [...document.querySelectorAll('#access-dial .dial-center-label')].filter((el) => used(el) > 0.1);
+        if (labels.length !== 1) {
+          const shown = labels.map((el) => `${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 32)}@${used(el).toFixed(2)}`);
+          found.push(`center labels ${labels.length} [${shown.join(' | ')}]`);
+        }
+        const texts = [...document.querySelectorAll('#access-dial .dial-chip, #access-dial .dial-name')].filter((el) => used(el) > 0.05);
+        const icons = [...document.querySelectorAll('#access-dial .dial-station, #access-dial .dial-halo, #access-dial .dial-center-halo')].filter((el) => {
+          if (el.getClientRects().length === 0) return false;
+          if (el.classList.contains('dial-halo') || el.classList.contains('dial-center-halo')) return used(el) > 0.1;
+          return true;
+        });
+        for (const text of texts) {
+          const a = box(text);
+          if (a.width < 1 || a.height < 1) continue;
+          for (const icon of icons) {
+            const b = box(icon);
+            if (b.width < 1 || b.height < 1) continue;
+            if (hits(a, b)) {
+              const name = text.textContent.trim().replace(/\s+/g, ' ').slice(0, 42);
+              found.push(`"${name}" intersects a station`);
+            }
+          }
+        }
+        if (pct === 0) {
+          const headline = document.querySelector('#dial-stage h2');
+          const range = document.createRange();
+          if (headline) range.selectNodeContents(headline);
+          const lines = headline ? new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size : 0;
+          if (lines !== 2) found.push(`headline lines ${lines}`);
+          const copy = (headline?.innerText ?? '').replace(/\s+/g, ' ').trim();
+          if (copy !== 'Ten transitions, one access row.') found.push(`headline copy "${copy}"`);
+        }
+        if (pct === 80 || pct === 100) {
+          const halo = document.querySelector('#access-dial .dial-center-halo');
+          if (used(halo) <= 0.1) found.push('center leak halo missing');
+          const pill = [...document.querySelectorAll('#access-dial .dial-leak')].find((el) => used(el) > 0.1);
+          if (!pill) found.push('leak pill missing');
+          else {
+            const style = getComputedStyle(pill);
+            const border = Number.parseFloat(style.borderTopWidth);
+            if (border < 1 || style.borderTopStyle === 'none') found.push('leak pill has no border');
+          }
+        }
+        return found;
+      }, step * 10));
+    }
+    await page.close();
+  }
 }
 
 await browser.close();

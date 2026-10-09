@@ -144,59 +144,78 @@ function nameParts(name: string) {
 			</span>
 		))}
 
-		{labels && stations.map((station, i) => (
-			<span
-				class:list={['dial-label', `is-${station.align}`]}
-				data-id={station.id}
-				data-i={i}
-				style={`left:${station.lx}%;top:${station.ly}%`}
-			>
-				<span class="dial-chip">{station.chip}</span>
-				<span class="dial-name">
-					{nameParts(station.name).map((part, index, all) => (
-						<>
-							{part}
-							{index < all.length - 1 && <>_<wbr /></>}
-						</>
-					))}
-				</span>
-				{station.leak && (
-					<span class="dial-leak dial-leak-label">
-						<span class="dial-ico" set:html={glyph('x')} />
-						<span>leak caught</span>
+		{labels && stations.map((station, i) => {
+			const parts = nameParts(station.name);
+			const wrap = station.align === 'end' && parts.length >= 4;
+			const gap = station.leak ? '3.4cqw' : '2.4cqw';
+			const style = station.align === 'end'
+				? `top:${station.ly}%;left:auto;right:calc(${(100 - station.sx).toFixed(3)}% + ${gap} + 12px);width:max-content`
+				: station.align === 'start'
+					? `top:${station.ly}%;left:calc(${station.sx}% + 2.4cqw + 12px);width:max-content;max-width:calc(100% - ${station.sx}% - 2.4cqw - 24px)`
+					: `left:${station.lx}%;top:${station.ly}%`;
+			return (
+				<span
+					class:list={['dial-label', `is-${station.align}`]}
+					data-id={station.id}
+					data-i={i}
+					style={style}
+				>
+					<span class="dial-chip">{station.chip}</span>
+					<span class="dial-name">
+						{wrap ? (
+							<>
+								{parts.slice(0, -1).join('_')}_<br />{parts[parts.length - 1]}
+							</>
+						) : parts.map((part, index, all) => (
+							<>
+								{part}
+								{index < all.length - 1 && <>_<wbr /></>}
+							</>
+						))}
 					</span>
-				)}
-			</span>
-		))}
+					{station.leak && (
+						<span class="dial-leak dial-leak-label">
+							<span class="dial-ico" set:html={glyph('x')} />
+							<span>leak caught</span>
+						</span>
+					)}
+				</span>
+			);
+		})}
 
 		<div class="dial-center">
 			<div class="dial-locks" aria-hidden="true">
+				<span class="dial-center-halo" aria-hidden="true"></span>
 				<span class="dial-lock dial-lock-idle" set:html={glyph('lock')} />
 				<span class="dial-lock dial-lock-open" set:html={glyph('open')} />
 				<span class="dial-lock dial-lock-shut" set:html={glyph('lock')} />
 			</div>
 			<span class="dial-kicker">access_row</span>
-		<div class="dial-readout">
-			<div class="dial-swap">
-				<span class="dial-count">0 / 10 events</span>
-				{stations.map((station, i) => (
-					<span class="dial-center-chip" data-id={station.id} data-i={i}>{station.chip}</span>
-				))}
-			</div>
-			<span class="dial-leak dial-leak-center">
-					<span class="dial-ico" set:html={glyph('x')} />
-					<span>leak caught</span>
-				</span>
-				<span class="dial-badges">
-					<span class="dial-badge dial-badge-pass">
-						<span class="dial-ico" set:html={glyph('check')} />
-						<span>9 pass</span>
+			<div class="dial-readout">
+				<div class="dial-swap">
+					<span class="dial-center-label dial-count">0 / 10 events</span>
+					{stations.map((station, i) => (
+						<span class="dial-center-label" data-id={station.id} data-i={i}>
+							<span class="dial-center-chip" data-id={station.id} data-i={i}>{station.chip}</span>
+							{station.leak && (
+								<span class="dial-leak dial-leak-center">
+									<span class="dial-ico" set:html={glyph('x')} />
+									<span>leak caught</span>
+								</span>
+							)}
+						</span>
+					))}
+					<span class="dial-center-label dial-badges">
+						<span class="dial-badge dial-badge-pass">
+							<span class="dial-ico" set:html={glyph('check')} />
+							<span>9 pass</span>
+						</span>
+						<span class="dial-badge dial-badge-fail">
+							<span class="dial-ico" set:html={glyph('x')} />
+							<span>1 leak</span>
+						</span>
 					</span>
-					<span class="dial-badge dial-badge-fail">
-						<span class="dial-ico" set:html={glyph('x')} />
-						<span>1 leak</span>
-					</span>
-				</span>
+				</div>
 			</div>
 		</div>
 	</div>
