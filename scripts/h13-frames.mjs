@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 // Settled hero and leak frames must not stack text or clip it.
+// The landing also must not scroll sideways at 390px, and the hero
+// headline must not leave a one-word line at desktop widths.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -187,12 +189,87 @@ async function checkLeak(width) {
   await page.close();
 }
 
+async function checkNavOverflow() {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.waitForTimeout(1600);
+  note('nav 390', await page.evaluate(() => {
+    const found = [];
+    const doc = document.documentElement;
+    const extra = doc.scrollWidth - doc.clientWidth;
+    if (extra > 1) found.push(`horizontal overflow ${extra}px`);
+    const buy = document.querySelector('.site-nav .buy');
+    const box = buy?.getBoundingClientRect();
+    if (!box || box.width < 40 || box.left < -1 || box.right > window.innerWidth + 1) {
+      found.push('Buy for $49 is clipped or missing');
+    }
+    for (const link of document.querySelectorAll('.nav-link')) {
+      const style = getComputedStyle(link);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number.parseFloat(style.opacity) < 0.3) continue;
+      const rect = link.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) continue;
+      if (rect.left < -1 || rect.right > window.innerWidth + 1) found.push(`nav clip "${link.textContent.trim()}"`);
+    }
+    return found;
+  }));
+  await page.close();
+}
+
+async function checkHeroLines(width) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  note(`hero lines ${width}`, await page.evaluate(() => {
+    const h1 = document.querySelector('#hero-title');
+    if (!h1) return ['hero title missing'];
+    const found = [];
+    const wrap = getComputedStyle(h1).textWrap;
+    if (wrap !== 'balance') found.push(`text-wrap is ${wrap}`);
+    const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+    const words = [];
+    let node = walker.nextNode();
+    while (node) {
+      const text = node.textContent ?? '';
+      const re = /\S+/g;
+      let match = re.exec(text);
+      while (match) {
+        const range = document.createRange();
+        range.setStart(node, match.index);
+        range.setEnd(node, match.index + match[0].length);
+        const rect = range.getClientRects()[0];
+        if (rect && rect.width > 0) words.push({ word: match[0], top: rect.top });
+        match = re.exec(text);
+      }
+      node = walker.nextNode();
+    }
+    const lines = [];
+    for (const word of words) {
+      const last = lines.at(-1);
+      if (!last || Math.abs(last.top - word.top) > 2) lines.push({ top: word.top, words: [word.word] });
+      else last.words.push(word.word);
+    }
+    if (lines.length < 2) found.push(`hero has ${lines.length} line`);
+    for (const line of lines) {
+      if (line.words.length < 2) found.push(`single-word line "${line.words.join(' ')}"`);
+    }
+    return found;
+  }));
+  await page.close();
+}
+
 await checkHero(1440, 900, false);
 await checkHero(390, 844, false);
 await checkHero(1440, 900, true);
 await checkHero(390, 844, true);
 await checkLeak(1440);
 await checkLeak(1100);
+await checkNavOverflow();
+await checkHeroLines(1280);
+await checkHeroLines(1440);
+await checkHeroLines(1920);
 
 await browser.close();
 server.close();

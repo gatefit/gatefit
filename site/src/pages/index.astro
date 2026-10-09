@@ -78,7 +78,11 @@ const story = [
 		<header class="site-nav">
 			<div class="wrap">
 				<a class="word" href="/">Gatefit</a>
-				<nav class="nav-links" aria-label="Primary">
+				<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+					<span class="nav-toggle-open">Menu</span>
+					<span class="nav-toggle-close">Close</span>
+				</button>
+				<nav class="nav-links" id="nav-links" aria-label="Primary">
 					<a class="nav-link" href="/quickstart/">Quickstart</a>
 					<a class="nav-link" href="/action/">Action</a>
 					<a class="nav-link" href="#pricing">Pricing</a>
@@ -363,6 +367,18 @@ const story = [
 		</footer>
 
 		<script>
+			const nav = document.querySelector<HTMLElement>('.site-nav');
+			const navToggle = nav?.querySelector<HTMLButtonElement>('.nav-toggle');
+			const setNavOpen = (open: boolean) => {
+				nav?.classList.toggle('is-open', open);
+				navToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+			};
+			navToggle?.addEventListener('click', () => {
+				setNavOpen(navToggle.getAttribute('aria-expanded') !== 'true');
+			});
+			document.addEventListener('keydown', (event) => {
+				if (event.key === 'Escape') setNavOpen(false);
+			});
 			const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 			const sim = document.querySelector<HTMLElement>('#sim');
 			const next = sim?.querySelector<HTMLButtonElement>('.sim-next');
