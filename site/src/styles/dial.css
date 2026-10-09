@@ -650,6 +650,7 @@
 	.dial-chip,
 	.dial-lock-open { transform: none; }
 	.dial-halo { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	.dial-swap > .dial-center-label.dial-count { opacity: 0; }
 }
 
 @supports not (animation-timeline: view()) {
@@ -681,5 +682,6 @@
 		.dial-chip,
 		.dial-lock-open { transform: none; }
 		.dial-halo { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+		.dial-swap > .dial-center-label.dial-count { opacity: 0; }
 	}
 }
