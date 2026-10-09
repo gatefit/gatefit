@@ -207,13 +207,14 @@ function initSim() {
 		.fromTo(rows.created, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.32 }, 0)
 		.addLabel('paid', 1.2)
 		.fromTo(rows.paid, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.32 }, 1.2)
+		.to('.plan-trial', { opacity: 0, duration: 0.18 }, 1.2)
 		.to('.plan-pro', { opacity: 1, duration: 0.18 }, 1.2)
 		.fromTo('.verdict[data-v="paid"]', { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.28 }, 1.35)
 		.addLabel('refund', 2.6)
 		.fromTo(rows.refund, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.32 }, 2.6)
 		.to('.row-hl', { opacity: 1, duration: 0.22 }, 2.6)
 		.fromTo('.row-sweep', { xPercent: -100, opacity: 1 }, { xPercent: 100, duration: 0.6 }, 2.7)
-		.to('.db-red', { opacity: 1, duration: 0.3 }, 2.6)
+		.to('.db-leak', { opacity: 1, duration: 0.3 }, 2.6)
 		.fromTo('.leak-callout', { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.32 }, 3.4)
 		.fromTo('.verdict[data-v="refund"]', { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.28 }, 3.4)
 		.addLabel('dispute', 4.2)
@@ -224,8 +225,10 @@ function initSim() {
 		.fromTo('.verdict[data-v="block"]', { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.7 }, 5.4)
 		.addLabel('reset', 8.4)
 		.to('.sim-row, .verdict, .leak-callout', { opacity: 0.35, duration: 0.4 }, 8.4)
-		.to('.db-red, .row-hl, .plan-pro', { opacity: 0, duration: 0.4 }, 8.4)
-		.set('.sim-row, .verdict, .leak-callout, .db-red, .row-hl, .plan-pro', { opacity: 0, x: 0 }, 9.4);
+		.to('.db-leak, .row-hl, .plan-pro', { opacity: 0, duration: 0.4 }, 8.4)
+		.to('.plan-trial', { opacity: 1, duration: 0.4 }, 8.4)
+		.set('.sim-row, .verdict, .leak-callout, .db-leak, .row-hl, .plan-pro', { opacity: 0, x: 0 }, 9.4)
+		.set('.plan-trial', { opacity: 1 }, 9.4);
 
 	let held = false;
 	const replay = root.querySelector<HTMLButtonElement>('.replay');

@@ -171,7 +171,7 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .hero .wrap {
 	position: relative;
 	display: grid;
-	grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+	grid-template-columns: minmax(0, 0.9fr) minmax(460px, 1.1fr);
 	gap: 48px;
 	align-items: center;
 	padding: 5.5rem 0 3rem;
@@ -218,8 +218,8 @@ h1 {
 .replaying-dot {
 	width: 8px; height: 8px; border-radius: 999px; background: var(--amber);
 }
-.sim-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px; }
-.sim-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sim-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 0.92fr); gap: 14px; align-items: stretch; }
+.sim-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
 .sim-row {
 	width: 100%;
 	text-align: left;
@@ -230,11 +230,13 @@ h1 {
 	font-size: 0.72rem;
 	position: relative;
 	overflow: hidden;
+	align-items: flex-start;
 }
-.sim-row .name { position: relative; z-index: 1; }
+.sim-row .name { position: relative; z-index: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
 .chip {
 	position: relative;
 	z-index: 1;
+	flex: none;
 	padding: 2px 7px;
 	border-radius: var(--r-btn);
 	background: rgba(255, 255, 255, 0.06);
@@ -255,34 +257,71 @@ h1 {
 	background: var(--surface);
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: 12px;
-	padding: 10px;
+	padding: 12px 14px;
 	font-family: var(--mono);
-	font-size: 0.72rem;
+	font-size: 0.78rem;
+	min-width: 0;
 }
-.db { position: relative; min-height: 148px; }
+.db { display: flex; flex-direction: column; gap: 8px; }
 .db h3, .node h3 { font-size: 0.72rem; letter-spacing: 0.04em; color: var(--faint); font-weight: 560; }
-.db-green, .db-red { display: grid; gap: 6px; }
-.db-red {
-	position: absolute;
-	inset: 10px;
+.db-line { justify-content: flex-start; align-items: baseline; gap: 8px; min-width: 0; }
+.db-line .k { flex: none; width: 8ch; }
+.db-line > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.db .swap { display: inline-grid; min-width: 5ch; }
+.db .swap > span, .node .swap > span { grid-area: 1 / 1; }
+.node .swap { display: grid; width: 100%; }
+.node .swap > span { overflow-wrap: anywhere; }
+.db-leak {
+	display: grid;
+	gap: 6px;
+	margin-top: auto;
+	position: relative;
 	opacity: 0;
 	background: rgba(242, 85, 90, 0.08);
 	border-radius: 8px;
 	padding: 8px;
 }
-.db-red::after {
+.db-leak::after {
 	content: '';
 	position: absolute;
-	inset: -30%;
-	background: radial-gradient(circle, rgba(242, 85, 90, 0.45), transparent 60%);
-	opacity: 0.4;
+	inset: -12% -8%;
+	background: radial-gradient(circle, rgba(242, 85, 90, 0.28), transparent 62%);
+	opacity: 0.45;
 	pointer-events: none;
 }
+.db-leak > * { position: relative; }
 .k { color: var(--faint); margin-right: 6px; }
-.plan-pro { position: absolute; opacity: 0; }
-.leak-callout { color: var(--red); }
+.plan-trial { opacity: 1; }
+.plan-pro { opacity: 0; }
+.leak-callout { color: var(--red); opacity: 0; }
 .verdicts { margin-top: 10px; display: grid; gap: 6px; }
-.verdict { justify-content: flex-start; color: var(--muted); opacity: 0; }
+.verdict { display: block; color: var(--muted); opacity: 0; line-height: 1.4; }
+.verdict .icon { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.sim[data-state='paid'] .plan-trial,
+.sim[data-state='refund'] .plan-trial,
+.sim[data-state='dispute'] .plan-trial,
+.sim[data-state='past_due'] .plan-trial { opacity: 0; }
+.sim[data-state='paid'] .plan-pro,
+.sim[data-state='refund'] .plan-pro,
+.sim[data-state='dispute'] .plan-pro,
+.sim[data-state='past_due'] .plan-pro { opacity: 1; }
+.sim[data-state='refund'] .db-leak,
+.sim[data-state='dispute'] .db-leak,
+.sim[data-state='past_due'] .db-leak,
+.sim[data-state='refund'] .leak-callout,
+.sim[data-state='dispute'] .leak-callout,
+.sim[data-state='past_due'] .leak-callout { opacity: 1; }
+.sim[data-state='paid'] .verdict[data-v='paid'],
+.sim[data-state='refund'] .verdict[data-v='paid'],
+.sim[data-state='refund'] .verdict[data-v='refund'],
+.sim[data-state='dispute'] .verdict[data-v='paid'],
+.sim[data-state='dispute'] .verdict[data-v='refund'],
+.sim[data-state='past_due'] .verdict[data-v='paid'],
+.sim[data-state='past_due'] .verdict[data-v='refund'],
+.sim[data-state='past_due'] .verdict[data-v='block'] { opacity: 1; }
+.sim[data-state='refund'] .row-hl,
+.sim[data-state='dispute'] .row-hl,
+.sim[data-state='past_due'] .row-hl { opacity: 1; }
 .verdict .icon { color: var(--green); }
 .verdict.bad .icon { color: var(--red); }
 .sim-next, .replay { display: none; color: var(--amber); font-family: var(--mono); font-size: 0.75rem; }
@@ -319,7 +358,7 @@ h1 {
 .leak-headlines p[data-i]:not([data-i='0']) { opacity: 0; }
 .pipeline {
 	display: grid;
-	grid-template-columns: 1fr 40px 1fr 40px 1fr 40px 1fr;
+	grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr) 40px minmax(0, 1fr) 40px minmax(0, 1fr);
 	gap: 8px;
 	align-items: stretch;
 }
@@ -330,6 +369,7 @@ h1 {
 	border-radius: var(--r-card);
 	padding: 14px;
 	min-height: 148px;
+	min-width: 0;
 }
 #node-hook, #node-db, #node-ci { opacity: 0.4; }
 .ring {
@@ -675,7 +715,7 @@ details[open] .faq-body > div { opacity: 1; }
 		#conn-2 { animation-name: draw-40; }
 		#conn-2 .red { animation-name: conn-red; }
 		#node-db .red { animation-name: leak-red; }
-		#node-db .locked-false { animation-name: shake-once; }
+		#node-db .locked-false { animation-name: lock-false-story; }
 		#node-hook .pending { animation-name: hook-pending; }
 		#node-hook .ok { animation-name: hook-ok; }
 		#conn-3 { animation-name: draw-60; }
@@ -720,15 +760,17 @@ details[open] .faq-body > div { opacity: 1; }
 	.sim:not(.sim-js) .row-hl { animation: hl-refund 9.6s linear infinite; }
 	.sim:not(.sim-js) .row-sweep { animation: sweep 9.6s linear infinite; }
 	.sim:not(.sim-js) .plan-pro { animation: plan-pro 9.6s linear infinite; }
-	.sim:not(.sim-js) .db-red { animation: db-red 9.6s linear infinite; }
-	.sim:not(.sim-js) .db-red::after { animation: breathe 1.6s var(--ease-io) infinite alternate; }
+	.sim:not(.sim-js) .plan-trial { animation: plan-trial 9.6s linear infinite; }
+	.sim:not(.sim-js) .db-leak { animation: db-leak 9.6s linear infinite; }
+	.sim:not(.sim-js) .db-leak::after { animation: breathe 1.6s var(--ease-io) infinite alternate; }
 	.sim:not(.sim-js) .leak-callout { animation: callout 9.6s linear infinite; }
 	.sim:not(.sim-js) .verdict[data-v='paid'] { animation: pop-paid 9.6s linear infinite; }
 	.sim:not(.sim-js) .verdict[data-v='refund'] { animation: pop-refund 9.6s linear infinite; }
 	.sim:not(.sim-js) .verdict[data-v='block'] { animation: pop-block 9.6s linear infinite; }
 	.sim:not(.sim-js) .replaying-dot { animation: pulse 1.4s var(--ease) infinite; }
 	.sim.sim-js .sim-row, .sim.sim-js .row-hl, .sim.sim-js .row-sweep, .sim.sim-js .plan-pro,
-	.sim.sim-js .db-red, .sim.sim-js .leak-callout, .sim.sim-js .verdict, .sim.sim-js .replaying-dot { animation: none; }
+	.sim.sim-js .plan-trial, .sim.sim-js .db-leak, .sim.sim-js .leak-callout, .sim.sim-js .verdict, .sim.sim-js .replaying-dot { animation: none; }
+	html.frames .sim, html.frames .sim * { animation: none !important; }
 	.chip-track .pchip { animation: chip-on 6s linear infinite; }
 	.chip-track .pchip:nth-child(1) { animation-delay: 0s; }
 	.chip-track .pchip:nth-child(3) { animation-delay: 0.7s; }
@@ -750,12 +792,9 @@ details[open] .faq-body > div { opacity: 1; }
 	#leak-track { height: auto; }
 	#leak-stage, .leak-snaps { display: none; }
 	.leak-stack { display: grid; }
-	.sim-row, .row-hl, .row-sweep, .plan-pro, .db-red, .leak-callout, .verdict, .replaying-dot,
+	.sim-row, .row-hl, .row-sweep, .plan-pro, .plan-trial, .db-leak, .leak-callout, .verdict, .replaying-dot,
 	.hero-field, .pchip, .chips i, .got, .pass-line, .orbit, .indie-glow { animation: none !important; }
 	.sim-row { opacity: 0.35; transform: none; }
-	.sim-row[data-sim-jump='refund'] { opacity: 1; }
-	.sim[data-state='refund'] .row-hl, .sim:not([data-state]) .row-hl { opacity: 1; }
-	.db-red, .leak-callout, .verdict { opacity: 1; transform: none; }
 	.sim[data-state='created'] .sim-row,
 	.sim[data-state='paid'] .sim-row,
 	.sim[data-state='dispute'] .sim-row,
@@ -766,14 +805,6 @@ details[open] .faq-body > div { opacity: 1; }
 	.sim[data-state='refund'] .sim-row[data-sim-jump='refund'],
 	.sim[data-state='dispute'] .sim-row[data-sim-jump='dispute'],
 	.sim[data-state='past_due'] .sim-row[data-sim-jump='past_due'] { opacity: 1; }
-	.sim[data-state='created'] .db-red,
-	.sim[data-state='created'] .leak-callout,
-	.sim[data-state='created'] .verdict,
-	.sim[data-state='paid'] .db-red,
-	.sim[data-state='paid'] .leak-callout,
-	.sim[data-state='paid'] .verdict { opacity: 0; }
-	.sim[data-state='paid'] .verdict[data-v='paid'],
-	.sim[data-state='paid'] .plan-pro { opacity: 1; }
 	.sim-next { display: inline-flex; margin-top: 10px; }
 	.indie-glow { opacity: 0.8; }
 	.how-inner, .out-cmd span, .tile, .price-card, .final-band { transform: none; opacity: 1; }
@@ -836,7 +867,16 @@ details[open] .faq-body > div { opacity: 1; }
 @keyframes hl-refund { 0%, 26% { opacity: 0; } 30%, 87% { opacity: 1; } 94%, 100% { opacity: 0; } }
 @keyframes sweep { 0%, 27% { transform: translateX(-100%); opacity: 0; } 30% { opacity: 1; } 36%, 100% { transform: translateX(100%); opacity: 0; } }
 @keyframes plan-pro { 0%, 12% { opacity: 0; } 16%, 87% { opacity: 1; } 94%, 100% { opacity: 0; } }
-@keyframes db-red { 0%, 26% { opacity: 0; } 30%, 87% { opacity: 1; } 94%, 100% { opacity: 0; } }
+@keyframes plan-trial { 0%, 12% { opacity: 1; } 16%, 87% { opacity: 0; } 94%, 100% { opacity: 1; } }
+@keyframes db-leak { 0%, 26% { opacity: 0; } 30%, 87% { opacity: 1; } 94%, 100% { opacity: 0; } }
+@keyframes lock-false-story {
+	0%, 40% { opacity: 1; transform: none; }
+	42% { opacity: 1; transform: translateX(-2px); }
+	44% { opacity: 1; transform: translateX(2px); }
+	46% { opacity: 1; transform: translateX(-2px); }
+	48%, 80% { opacity: 1; transform: none; }
+	88%, 100% { opacity: 0; transform: none; }
+}
 @keyframes callout { 0%, 34% { opacity: 0; transform: translateY(8px); } 38%, 87% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
 @keyframes pop-paid { 0%, 12% { opacity: 0; transform: scale(0.6); } 16%, 87% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
 @keyframes pop-refund { 0%, 34% { opacity: 0; transform: scale(0.6); } 38%, 87% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }

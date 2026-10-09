@@ -413,6 +413,8 @@ ok "PUBLIC_POLAR_CHECKOUT_URL overrides the committed Checkout Link"
 build_polar_override ''
 assert_live_cta site/dist/index.html "$POLAR_CHECKOUT_URL"
 assert_h13_dist
+node scripts/h13-frames.mjs site/dist || fail "hero or leak frames overlap or clip"
+ok "hero and leak frames do not overlap"
 
 if GATEFIT_SITE_DIST="/tmp/gatefit-missing-dist-$$" GATEFIT_DEPLOY_TARGET=local \
   GATEFIT_DEPLOY_DEST="/tmp/gatefit-deploy-should-not-matter-$$" \

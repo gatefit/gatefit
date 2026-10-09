@@ -62,6 +62,9 @@ const story = [
 		<meta name="theme-color" content="#0A0A0B" />
 		<link rel="icon" href="/favicon.svg" />
 		<script is:inline>
+			if (new URLSearchParams(location.search).has('frames')) {
+				document.documentElement.classList.add('frames');
+			}
 			if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
 				document.documentElement.classList.add('motion');
 				var ready = function () { document.documentElement.classList.add('ready'); };
@@ -122,12 +125,10 @@ const story = [
 								</ol>
 								<div class="db">
 									<h3>Access DB</h3>
-									<div class="db-green">
-										<p class="db-line"><span><span class="k">locked</span>false</span></p>
-										<p class="db-line"><span class="k">plan</span><span class="plan-trial">trial</span><span class="plan-pro">pro</span></p>
-									</div>
-									<div class="db-red">
-										<p class="db-line"><span class="k">expected</span>locked: true</p>
+									<p class="db-line"><span class="k">plan</span><span class="swap"><span class="plan-trial">trial</span><span class="plan-pro">pro</span></span></p>
+									<p class="db-line"><span class="k">locked</span><span>false</span></p>
+									<div class="db-leak">
+										<p class="db-line"><span class="k">expected</span><span>locked: true</span></p>
 										<p class="db-line"><span class="k">actual</span><span class="db-false">locked: false</span></p>
 										<p class="leak-callout">Refunded customer still has Pro.</p>
 									</div>
@@ -160,20 +161,18 @@ const story = [
 							<div class="pipeline">
 								<article class="node" id="node-stripe"><span class="ring"></span><h3>Stripe</h3><p>charge.refunded</p></article>
 								<div class="conn" id="conn-1"></div>
-								<article class="node" id="node-hook"><span class="ring"></span><h3>Webhook</h3><p class="pending">pending</p><p class="ok">200 OK</p></article>
+								<article class="node" id="node-hook"><span class="ring"></span><h3>Webhook</h3><p class="swap"><span class="pending">pending</span><span class="ok">200 OK</span></p></article>
 								<div class="conn" id="conn-2"><span class="red"></span><span class="green"></span></div>
 								<article class="node" id="node-db">
 									<span class="red"></span><span class="green"></span>
 									<h3>Access DB</h3>
-									<p class="locked-false">locked: false</p>
-									<p class="locked-true">locked: true</p>
+									<p class="swap"><span class="locked-false">locked: false</span><span class="locked-true">locked: true</span></p>
 								</article>
 								<div class="conn" id="conn-3"><span class="green"></span></div>
 								<article class="node" id="node-ci">
 									<span class="red"></span><span class="green"></span>
 									<h3>CI</h3>
-									<p class="fail">FAIL refund_revokes_access</p>
-									<p class="pass">PASS all goldens</p>
+									<p class="swap"><span class="fail">FAIL refund_revokes_access</span><span class="pass">PASS all goldens</span></p>
 								</article>
 							</div>
 							<div class="rail" role="group" aria-label="Leak story">
@@ -373,7 +372,7 @@ const story = [
 				step = (step + 1) % order.length;
 				sim?.setAttribute('data-state', order[step] ?? 'refund');
 			});
-			if (!reduce) {
+			if (!reduce && !new URLSearchParams(location.search).has('frames')) {
 				import('../scripts/landing-motion').catch(() => {
 					document.documentElement.classList.remove('motion');
 				});
