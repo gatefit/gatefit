@@ -178,19 +178,35 @@ grep -q 'scripts/action-run.sh' action.yml || dist_fail "root action.yml does no
 grep -q 'using: composite' .github/actions/gatefit/action.yml || dist_fail "nested action.yml is not composite"
 grep -q 'scripts/action-run.sh' .github/actions/gatefit/action.yml || dist_fail "nested action.yml does not call scripts/action-run.sh"
 
-grep -q '\*\*Docs site:\*\* coming soon' README.md || dist_fail "README docs site is not marked coming soon"
+grep -q '\*\*Docs site:\*\* live' README.md || dist_fail "README docs site is not marked live"
+grep -q 'https://gatefit.io' README.md || dist_fail "README missing https://gatefit.io"
+if grep -q '\*\*Docs site:\*\* coming soon' README.md; then
+  dist_fail "README still marks the docs site coming soon"
+fi
 grep -q '\*\*npm:\*\* coming soon' README.md || dist_fail "README npm is not marked coming soon"
 grep -q '\*\*Polar checkout:\*\* live' README.md || dist_fail "README Polar checkout is not marked live"
 grep -q 'https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0' README.md \
   || dist_fail "README missing the Gatefit Indie License Checkout Link"
 grep -q '\$49' README.md || dist_fail "README missing \$49 Indie License price"
 grep -q 'GitHub Pages needs a public repository or a paid plan' README.md || dist_fail "README missing GitHub Pages public-or-paid requirement"
+grep -q 'gatefit-bdu.pages.dev' README.md || dist_fail "README missing gatefit-bdu.pages.dev"
+if grep -F 'gatefit.pages.dev' README.md >/dev/null; then
+  dist_fail "README uses gatefit.pages.dev; the host is gatefit-bdu.pages.dev"
+fi
 
 if [[ -f scripts/deploy-site.sh ]]; then
   grep -q 'GATEFIT_SITE_DIST' scripts/deploy-site.sh || dist_fail "deploy-site missing GATEFIT_SITE_DIST"
   grep -q 'GATEFIT_DEPLOY_TARGET' scripts/deploy-site.sh || dist_fail "deploy-site missing GATEFIT_DEPLOY_TARGET"
   grep -q 'GATEFIT_DEPLOY_DEST' scripts/deploy-site.sh || dist_fail "deploy-site missing GATEFIT_DEPLOY_DEST"
   grep -q 'public repository or a paid plan' scripts/deploy-site.sh || dist_fail "deploy-site missing GitHub Pages requirement"
+  grep -q 'wrangler@4 pages deploy' scripts/deploy-site.sh || dist_fail "deploy-site missing wrangler pages deploy"
+  grep -q -- '--project-name gatefit' scripts/deploy-site.sh || dist_fail "deploy-site missing --project-name gatefit"
+  grep -q 'gatefit-bdu.pages.dev' scripts/deploy-site.sh || dist_fail "deploy-site missing gatefit-bdu.pages.dev"
+  grep -q 'CLOUDFLARE_API_TOKEN' scripts/deploy-site.sh || dist_fail "deploy-site missing CLOUDFLARE_API_TOKEN"
+  grep -q 'CLOUDFLARE_ACCOUNT_ID' scripts/deploy-site.sh || dist_fail "deploy-site missing CLOUDFLARE_ACCOUNT_ID"
+  if grep -F 'gatefit.pages.dev' scripts/deploy-site.sh >/dev/null; then
+    dist_fail "deploy-site uses gatefit.pages.dev; the host is gatefit-bdu.pages.dev"
+  fi
   if grep -E '^[[:space:]]*(npm[[:space:]]+publish|git[[:space:]]+tag|gh[[:space:]]+release)' scripts/deploy-site.sh >/dev/null; then
     dist_fail "deploy-site runs a registry write, tag, or release"
   fi
@@ -201,9 +217,9 @@ fi
 
 while IFS= read -r honesty_file; do
   if grep -q 'edipert.github.io/gatefit' "$honesty_file"; then
-    grep -qi 'coming soon' "$honesty_file" || dist_fail "${honesty_file} mentions the docs site without coming soon"
+    dist_fail "${honesty_file} still points the docs site at edipert.github.io/gatefit"
   fi
-done < <(find README.md docs site/README.md site/src -type f \( -name '*.md' -o -name '*.mdx' -o -name '*.astro' \))
+done < <(find README.md docs site/README.md site/src -type f \( -name '*.md' -o -name '*.mdx' -o -name '*.astro' -o -name '*.css' \))
 
 if grep -R -n --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.astro \
   'buy.polar.sh/products/' README.md docs site >/dev/null; then
@@ -293,7 +309,8 @@ ok "npm publish --dry-run"
 need_file site/astro.config.mjs
 need_file site/src/lib/polarCheckout.ts
 need_file site/src/components/PolarBuyCta.astro
-need_file site/src/content/docs/index.mdx
+need_file site/src/pages/index.astro
+need_file site/public/_redirects
 need_file site/src/content/docs/quickstart.md
 need_file site/src/content/docs/action.md
 need_file site/src/content/docs/polar.md
@@ -305,7 +322,33 @@ fi
 if grep -q 'GATEFIT_LIVE_CLOCK' .github/workflows/pages.yml; then
   fail "pages.yml must not set GATEFIT_LIVE_CLOCK"
 fi
+grep -q 'https://gatefit.io' site/astro.config.mjs || fail "astro site is not https://gatefit.io"
+grep -q "base: '/'" site/astro.config.mjs || fail "astro base is not /"
+if grep -q "base: '/gatefit'" site/astro.config.mjs; then
+  fail "astro base is still /gatefit"
+fi
+grep -q '/gatefit / 301' site/public/_redirects || fail "_redirects missing /gatefit 301"
+grep -q '/gatefit/\* /:splat 301' site/public/_redirects || fail "_redirects missing /gatefit splat 301"
+if grep -q 'Empty / unset fails closed' .github/workflows/pages.yml; then
+  fail "pages.yml still says an empty PUBLIC_POLAR_CHECKOUT_URL fails closed"
+fi
 ok "site files + Polar CTA"
+assert_h13_dist() {
+  if grep -R -E -n --include='*.html' --include='*.css' --include='*.js' --include='*.mjs' \
+    '/gatefit/_astro|href="/gatefit|src="/gatefit|url\(["'\'']?/gatefit/' site/dist >/dev/null; then
+    fail "built dist contains /gatefit/ asset paths"
+  fi
+  grep -R -q 'prefers-reduced-motion' site/dist || fail "built site missing prefers-reduced-motion CSS"
+  grep -R -q 'leak-stack' site/dist || fail "built site missing reduced-motion leak stack"
+  if grep -R -E -n --include='*.html' --include='*.css' --include='*.js' --include='*.mjs' \
+    'fonts\.googleapis\.com|fonts\.gstatic\.com|use\.typekit\.net|api\.fontshare\.com' site/dist >/dev/null; then
+    fail "built site loads an external font CDN"
+  fi
+  grep -R -q 'npm is coming soon' site/dist || fail "built site does not say npm is coming soon"
+  if grep -R -i -n -E 'docs site[^.]{0,40}coming soon|coming soon[^.]{0,24}docs site' site/dist >/dev/null; then
+    fail "built site still says the docs site is coming soon"
+  fi
+}
 POLAR_CHECKOUT_URL='https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0'
 assert_live_cta() {
   local html="$1" expected="$2"
@@ -344,7 +387,8 @@ if grep -R -n 'buy.polar.sh/products/' site/dist >/dev/null; then
 fi
 grep -q '\$49' site/dist/index.html || fail "built landing missing \$49"
 grep -q 'Indie License' site/dist/index.html || fail "built landing missing Indie License"
-grep -R -q 'coming soon' site/dist || fail "built site does not say docs site or npm coming soon"
+grep -q 'Buy for $49' site/dist/index.html || fail "built landing missing Buy for \$49"
+assert_h13_dist
 ok "built site default Checkout Link"
 
 build_polar_override() {
@@ -368,6 +412,7 @@ ok "PUBLIC_POLAR_CHECKOUT_URL overrides the committed Checkout Link"
 # Restore the default build so deploy-site publishes the committed link.
 build_polar_override ''
 assert_live_cta site/dist/index.html "$POLAR_CHECKOUT_URL"
+assert_h13_dist
 
 if GATEFIT_SITE_DIST="/tmp/gatefit-missing-dist-$$" GATEFIT_DEPLOY_TARGET=local \
   GATEFIT_DEPLOY_DEST="/tmp/gatefit-deploy-should-not-matter-$$" \

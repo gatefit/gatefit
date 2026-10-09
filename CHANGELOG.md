@@ -4,7 +4,7 @@ All notable Gatefit changes are listed here. The heading version matches `packag
 
 ## [0.4.0] - unreleased
 
-Tag-ready pack. The git tag and GitHub Release are not created here. npm publish and the docs site are coming soon. Polar checkout is the committed Gatefit Indie License link.
+Tag-ready pack. The git tag and GitHub Release are not created here. npm publish is coming soon. The docs site is live at https://gatefit.io. Polar checkout is the committed Gatefit Indie License link.
 
 ### Added
 
@@ -18,5 +18,5 @@ Tag-ready pack. The git tag and GitHub Release are not created here. npm publish
 
 - Public GitHub repository.
 - npm registry publish.
-- Live docs site. GitHub Pages needs a public repository or a paid plan.
+- A docs deploy from this changelog. The site is already live at https://gatefit.io.
 - Polar checkout.

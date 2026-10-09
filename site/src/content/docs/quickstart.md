@@ -9,9 +9,9 @@ Gatefit checks **your access DB**, not Stripe HTTP 200. Node 22+.
 
 Export `createAdapter()` (or `default`) with:
 
-- `apply(event)` — ingest one billing event
-- `snapshot(customerId)` — return `{ locked, plan?, seats?, features? }`
-- `reset()` — required when running more than one golden
+- `apply(event)`: ingest one billing event
+- `snapshot(customerId)`: return `{ locked, plan?, seats?, features? }`
+- `reset()`: required when running more than one golden
 
 `locked: true` means deny even if Stripe looks paid. Compare is declared-fields-only.
 
@@ -51,4 +51,4 @@ Do not set `GATEFIT_LIVE_CLOCK` for this gate. Do not use `sk_live`. Live Test C
 
 ## 4. GitHub Action
 
-See [GitHub Action](/gatefit/action/).
+See [GitHub Action](/action/).

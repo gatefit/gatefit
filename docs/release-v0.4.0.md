@@ -6,7 +6,7 @@ Draft GitHub Release notes for tag `v0.4.0`. Do not create the tag or the Releas
 
 Gatefit is a CI pack that asserts an access database survives ugly billing transitions. The CLI and the composite GitHub Action stay free.
 
-Docs site and npm are **coming soon**. Polar checkout is live (Gatefit Indie License, $49 one-time). Nothing in this draft publishes npm or the docs site.
+The docs site is live at https://gatefit.io. npm is **coming soon**. Polar checkout is live (Gatefit Indie License, $49 one-time). Nothing in this draft publishes npm or deploys the docs site.
 
 ## Install
 
@@ -44,7 +44,7 @@ Both paths wrap `gatefit run` via `scripts/action-run.sh`. Do not use `edipert/g
 
 ## Docs site
 
-Coming soon. Intended URL: `https://edipert.github.io/gatefit/`. GitHub Pages needs a public repository or a paid plan. `scripts/deploy-site.sh` copies `site/dist` to any static host.
+Live at https://gatefit.io. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. The Pages project is `gatefit`. The hostname is `gatefit-bdu.pages.dev`. GitHub Pages needs a public repository or a paid plan and is not the live host.
 
 ## Not included
 
