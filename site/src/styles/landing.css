@@ -50,6 +50,7 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .wrap { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
 .icon { display: inline-flex; }
 
+html { scroll-padding-top: 64px; }
 .site-nav {
 	position: sticky;
 	top: 0;
@@ -514,8 +515,8 @@ h2 {
 .pane { display: none; }
 .pane.is-on { display: block; }
 .how-window pre { margin: 0; padding: 14px 16px 18px; overflow: auto; }
-.how-line { display: block; position: relative; overflow: hidden; min-height: 1.35em; }
-.how-inner { display: inline-block; font-family: var(--mono); font-size: 0.82rem; color: var(--body); white-space: pre; }
+.how-line { display: block; position: relative; overflow: hidden; line-height: 1.45; white-space: normal; }
+.how-inner { display: inline-block; font-family: var(--mono); font-size: 0.82rem; color: var(--body); white-space: pre; line-height: 1.45; vertical-align: top; }
 .how-bar {
 	position: absolute;
 	left: 0; top: 0; bottom: 0;
@@ -683,8 +684,12 @@ details[open] .faq-body > div { opacity: 1; }
 	.conn { display: none; }
 	.how-window pre { overflow-x: auto; }
 	#leak-track { height: auto; }
-	#leak-stage, .leak-snaps { display: none; }
+	#leak-stage, .leak-snaps { display: none; position: static; height: auto; min-height: 0; }
 	.leak-mobile { display: flex; }
+	.site-nav { position: static; }
+	html { scroll-padding-top: 0; }
+	.tile, .m-node, .stack-card { overflow: visible; }
+	.tile h3, .tile p, .m-node p, .price-card li { overflow-wrap: anywhere; }
 	.leak-stack { display: none; }
 	.final-band { padding: 32px 20px; }
 }
@@ -774,6 +779,8 @@ details[open] .faq-body > div { opacity: 1; }
 }
 
 @media (max-width: 899px) {
+	#leak-track { height: auto; }
+	#leak-stage, .leak-snaps { display: none; position: static; height: auto; min-height: 0; }
 	.vconn, .how-bar { transform: none; }
 	.m-node .red { opacity: 1; }
 	.how-line { overflow: visible; }

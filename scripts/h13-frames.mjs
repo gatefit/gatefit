@@ -408,6 +408,55 @@ async function mobileAudit(page, selector) {
       }
     }
     if (document.querySelector('.pin-spacer')) issues.push('pin spacer present');
+    const track = document.querySelector('#leak-track');
+    if (track && window.innerWidth < 900 && track.offsetHeight > window.innerHeight * 1.25) {
+      issues.push(`leak track is a tall scrub (${track.offsetHeight}px)`);
+    }
+
+    const nav = document.querySelector('.site-nav')?.getBoundingClientRect();
+    const bands = [];
+    const seenUnderNav = new Set();
+    for (const el of document.querySelectorAll('main h1, main h2, main h3, main p, main li, main span, main a, main button, main summary, footer p, footer a')) {
+      if (el.closest('.site-nav')) continue;
+      const own = [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim());
+      if (!own) continue;
+      let opacity = 1;
+      let hidden = false;
+      for (let node = el; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden') hidden = true;
+        opacity *= Number.parseFloat(style.opacity);
+      }
+      if (hidden || !Number.isFinite(opacity) || opacity < 0.3) continue;
+      const text = el.textContent.trim().replace(/\s+/g, ' ').slice(0, 60);
+      for (const rect of el.getClientRects()) {
+        const left = Math.max(rect.left, 0);
+        const right = Math.min(rect.right, window.innerWidth);
+        const top = Math.max(rect.top, 0);
+        const bottom = Math.min(rect.bottom, window.innerHeight);
+        if (right - left < 2 || bottom - top < 2) continue;
+        if (nav && nav.bottom > 1) {
+          const overlapY = Math.min(rect.bottom, nav.bottom) - Math.max(rect.top, nav.top);
+          const overlapX = Math.min(rect.right, nav.right) - Math.max(rect.left, nav.left);
+          if (overlapY > 2 && overlapX > 2 && !seenUnderNav.has(text)) {
+            seenUnderNav.add(text);
+            issues.push(`text under nav "${text}"`);
+          }
+        }
+        bands.push([top, bottom]);
+      }
+    }
+    bands.sort((a, b) => a[0] - b[0]);
+    let cursor = nav && nav.bottom > 0 ? nav.bottom : 0;
+    let maxGap = 0;
+    for (const [top, bottom] of bands) {
+      if (top > cursor) maxGap = Math.max(maxGap, top - cursor);
+      cursor = Math.max(cursor, bottom);
+    }
+    const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+    const tail = window.innerHeight - cursor;
+    if (!(atEnd && cursor > window.innerHeight * 0.35)) maxGap = Math.max(maxGap, tail);
+    if (maxGap > window.innerHeight * 0.42) issues.push(`empty scroll ${Math.round(maxGap)}px`);
 
     const root = document.querySelector(scopeSel);
     if (!root || getComputedStyle(root).display === 'none') return issues;
