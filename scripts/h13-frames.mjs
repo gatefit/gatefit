@@ -8,6 +8,11 @@
 // Mobile scroll through every scroll-driven section must not overflow
 // sideways or stack text, at 390 and 360, including after the URL bar
 // changes the viewport height. Layout heights use svh or dvh, never vh.
+// The Indie [data-count] digits stay the large price, and the "$" glyph
+// uses that same font size. Desktop scenario titles stay inside the tile
+// and break only at "_". The Indie orbit stays behind the card text. The
+// hero headline has no one-word line at 360 or 390 either. An open mobile
+// menu at 360 and 390 is an opaque sheet whose links do not cover the hero.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -353,6 +358,179 @@ async function checkHeroLines(width) {
   await page.close();
 }
 
+async function checkPriceDigits(width) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  note(`price ${width}`, await page.evaluate(() => {
+    const count = document.querySelector('.price-indie [data-count]');
+    const amount = count?.closest('.amount');
+    if (!count || !amount) return ['indie amount missing'];
+    const found = [];
+    const digits = (count.textContent ?? '').trim();
+    if (!/^\d+$/.test(digits)) found.push(`data-count is "${digits}"`);
+    if (digits.includes('$')) found.push('dollar sign is inside data-count');
+    const countSize = Number.parseFloat(getComputedStyle(count).fontSize);
+    const amountSize = Number.parseFloat(getComputedStyle(amount).fontSize);
+    if (!(countSize >= amountSize - 0.5)) found.push(`digits ${countSize}px under amount ${amountSize}px`);
+    let dollarSize = null;
+    const walker = document.createTreeWalker(amount, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      if ((node.textContent ?? '').includes('$')) {
+        dollarSize = Number.parseFloat(getComputedStyle(node.parentElement).fontSize);
+        break;
+      }
+      node = walker.nextNode();
+    }
+    if (dollarSize == null) found.push('dollar glyph missing');
+    else if (Math.abs(dollarSize - countSize) > 0.5) found.push(`$ ${dollarSize}px vs 49 ${countSize}px`);
+    for (const el of amount.querySelectorAll('span')) {
+      if ((el.textContent ?? '').trim() === '$' && el.hasAttribute('data-count')) {
+        found.push('dollar span is data-count');
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
+async function checkMobileMenu(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  const toggle = page.locator('.nav-toggle');
+  await toggle.click();
+  await settle(page);
+  note(`menu ${width}`, await page.evaluate(() => {
+    const found = [];
+    const panel = document.querySelector('#nav-links');
+    const button = document.querySelector('.nav-toggle');
+    if (!panel || !button) return ['menu missing'];
+    if (button.getAttribute('aria-expanded') !== 'true') found.push('aria-expanded is not true');
+    const style = getComputedStyle(panel);
+    if (style.display === 'none' || style.visibility === 'hidden') found.push('panel hidden while open');
+    const color = style.backgroundColor;
+    const parts = color.match(/[\d.]+/g)?.map(Number) ?? [];
+    const alpha = parts.length >= 4 ? parts[3] : (color === 'transparent' ? 0 : 1);
+    if (!(alpha >= 0.99)) found.push(`panel background ${color}`);
+    const heroes = [document.querySelector('.eyebrow'), document.querySelector('#hero-title')].filter(Boolean);
+    for (const link of panel.querySelectorAll('a')) {
+      const linkBox = link.getBoundingClientRect();
+      if (linkBox.width < 1 || linkBox.height < 1) {
+        found.push(`link missing "${link.textContent.trim()}"`);
+        continue;
+      }
+      for (const hero of heroes) {
+        const heroBox = hero.getBoundingClientRect();
+        const x = Math.min(linkBox.right, heroBox.right) - Math.max(linkBox.left, heroBox.left);
+        const y = Math.min(linkBox.bottom, heroBox.bottom) - Math.max(linkBox.top, heroBox.top);
+        if (x > 2 && y > 2) found.push(`link overlaps hero "${link.textContent.trim()}"`);
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
+async function checkScenarioTitles(width) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.evaluate(() => document.querySelector('#scenarios')?.scrollIntoView());
+  await settle(page);
+  note(`scenario ${width}`, await page.evaluate(() => {
+    const name = 'cancel_at_period_end_keeps_access_until_end';
+    const headings = [...document.querySelectorAll('#scenarios .tile h3')];
+    const target = headings.find((el) => (el.textContent ?? '').replace(/\s+/g, '') === name);
+    if (!target) return [`missing ${name}`];
+    const found = [];
+    for (const h3 of headings) {
+      const label = (h3.textContent ?? '').replace(/\s+/g, '');
+      const tile = h3.closest('.tile');
+      if (!tile) continue;
+      const box = tile.getBoundingClientRect();
+      const style = getComputedStyle(tile);
+      const clip = {
+        left: box.left + Number.parseFloat(style.borderLeftWidth),
+        right: box.right - Number.parseFloat(style.borderRightWidth),
+        top: box.top + Number.parseFloat(style.borderTopWidth),
+        bottom: box.bottom - Number.parseFloat(style.borderBottomWidth),
+      };
+      if (h3.scrollWidth > h3.clientWidth + 1 || h3.scrollHeight > h3.clientHeight + 1) {
+        found.push(`overflow "${label}"`);
+      }
+      const walker = document.createTreeWalker(h3, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        const text = node.textContent ?? '';
+        const re = /[A-Za-z0-9]+/g;
+        let match = re.exec(text);
+        while (match) {
+          const range = document.createRange();
+          range.setStart(node, match.index);
+          range.setEnd(node, match.index + match[0].length);
+          const rects = [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0);
+          const tops = new Set(rects.map((rect) => Math.round(rect.top)));
+          if (tops.size > 1) found.push(`mid-word "${match[0]}" in "${label}"`);
+          for (const rect of rects) {
+            if (rect.left < clip.left - 1 || rect.right > clip.right + 1 || rect.top < clip.top - 1 || rect.bottom > clip.bottom + 1) {
+              found.push(`clip "${label}"`);
+            }
+          }
+          match = re.exec(text);
+        }
+        node = walker.nextNode();
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
+async function checkOrbitBehindText(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.evaluate(() => document.querySelector('.price-indie')?.scrollIntoView({ block: 'center' }));
+  await settle(page);
+  note(`orbit ${width}`, await page.evaluate(() => {
+    const card = document.querySelector('.price-indie');
+    const orbit = card?.querySelector('.orbit');
+    const glow = card?.querySelector('.indie-glow');
+    if (!card || !orbit) return ['indie orbit missing'];
+    card.classList.add('lit');
+    for (const el of [orbit, glow]) {
+      if (!el) continue;
+      el.style.pointerEvents = 'auto';
+      el.style.opacity = '1';
+    }
+    const probes = [card.querySelector('[data-count]'), card.querySelector('h3')].filter(Boolean);
+    if (!probes.length) return ['indie text missing'];
+    const found = [];
+    for (const el of probes) {
+      const rect = el.getBoundingClientRect();
+      const x = Math.min(Math.max(rect.left + Math.min(rect.width / 2, 12), 0), window.innerWidth - 1);
+      const y = rect.top + rect.height / 2;
+      const label = (el.textContent ?? '').trim().slice(0, 40);
+      if (y < 0 || y > window.innerHeight) {
+        found.push(`probe offscreen "${label}"`);
+        continue;
+      }
+      const hit = document.elementFromPoint(x, y);
+      if (hit === orbit || hit === glow || hit?.closest('.orbit') || hit?.closest('.indie-glow')) {
+        found.push(`glow covers "${label}"`);
+      }
+    }
+    return found;
+  }));
+  await page.close();
+}
+
 const scrollSections = ['#leak', '#how', '#scenarios', '#pricing', '#final'];
 const scrollFractions = [0, 0.25, 0.5, 0.75, 1];
 const shotDir = '/cursor/stores/bc-0e25cb1c-5f8c-45e6-887e-4641b51f68a8/media';
@@ -590,6 +768,18 @@ await checkNavOverflow();
 await checkHeroLines(1280);
 await checkHeroLines(1440);
 await checkHeroLines(1920);
+await checkHeroLines(360);
+await checkHeroLines(390);
+await checkPriceDigits(360);
+await checkPriceDigits(390);
+await checkPriceDigits(1440);
+await checkMobileMenu(390, 844);
+await checkMobileMenu(360, 740);
+await checkScenarioTitles(1280);
+await checkScenarioTitles(1440);
+await checkScenarioTitles(1920);
+await checkOrbitBehindText(360, 740);
+await checkOrbitBehindText(390, 844);
 await checkEventNames(1280);
 await checkEventNames(1440);
 await checkEventNames(1920);

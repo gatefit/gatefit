@@ -32,6 +32,8 @@ const adapter = [
 	'}',
 ];
 
+const snakeTitle = (name: string) => name.replaceAll('_', '_<wbr>');
+
 const scenarios = [
 	{ name: 'paid_grants_access', body: 'invoice.paid leaves the row unlocked on the paid plan.', kind: 'paid' },
 	{ name: 'cancel_revokes_access', body: 'A canceled subscription locks the row.' },
@@ -258,7 +260,7 @@ const story = [
 					<p class="lede">The fixture pack the CLI runs. Names match the goldens.</p>
 					<div class="bento">
 						<article class="tile tile-wide">
-							<h3>past_due_denies_until_recovery</h3>
+							<h3 set:html={snakeTitle('past_due_denies_until_recovery')} />
 							<p>Access stays locked through past_due until invoice.paid.</p>
 							<div class="chips chip-track">
 								<span class="pchip">active</span><i></i>
@@ -269,13 +271,13 @@ const story = [
 							</div>
 						</article>
 						<article class="tile tile-wide dispute-visual">
-							<h3>dispute_revokes_or_flags</h3>
+							<h3 set:html={snakeTitle('dispute_revokes_or_flags')} />
 							<p>unpaid_after_retries_revokes sits in the same pack. Expected locked: true.</p>
 							<p class="dispute-line"><span>expected locked: true</span> <span class="got">got locked: false</span> <span class="pass-line">PASS</span></p>
 						</article>
 						{scenarios.map((item) => (
 							<article class:list={['tile', item.kind && `tile-${item.kind}`]}>
-								<h3>{item.name}</h3>
+								<h3 set:html={snakeTitle(item.name)} />
 								<p>{item.body}</p>
 							</article>
 						))}
@@ -303,7 +305,7 @@ const story = [
 							<span class="indie-glow"></span>
 							<span class="orbit" aria-hidden="true"></span>
 							<h3>Indie License</h3>
-							<p class="amount">$<span data-count>49</span> <span>one-time</span></p>
+							<p class="amount"><span class="amount-figure">$<span data-count>49</span></span><span class="amount-note">one-time</span></p>
 							<ul>
 								<li>Gatefit Indie License</li>
 								<li>Optional updates about $19 a month</li>
@@ -369,15 +371,25 @@ const story = [
 		<script>
 			const nav = document.querySelector<HTMLElement>('.site-nav');
 			const navToggle = nav?.querySelector<HTMLButtonElement>('.nav-toggle');
+			const navLinks = nav?.querySelector<HTMLElement>('#nav-links');
 			const setNavOpen = (open: boolean) => {
 				nav?.classList.toggle('is-open', open);
+				document.documentElement.classList.toggle('nav-open', open);
 				navToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
 			};
 			navToggle?.addEventListener('click', () => {
-				setNavOpen(navToggle.getAttribute('aria-expanded') !== 'true');
+				const open = navToggle.getAttribute('aria-expanded') !== 'true';
+				setNavOpen(open);
+				if (open) navLinks?.querySelector('a')?.focus({ preventScroll: true });
 			});
 			document.addEventListener('keydown', (event) => {
-				if (event.key === 'Escape') setNavOpen(false);
+				if (event.key !== 'Escape' || !nav?.classList.contains('is-open')) return;
+				setNavOpen(false);
+				navToggle?.focus({ preventScroll: true });
+			});
+			navLinks?.addEventListener('click', (event) => {
+				const target = event.target;
+				if (target instanceof Element && target.closest('a')) setNavOpen(false);
 			});
 			const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 			const sim = document.querySelector<HTMLElement>('#sim');
