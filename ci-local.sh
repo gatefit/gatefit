@@ -313,7 +313,7 @@ need_file site/src/pages/index.astro
 need_file site/public/_redirects
 need_file site/src/content/docs/quickstart.md
 need_file site/src/content/docs/action.md
-need_file site/src/content/docs/polar.md
+need_file site/src/pages/polar.astro
 need_file docs/polar.md
 need_file .github/workflows/pages.yml
 if ! grep -q 'data-polar-checkout' site/src/components/PolarBuyCta.astro; then
@@ -348,6 +348,12 @@ assert_h13_dist() {
   if grep -R -i -n -E 'docs site[^.]{0,40}coming soon|coming soon[^.]{0,24}docs site' site/dist >/dev/null; then
     fail "built site still says the docs site is coming soon"
   fi
+  [[ -f site/dist/polar/index.html ]] || fail "built /polar/ is missing"
+  if grep -q 'import PolarRedirect\|<PolarRedirect' site/dist/polar/index.html; then
+    fail "built /polar/ shows the PolarRedirect component source"
+  fi
+  grep -q "location.replace('/#pricing')" site/dist/polar/index.html \
+    || fail "built /polar/ does not redirect to /#pricing"
 }
 POLAR_CHECKOUT_URL='https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0'
 assert_live_cta() {

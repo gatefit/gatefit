@@ -30,7 +30,7 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   const index = read("site/src/pages/index.astro");
   const quickstart = read("site/src/content/docs/quickstart.md");
   const action = read("site/src/content/docs/action.md");
-  const polar = read("site/src/content/docs/polar.md");
+  const polar = read("site/src/pages/polar.astro");
   assert.match(index, /PolarBuyCta/);
   assert.match(index, /\$49/);
   assert.match(index, /Buy for \$49/);
@@ -43,11 +43,9 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(quickstart, /\/action\//);
   assert.doesNotMatch(quickstart, /\/gatefit\/action\//);
   assert.match(action, /uses: edipert\/gatefit@v0\.4\.0/);
-  assert.match(polar, /PUBLIC_POLAR_CHECKOUT_URL/);
-  assert.match(polar, /fail closed|fails closed/i);
-  assert.match(polar, /checkout is live/i);
-  assert.match(polar, /polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0/);
-  assert.match(polar, /\$49/);
+  assert.match(polar, /location\.replace\('\/#pricing'\)/);
+  assert.doesNotMatch(polar, /import PolarRedirect/);
+  assert.doesNotMatch(polar, /<PolarRedirect/);
 });
 
 const GATEFIT_CHECKOUT_URL =
