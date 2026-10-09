@@ -4,7 +4,7 @@ CI does **not** publish. There is no npm token in this repo. Do not paste tokens
 
 **npm:** coming soon. The named gate runs `npm publish --dry-run` only.
 
-**Docs site:** coming soon (`https://edipert.github.io/gatefit/`). GitHub Pages needs a public repository or a paid plan. `scripts/deploy-site.sh` copies `site/dist` to any static host.
+**Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` copies `site/dist` or deploys the Cloudflare target.
 
 **Polar checkout:** live. Gatefit Indie License, **$49** one-time: `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`.
 
@@ -31,9 +31,10 @@ Root `action.yml` is marketplace-ready (name, description, branding, composite `
 ## Docs site
 
 1. `cd site && npm ci && npm run build` writes `site/dist`.
-2. `GATEFIT_DEPLOY_TARGET=local GATEFIT_DEPLOY_DEST=/tmp/gatefit-site bash scripts/deploy-site.sh` copies that tree.
-3. `rsync` and `s3` targets are documented in `scripts/deploy-site.sh`. Set `GATEFIT_DEPLOY_REPLACE=1` because they replace destination contents.
-4. GitHub Pages needs a public repository or a paid plan. Do not expect Pages to serve a private free repo.
+2. Deploy: `npx wrangler@4 pages deploy dist --project-name gatefit` from `site/`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. The Pages project is `gatefit`. The hostname is `gatefit-bdu.pages.dev`.
+3. `GATEFIT_DEPLOY_TARGET=local GATEFIT_DEPLOY_DEST=/tmp/gatefit-site bash scripts/deploy-site.sh` copies that tree. `GATEFIT_DEPLOY_TARGET=cloudflare` runs the same wrangler deploy.
+4. `rsync` and `s3` targets are documented in `scripts/deploy-site.sh`. Set `GATEFIT_DEPLOY_REPLACE=1` because they replace destination contents.
+5. GitHub Pages needs a public repository or a paid plan. Do not expect Pages to serve a private free repo. The live site is https://gatefit.io.
 
 ## Out of scope here
 

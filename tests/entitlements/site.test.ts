@@ -13,10 +13,11 @@ function read(rel: string): string {
   return fs.readFileSync(path.join(root, rel), "utf8");
 }
 
-test("Starlight lives in site/ with GitHub Pages site+base", () => {
+test("Starlight lives in site/ at the gatefit.io root", () => {
   const cfg = read("site/astro.config.mjs");
-  assert.match(cfg, /edipert\.github\.io/);
-  assert.match(cfg, /base:\s*['"]\/gatefit['"]/);
+  assert.match(cfg, /https:\/\/gatefit\.io/);
+  assert.match(cfg, /base:\s*['"]\/['"]/);
+  assert.doesNotMatch(cfg, /base:\s*['"]\/gatefit['"]/);
   const pkg = JSON.parse(read("package.json")) as {
     version: string;
     files?: string[];
@@ -26,23 +27,25 @@ test("Starlight lives in site/ with GitHub Pages site+base", () => {
 });
 
 test("landing, quickstart, Action, and Polar docs exist", () => {
-  const index = read("site/src/content/docs/index.mdx");
+  const index = read("site/src/pages/index.astro");
   const quickstart = read("site/src/content/docs/quickstart.md");
   const action = read("site/src/content/docs/action.md");
-  const polar = read("site/src/content/docs/polar.md");
+  const polar = read("site/src/pages/polar.astro");
   assert.match(index, /PolarBuyCta/);
   assert.match(index, /\$49/);
+  assert.match(index, /Buy for \$49/);
   assert.match(index, /Indie License/);
-  assert.match(index, /coming soon/i);
+  assert.match(index, /npm is coming soon/i);
   assert.match(index, /checkout is live/i);
+  assert.doesNotMatch(index, /\/gatefit\//);
   assert.match(quickstart, /npx gatefit/);
   assert.match(quickstart, /adapter/i);
+  assert.match(quickstart, /\/action\//);
+  assert.doesNotMatch(quickstart, /\/gatefit\/action\//);
   assert.match(action, /uses: edipert\/gatefit@v0\.4\.0/);
-  assert.match(polar, /PUBLIC_POLAR_CHECKOUT_URL/);
-  assert.match(polar, /fail closed|fails closed/i);
-  assert.match(polar, /checkout is live/i);
-  assert.match(polar, /polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0/);
-  assert.match(polar, /\$49/);
+  assert.match(polar, /location\.replace\('\/#pricing'\)/);
+  assert.doesNotMatch(polar, /import PolarRedirect/);
+  assert.doesNotMatch(polar, /<PolarRedirect/);
 });
 
 const GATEFIT_CHECKOUT_URL =
@@ -81,6 +84,8 @@ test("GitHub Pages workflow builds site/ and stays out of live-clock CI", () => 
   assert.match(workflow, /withastro\/action/);
   assert.match(workflow, /path:\s*site/);
   assert.match(workflow, /deploy-pages/);
+  assert.match(workflow, /committed Checkout Link/);
+  assert.doesNotMatch(workflow, /Empty \/ unset fails closed/);
   assert.doesNotMatch(workflow, /GATEFIT_LIVE_CLOCK/);
 });
 

@@ -20,7 +20,7 @@ jobs:
           path: site
           node-version: 22
         env:
-          # Empty / unset fails closed in PolarBuyCta (no polar.sh placeholder href).
+          # Empty / unset uses the committed Checkout Link. Any other non-polar_cl_ value fails closed.
           PUBLIC_POLAR_CHECKOUT_URL: ${{ vars.PUBLIC_POLAR_CHECKOUT_URL }}
   deploy:
     needs: build

@@ -24,7 +24,7 @@ Nested path from earlier Highs still works:
     adapter: src/your-access-adapter.ts
 ```
 
-`adapter` is a path in **your** repo. Goldens default to Gatefit’s bundled pack (S1–S6 plus later fixture goldens).
+`adapter` is a path in **your** repo. Goldens default to Gatefit’s bundled pack (S1-S6 plus later fixture goldens).
 
 ## Rules
 

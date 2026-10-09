@@ -8,11 +8,16 @@
 #
 # Inputs:
 #   GATEFIT_SITE_DIST       Built static directory. Default: <repo>/site/dist
-#   GATEFIT_DEPLOY_TARGET   local | rsync | s3
-#   GATEFIT_DEPLOY_DEST     Destination.
+#   GATEFIT_DEPLOY_TARGET   local | rsync | s3 | cloudflare
+#   GATEFIT_DEPLOY_DEST     Destination. Not used for cloudflare.
 #     local: absolute directory. Created if needed.
 #     rsync: user@host:path (requires rsync). Replaces remote contents.
 #     s3:    s3://bucket/prefix (requires the aws CLI). Replaces prefix contents.
+#     cloudflare: npx wrangler@4 pages deploy dist --project-name gatefit
+#       Run from site/ after npm run build, or let this script pass the dist path.
+#       Project name is gatefit. Hostname is gatefit-bdu.pages.dev.
+#       CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID come from the environment.
+#       This script does not read or store those secrets.
 #   GATEFIT_DEPLOY_REPLACE  Set to 1 to replace a non-empty local dest, or to
 #                           allow rsync and s3 (those targets always replace).
 #
@@ -29,12 +34,14 @@ DEST="${GATEFIT_DEPLOY_DEST:-}"
 
 fail() { echo "deploy-site: FAIL: $*" >&2; exit 1; }
 
-[[ -n "$TARGET" ]] || fail "GATEFIT_DEPLOY_TARGET is required (local, rsync, or s3)"
-[[ -n "$DEST" ]] || fail "GATEFIT_DEPLOY_DEST is required"
+[[ -n "$TARGET" ]] || fail "GATEFIT_DEPLOY_TARGET is required (local, rsync, s3, or cloudflare)"
+if [[ "$TARGET" != "cloudflare" ]]; then
+  [[ -n "$DEST" ]] || fail "GATEFIT_DEPLOY_DEST is required"
+fi
 
 case "$TARGET" in
-  local|rsync|s3) ;;
-  *) fail "unknown GATEFIT_DEPLOY_TARGET: $TARGET (use local, rsync, or s3)" ;;
+  local|rsync|s3|cloudflare) ;;
+  *) fail "unknown GATEFIT_DEPLOY_TARGET: $TARGET (use local, rsync, s3, or cloudflare)" ;;
 esac
 
 assert_safe_local_dest() {
@@ -122,6 +129,12 @@ case "$TARGET" in
   s3)
     command -v aws >/dev/null 2>&1 || fail "aws CLI is not installed"
     aws s3 sync "$DIST" "$DEST" --delete
+    ;;
+  cloudflare)
+    [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]] || fail "CLOUDFLARE_API_TOKEN is required from the environment"
+    [[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]] || fail "CLOUDFLARE_ACCOUNT_ID is required from the environment"
+    command -v npx >/dev/null 2>&1 || fail "npx is required"
+    npx --yes wrangler@4 pages deploy "$DIST" --project-name gatefit
     ;;
 esac
 

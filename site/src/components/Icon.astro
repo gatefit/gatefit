@@ -1,0 +1,38 @@
+---
+import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
+import githubLogo from '@phosphor-icons/core/assets/regular/github-logo.svg?raw';
+import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
+import xIcon from '@phosphor-icons/core/assets/regular/x.svg?raw';
+import lock from '@phosphor-icons/core/assets/regular/lock.svg?raw';
+import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
+import plus from '@phosphor-icons/core/assets/regular/plus.svg?raw';
+import arrowClockwise from '@phosphor-icons/core/assets/regular/arrow-clockwise.svg?raw';
+import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
+import terminalWindow from '@phosphor-icons/core/assets/regular/terminal-window.svg?raw';
+
+const icons = {
+	'arrow-right': arrowRight,
+	'github-logo': githubLogo,
+	check,
+	x: xIcon,
+	lock,
+	copy,
+	plus,
+	'arrow-clockwise': arrowClockwise,
+	'shield-check': shieldCheck,
+	'terminal-window': terminalWindow,
+} as const;
+
+interface Props {
+	name: keyof typeof icons;
+	size?: number;
+}
+
+const { name, size = 20 } = Astro.props;
+const svg = icons[name].replace(
+	'<svg ',
+	`<svg width="${size}" height="${size}" aria-hidden="true" focusable="false" `,
+);
+---
+
+<span class="icon" set:html={svg} />

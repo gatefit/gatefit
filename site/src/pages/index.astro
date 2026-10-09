@@ -1,0 +1,382 @@
+---
+import '../styles/landing.css';
+import Icon from '../components/Icon.astro';
+import PolarBuyCta from '../components/PolarBuyCta.astro';
+
+const workflow = [
+	'name: gatefit',
+	'on:',
+	'  pull_request:',
+	'jobs:',
+	'  access:',
+	'    runs-on: ubuntu-latest',
+	'    steps:',
+	'      - uses: actions/checkout@v4',
+	'      - uses: actions/setup-node@v4',
+	'        with:',
+	'          node-version: "22"',
+	'      - uses: edipert/gatefit@v0.4.0',
+	'        with:',
+	'          adapter: src/access-adapter.ts',
+];
+
+const adapter = [
+	'export function createAdapter() {',
+	'  return {',
+	'    apply(event) {},',
+	'    snapshot() {',
+	'      return { locked: true, plan: "pro" };',
+	'    },',
+	'    reset() {},',
+	'  };',
+	'}',
+];
+
+const scenarios = [
+	{ name: 'paid_grants_access', body: 'invoice.paid leaves the row unlocked on the paid plan.', kind: 'paid' },
+	{ name: 'cancel_revokes_access', body: 'A canceled subscription locks the row.' },
+	{ name: 'refund_revokes_access', body: 'charge.refunded must lock Pro. A 200 is not enough.', kind: 'refund' },
+	{ name: 'trial_to_paid_grants', body: 'trialing becomes paid only after invoice.paid.' },
+	{ name: 'duplicate_webhook_idempotent', body: 'The same Stripe event id does not grant twice.' },
+	{ name: 'seat_qty_vs_db_cap', body: 'The DB cap matches the subscription quantity.' },
+	{ name: 'cancel_at_period_end_keeps_access_until_end', body: 'Access stays until period_end, then locks.' },
+	{ name: 'upgrade_plus_cape_race', body: 'An upgrade and cancel-at-period-end resolve to one row.' },
+];
+
+const story = [
+	{ k: 'Refund', h: 'A customer asks for a refund. Stripe fires charge.refunded.', d: 'Stripe node active. The access row is still Pro.' },
+	{ k: 'Webhook', h: 'Your webhook answers 200 OK. Everyone relaxes.', d: 'pending becomes 200 OK. The database has not moved.' },
+	{ k: 'Leak', h: 'Stripe said 200. Your database said yes. It should have said no.', d: 'locked: false. Refunded customer still has Pro.' },
+	{ k: 'Caught', h: 'Gatefit replays it in CI. The build goes red, not your inbox.', d: 'FAIL refund_revokes_access. Expected locked: true. Merge blocked.' },
+	{ k: 'Fixed', h: 'Fix the adapter, rerun the gate. Refund in, Pro out.', d: 'locked: true. PASS all goldens. Exit 0.' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Gatefit</title>
+		<meta name="description" content="CI that asserts the access DB survives ugly billing transitions." />
+		<meta name="theme-color" content="#0A0A0B" />
+		<link rel="icon" href="/favicon.svg" />
+		<script is:inline>
+			if (new URLSearchParams(location.search).has('frames')) {
+				document.documentElement.classList.add('frames');
+			}
+			if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				document.documentElement.classList.add('motion');
+				var ready = function () { document.documentElement.classList.add('ready'); };
+				if (document.fonts) document.fonts.ready.then(ready);
+				setTimeout(ready, 300);
+			}
+		</script>
+	</head>
+	<body>
+		<a class="skip" href="#hero">Skip to content</a>
+		<header class="site-nav">
+			<div class="wrap">
+				<a class="word" href="/">Gatefit</a>
+				<nav class="nav-links" aria-label="Primary">
+					<a class="nav-link" href="/quickstart/">Quickstart</a>
+					<a class="nav-link" href="/action/">Action</a>
+					<a class="nav-link" href="#pricing">Pricing</a>
+				</nav>
+				<PolarBuyCta size="nav" label="Buy for $49" />
+			</div>
+		</header>
+
+		<main id="hero">
+			<section class="hero" aria-labelledby="hero-title">
+				<div class="hero-field" aria-hidden="true"></div>
+				<div class="wrap">
+					<div class="hero-copy">
+						<p class="eyebrow">Access DB, not HTTP 200</p>
+						<h1 id="hero-title">
+							<span class="hero-line">Your paywall leaks</span>
+							<span class="hero-line">when Stripe gets weird.</span>
+						</h1>
+						<p class="hero-sub">CI checks the access row after refunds, replays, and past_due. A 200 from Stripe is not access.</p>
+						<div class="hero-cta">
+							<PolarBuyCta embed label="Buy for $49" />
+							<a class="quiet" href="/quickstart/">Read the quickstart <Icon name="arrow-right" size={16} /></a>
+						</div>
+					</div>
+					<div class="hero-sim">
+						<section class="sim" id="sim" data-state="refund" aria-label="Replay of sub_1Pq7 against the access DB">
+							<div class="sim-top">
+								<span>sub_1Pq7 replayed against your access DB</span>
+								<span class="replaying-dot" aria-hidden="true"></span>
+								<button type="button" class="replay">Replay</button>
+							</div>
+							<div class="sim-grid">
+								<ol class="sim-rows">
+									<li><button type="button" class="sim-row" data-sim-jump="created"><span class="name">customer.subscription.created</span><span class="chip">trialing</span></button></li>
+									<li><button type="button" class="sim-row" data-sim-jump="paid"><span class="name">invoice.paid</span><span class="chip">active</span></button></li>
+									<li>
+										<button type="button" class="sim-row" data-sim-jump="refund">
+											<span class="row-hl"></span><span class="row-sweep"></span>
+											<span class="name">charge.refunded</span><span class="chip">refunded</span>
+										</button>
+									</li>
+									<li><button type="button" class="sim-row" data-sim-jump="dispute"><span class="name">charge.dispute.created</span><span class="chip">disputed</span></button></li>
+									<li><button type="button" class="sim-row" data-sim-jump="past_due"><span class="name">invoice.payment_failed</span><span class="chip">past_due</span></button></li>
+								</ol>
+								<div class="db">
+									<h3>Access DB</h3>
+									<p class="db-line"><span class="k">plan</span><span class="swap"><span class="plan-trial">trial</span><span class="plan-pro">pro</span></span></p>
+									<p class="db-line"><span class="k">locked</span><span>false</span></p>
+									<div class="db-leak">
+										<p class="db-line"><span class="k">expected</span><span>locked: true</span></p>
+										<p class="db-line"><span class="k">actual</span><span class="db-false">locked: false</span></p>
+										<p class="leak-callout">Refunded customer still has Pro.</p>
+									</div>
+								</div>
+							</div>
+							<ul class="verdicts">
+								<li class="verdict" data-v="paid"><Icon name="check" size={14} /> paid_grants_access</li>
+								<li class="verdict bad" data-v="refund"><Icon name="x" size={14} /> refund_revokes_access expected locked: true, got false</li>
+								<li class="verdict bad" data-v="block"><Icon name="x" size={14} /> gatefit: 1 golden failed. Build blocked.</li>
+							</ul>
+							<button type="button" class="sim-next">Show next state</button>
+						</section>
+					</div>
+				</div>
+			</section>
+
+			<section id="leak" aria-labelledby="leak-title">
+				<div id="leak-track">
+					<div id="leak-stage">
+						<div class="leak-grid" aria-hidden="true"></div>
+						<div class="wrap">
+							<p class="leak-kicker">From refund to fix</p>
+							<div class="leak-headlines">
+								<p data-i="0" id="leak-title">A customer asks for a refund. Stripe fires charge.refunded.</p>
+								<p data-i="1">Your webhook answers 200 OK. Everyone relaxes.</p>
+								<p data-i="2">Stripe said 200. Your database said yes. It should have said no.</p>
+								<p data-i="3">Gatefit replays it in CI. The build goes red, not your inbox.</p>
+								<p data-i="4">Fix the adapter, rerun the gate. Refund in, Pro out.</p>
+							</div>
+							<div class="pipeline">
+								<article class="node" id="node-stripe"><span class="ring"></span><h3>Stripe</h3><p>charge.refunded</p></article>
+								<div class="conn" id="conn-1"></div>
+								<article class="node" id="node-hook"><span class="ring"></span><h3>Webhook</h3><p class="swap"><span class="pending">pending</span><span class="ok">200 OK</span></p></article>
+								<div class="conn" id="conn-2"><span class="red"></span><span class="green"></span></div>
+								<article class="node" id="node-db">
+									<span class="red"></span><span class="green"></span>
+									<h3>Access DB</h3>
+									<p class="swap"><span class="locked-false">locked: false</span><span class="locked-true">locked: true</span></p>
+								</article>
+								<div class="conn" id="conn-3"><span class="green"></span></div>
+								<article class="node" id="node-ci">
+									<span class="red"></span><span class="green"></span>
+									<h3>CI</h3>
+									<p class="swap"><span class="fail">FAIL refund_revokes_access</span><span class="pass">PASS all goldens</span></p>
+								</article>
+							</div>
+							<div class="rail" role="group" aria-label="Leak story">
+								<button type="button" data-leak-jump="0" data-leak-index="0">Refund <span class="rail-seg" data-i="0"></span></button>
+								<button type="button" data-leak-jump="0.2" data-leak-index="1">Webhook <span class="rail-seg" data-i="1"></span></button>
+								<button type="button" data-leak-jump="0.4" data-leak-index="2">Leak <span class="rail-seg" data-i="2"></span></button>
+								<button type="button" data-leak-jump="0.6" data-leak-index="3">Caught <span class="rail-seg" data-i="3"></span></button>
+								<button type="button" data-leak-jump="0.8" data-leak-index="4">Fixed <span class="rail-seg" data-i="4"></span></button>
+							</div>
+						</div>
+					</div>
+					<div class="leak-snaps" aria-hidden="true">
+						<div class="leak-snap" id="snap-refund"></div>
+						<div class="leak-snap" id="snap-webhook"></div>
+						<div class="leak-snap" id="snap-leak"></div>
+						<div class="leak-snap" id="snap-caught"></div>
+						<div class="leak-snap" id="snap-fixed"></div>
+					</div>
+					<div class="leak-stack wrap">
+						{story.map((item) => (
+							<article class="stack-card">
+								<h3>{item.h}</h3>
+								<p>{item.k}. {item.d}</p>
+							</article>
+						))}
+					</div>
+					<div class="leak-mobile wrap">
+						<article class="m-node"><h3>Stripe</h3><p>charge.refunded</p></article>
+						<div class="vconn"></div>
+						<article class="m-node"><h3>Webhook</h3><p>200 OK</p></article>
+						<div class="vconn"></div>
+						<article class="m-node" id="m-db"><h3>Access DB</h3><p class="red">locked: false</p></article>
+						<div class="vconn"></div>
+						<article class="m-node"><h3>CI</h3><p>FAIL refund_revokes_access</p></article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section" id="how">
+				<div class="wrap">
+					<h2>Three moves, then the merge stops.</h2>
+					<p class="lede">Adapt the access row, run the goldens, and gate the pull request.</p>
+					<div class="how-grid">
+						<ol class="steps">
+							<li class="step" data-step="adapt"><span class="step-bg"></span><strong>Adapt</strong></li>
+							<li class="step" data-step="run"><span class="step-bg"></span><strong>Run</strong></li>
+							<li class="step" data-step="gate"><span class="step-bg"></span><strong>Gate</strong></li>
+						</ol>
+						<div>
+							<div class="how-window">
+								<div class="tabs">
+									<span class="tab is-on" data-tab="workflow">workflow.yml</span>
+									<span class="tab" data-tab="adapter">access-adapter.ts</span>
+								</div>
+								<button type="button" class="copy" data-copy aria-label="Copy workflow">
+									<Icon name="copy" size={16} />
+									<span class="check"><Icon name="check" size={16} /></span>
+								</button>
+								<pre class="pane is-on" data-pane="workflow"><code>{workflow.map((line) => (
+									<span class:list={['how-line', line.includes('edipert/gatefit@v0.4.0') && 'is-uses']}>
+										{line.includes('edipert/gatefit@v0.4.0') && <span class="how-bar" />}
+										{line.includes('edipert/gatefit@v0.4.0') && <span class="uses-layer" />}
+										<span class="how-inner">{line || ' '}</span>
+									</span>
+								))}</code></pre>
+								<pre class="pane" data-pane="adapter"><code>{adapter.map((line) => (
+									<span class="how-line"><span class="how-inner">{line}</span></span>
+								))}</code></pre>
+							</div>
+							<p class="out"><span class="out-cmd"><span>$ gatefit run</span></span><span class="out-ok"><Icon name="check" size={14} /> all goldens passed, exit 0</span></p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="section" id="scenarios">
+				<div class="wrap">
+					<h2>Ten transitions, one access row.</h2>
+					<p class="lede">The fixture pack the CLI runs. Names match the goldens.</p>
+					<div class="bento">
+						<article class="tile tile-wide">
+							<h3>past_due_denies_until_recovery</h3>
+							<p>Access stays locked through past_due until invoice.paid.</p>
+							<div class="chips chip-track">
+								<span class="pchip">active</span><i></i>
+								<span class="pchip">past_due</span><i></i>
+								<span class="pchip">invoice.paid</span><i></i>
+								<span class="pchip">active</span>
+								<span class="lock-pop"><Icon name="lock" size={16} /></span>
+							</div>
+						</article>
+						<article class="tile tile-wide dispute-visual">
+							<h3>dispute_revokes_or_flags</h3>
+							<p>unpaid_after_retries_revokes sits in the same pack. Expected locked: true.</p>
+							<p class="dispute-line"><span>expected locked: true</span> <span class="got">got locked: false</span> <span class="pass-line">PASS</span></p>
+						</article>
+						{scenarios.map((item) => (
+							<article class:list={['tile', item.kind && `tile-${item.kind}`]}>
+								<h3>{item.name}</h3>
+								<p>{item.body}</p>
+							</article>
+						))}
+					</div>
+				</div>
+			</section>
+
+			<section class="section" id="pricing">
+				<div class="wrap">
+					<h2>Free to run. $49 to keep.</h2>
+					<p class="lede">The CLI and Action stay free. The indie license is a one-time Polar checkout.</p>
+					<div class="prices">
+						<article class="price-card">
+							<span class="edge"></span>
+							<h3>Free CLI / Action</h3>
+							<p class="amount">$0</p>
+							<ul>
+								<li>Fixture goldens and <code>npx gatefit</code></li>
+								<li>Composite GitHub Action</li>
+								<li>npm is coming soon</li>
+							</ul>
+							<a class="quiet" href="/quickstart/">Read the quickstart <Icon name="arrow-right" size={16} /></a>
+						</article>
+						<article class="price-card price-indie indie">
+							<span class="indie-glow"></span>
+							<span class="orbit" aria-hidden="true"></span>
+							<h3>Indie License</h3>
+							<p class="amount">$<span data-count>49</span> <span>one-time</span></p>
+							<ul>
+								<li>Gatefit Indie License</li>
+								<li>Optional updates about $19 a month</li>
+								<li>Polar is the merchant of record</li>
+							</ul>
+							<PolarBuyCta label="Buy for $49" />
+							<p class="live-note">Polar checkout is live.</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section" id="faq">
+				<div class="wrap">
+					<h2>Before you wire it.</h2>
+					<div class="faq">
+						<details>
+							<summary>Does the CLI cost money? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
+							<div class="faq-body"><div><p>No. The CLI and the GitHub Action stay free. npm is coming soon.</p></div></div>
+						</details>
+						<details>
+							<summary>What does the $49 license buy? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
+							<div class="faq-body"><div><p>The Gatefit Indie License, one time. Polar is the merchant of record. Optional updates are about $19 a month.</p></div></div>
+						</details>
+						<details>
+							<summary>Does a Stripe 200 prove access? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
+							<div class="faq-body"><div><p>No. Gatefit reads the access row after the event. HTTP 200 is not a grant.</p></div></div>
+						</details>
+						<details>
+							<summary>What if I reduce motion? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
+							<div class="faq-body"><div><p>The leak story stacks in place. Nothing pins, loops, or shakes.</p></div></div>
+						</details>
+					</div>
+				</div>
+			</section>
+
+			<section class="final" id="final">
+				<div class="wrap">
+					<div class="final-band">
+						<h2>Ship the gate before the refund.</h2>
+						<p class="lede">Buy the indie license, or read the quickstart and run the free CLI.</p>
+						<div class="hero-cta">
+							<PolarBuyCta label="Buy for $49" />
+							<a class="quiet" href="/quickstart/">Read the quickstart <Icon name="arrow-right" size={16} /></a>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="site-foot">
+			<div class="wrap">
+				<p>Docs live at <a href="https://gatefit.io">gatefit.io</a>. npm is coming soon.</p>
+				<div class="foot-links">
+					<a href="/quickstart/">Quickstart</a>
+					<a href="/action/">Action</a>
+					<a href="#pricing">Pricing</a>
+					<a href="https://github.com/edipert/gatefit" aria-label="GitHub"><Icon name="github-logo" size={18} /></a>
+				</div>
+			</div>
+		</footer>
+
+		<script>
+			const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const sim = document.querySelector<HTMLElement>('#sim');
+			const next = sim?.querySelector<HTMLButtonElement>('.sim-next');
+			const order = ['refund', 'dispute', 'past_due', 'created', 'paid'];
+			let step = 0;
+			next?.addEventListener('click', () => {
+				step = (step + 1) % order.length;
+				sim?.setAttribute('data-state', order[step] ?? 'refund');
+			});
+			if (!reduce && !new URLSearchParams(location.search).has('frames')) {
+				import('../scripts/landing-motion').catch(() => {
+					document.documentElement.classList.remove('motion');
+				});
+			}
+		</script>
+	</body>
+</html>
