@@ -13,6 +13,8 @@
 // and break only at "_". The Indie orbit stays behind the card text. The
 // hero headline has no one-word line at 360 or 390 either. An open mobile
 // menu at 360 and 390 is an opaque sheet whose links do not cover the hero.
+// Under 900px the Indie glow must not paint across the title, price, or
+// bullets, including halfway through the orbit spin.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -21,6 +23,7 @@ import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { inflateSync } from 'node:zlib';
 
 const dist = process.argv[2];
 if (!dist || !existsSync(join(dist, 'index.html'))) {
@@ -491,6 +494,162 @@ async function checkScenarioTitles(width) {
   await page.close();
 }
 
+function decodePng(buf) {
+  const png = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+  const sig = [137, 80, 78, 71, 13, 10, 26, 10];
+  for (let i = 0; i < sig.length; i += 1) {
+    if (png[i] !== sig[i]) throw new Error('png signature');
+  }
+  let pos = 8;
+  let width = 0;
+  let height = 0;
+  let colorType = 0;
+  const idat = [];
+  while (pos < png.length) {
+    const len = png.readUInt32BE(pos);
+    pos += 4;
+    const type = png.toString('ascii', pos, pos + 4);
+    pos += 4;
+    const data = png.subarray(pos, pos + len);
+    pos += len + 4;
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      colorType = data[9];
+      if (data[8] !== 8 || data[12] !== 0) throw new Error('unsupported png');
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+  }
+  const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : 0;
+  if (!channels) throw new Error(`png color ${colorType}`);
+  const inflated = inflateSync(Buffer.concat(idat));
+  const stride = width * channels;
+  const rgb = Buffer.alloc(width * height * 3);
+  let src = 0;
+  let prev = Buffer.alloc(stride);
+  for (let y = 0; y < height; y += 1) {
+    const filter = inflated[src];
+    src += 1;
+    const row = Buffer.from(inflated.subarray(src, src + stride));
+    src += stride;
+    for (let i = 0; i < stride; i += 1) {
+      const left = i >= channels ? row[i - channels] : 0;
+      const up = prev[i];
+      const ul = i >= channels ? prev[i - channels] : 0;
+      let value = row[i];
+      if (filter === 1) value = (value + left) & 255;
+      else if (filter === 2) value = (value + up) & 255;
+      else if (filter === 3) value = (value + ((left + up) >> 1)) & 255;
+      else if (filter === 4) {
+        const paeth = left + up - ul;
+        const pa = Math.abs(paeth - left);
+        const pb = Math.abs(paeth - up);
+        const pc = Math.abs(paeth - ul);
+        const pred = pa <= pb && pa <= pc ? left : pb <= pc ? up : ul;
+        value = (value + pred) & 255;
+      }
+      row[i] = value;
+    }
+    for (let x = 0; x < width; x += 1) {
+      const from = x * channels;
+      const to = (y * width + x) * 3;
+      rgb[to] = row[from];
+      rgb[to + 1] = row[from + 1];
+      rgb[to + 2] = row[from + 2];
+    }
+    prev = row;
+  }
+  return { width, height, rgb };
+}
+
+function amberInside(img, box, scaleX, scaleY) {
+  const x0 = Math.max(0, Math.floor((box.x + 3) * scaleX));
+  const y0 = Math.max(0, Math.floor((box.y + 3) * scaleY));
+  const x1 = Math.min(img.width, Math.ceil((box.x + box.w - 3) * scaleX));
+  const y1 = Math.min(img.height, Math.ceil((box.y + box.h - 3) * scaleY));
+  let count = 0;
+  for (let y = y0; y < y1; y += 1) {
+    for (let x = x0; x < x1; x += 1) {
+      const i = (y * img.width + x) * 3;
+      const r = img.rgb[i];
+      const g = img.rgb[i + 1];
+      const b = img.rgb[i + 2];
+      if (r > 140 && g > 80 && b < 170 && r > b + 40 && g > b + 25) count += 1;
+    }
+  }
+  return count;
+}
+
+async function seekIndieGlow(page, fraction) {
+  await page.evaluate((fraction) => {
+    document.querySelector('#pricing')?.classList.add('lit');
+    const card = document.querySelector('.price-indie');
+    card?.classList.add('lit');
+    const orbit = card?.querySelector('.orbit');
+    const glow = card?.querySelector('.indie-glow');
+    for (const anim of document.getAnimations()) {
+      const target = anim.effect?.target;
+      if (target !== orbit && target !== glow) continue;
+      anim.pause();
+      const dur = anim.effect.getComputedTiming().duration;
+      if (typeof dur === 'number' && dur > 0) anim.currentTime = dur * fraction;
+    }
+  }, fraction);
+}
+
+async function checkOrbitCone(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.locator('.price-indie').scrollIntoViewIfNeeded();
+  await settle(page);
+  const fractions = [0, 0.25, 0.5, 0.75];
+  for (const fraction of fractions) {
+    await seekIndieGlow(page, fraction);
+    await settle(page);
+    const card = page.locator('.price-indie');
+    const cardBox = await card.boundingBox();
+    if (!cardBox) {
+      note(`cone ${width} ${fraction}`, ['indie card missing']);
+      continue;
+    }
+    const png = await card.screenshot();
+    const img = decodePng(png);
+    const scaleX = img.width / cardBox.width;
+    const scaleY = img.height / cardBox.height;
+    const regions = await page.evaluate(() => {
+      const root = document.querySelector('.price-indie');
+      const card = root.getBoundingClientRect();
+      const pick = (sel) => {
+        const el = root.querySelector(sel);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return {
+          sel,
+          text: (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 32),
+          x: rect.left - card.left,
+          y: rect.top - card.top,
+          w: rect.width,
+          h: rect.height,
+        };
+      };
+      return [pick('h3'), pick('.amount'), pick('li')].filter(Boolean);
+    });
+    const found = [];
+    for (const region of regions) {
+      if (region.w < 4 || region.h < 4) {
+        found.push(`missing "${region.text}"`);
+        continue;
+      }
+      const amber = amberInside(img, region, scaleX, scaleY);
+      if (amber > 24) found.push(`cone over "${region.text}" at ${fraction} (${amber}px)`);
+    }
+    note(`cone ${width} ${fraction}`, found);
+  }
+  await page.close();
+}
+
 async function checkOrbitBehindText(width, height) {
   const page = await browser.newPage();
   await page.setViewportSize({ width, height });
@@ -780,6 +939,8 @@ await checkScenarioTitles(1440);
 await checkScenarioTitles(1920);
 await checkOrbitBehindText(360, 740);
 await checkOrbitBehindText(390, 844);
+await checkOrbitCone(360, 740);
+await checkOrbitCone(390, 844);
 await checkEventNames(1280);
 await checkEventNames(1440);
 await checkEventNames(1920);
