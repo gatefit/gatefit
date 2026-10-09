@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Bring an AccessAdapter and run Gatefit goldens with npx gatefit.
+description: Bring an AccessAdapter and run the access checks with npx gatefit.
 ---
 
 Gatefit checks **your access DB**, not Stripe HTTP 200. Node 22+.
@@ -11,7 +11,7 @@ Export `createAdapter()` (or `default`) with:
 
 - `apply(event)`: ingest one billing event
 - `snapshot(customerId)`: return `{ locked, plan?, seats?, features? }`
-- `reset()`: required when running more than one golden
+- `reset()`: required when running more than one check
 
 `locked: true` means deny even if Stripe looks paid. Compare is declared-fields-only.
 
@@ -21,15 +21,13 @@ Longer contract: [bring-your-adapter.md](https://github.com/edipert/gatefit/blob
 
 ## 2. Run
 
-npm is coming soon. After npm publish:
-
 ```bash
 npx gatefit --version
 npx gatefit adapter-check
 npx gatefit run --suite paid_grants_access --adapter ./src/your-access-adapter.ts
 ```
 
-From a clone until the package is on the registry:
+From a checkout of this repo:
 
 ```bash
 npm install
@@ -37,7 +35,7 @@ node bin/gatefit.js adapter-check
 node bin/gatefit.js run --suite tests/entitlements/goldens --adapter ./src/your-access-adapter.ts
 ```
 
-Exit 0 means the goldens passed against that adapter.
+Exit 0 means the checks passed against that adapter.
 
 ## 3. Named gate
 

@@ -2,6 +2,7 @@
 import '../styles/landing.css';
 import Icon from '../components/Icon.astro';
 import PolarBuyCta from '../components/PolarBuyCta.astro';
+import AccessDial from '../components/AccessDial.astro';
 
 const workflow = [
 	'name: gatefit',
@@ -30,19 +31,6 @@ const adapter = [
 	'    reset() {},',
 	'  };',
 	'}',
-];
-
-const snakeTitle = (name: string) => name.replaceAll('_', '_<wbr>');
-
-const scenarios = [
-	{ name: 'paid_grants_access', body: 'invoice.paid leaves the row unlocked on the paid plan.', kind: 'paid' },
-	{ name: 'cancel_revokes_access', body: 'A canceled subscription locks the row.' },
-	{ name: 'refund_revokes_access', body: 'charge.refunded must lock Pro. A 200 is not enough.', kind: 'refund' },
-	{ name: 'trial_to_paid_grants', body: 'trialing becomes paid only after invoice.paid.' },
-	{ name: 'duplicate_webhook_idempotent', body: 'The same Stripe event id does not grant twice.' },
-	{ name: 'seat_qty_vs_db_cap', body: 'The DB cap matches the subscription quantity.' },
-	{ name: 'cancel_at_period_end_keeps_access_until_end', body: 'Access stays until period_end, then locks.' },
-	{ name: 'upgrade_plus_cape_race', body: 'An upgrade and cancel-at-period-end resolve to one row.' },
 ];
 
 const story = [
@@ -220,7 +208,7 @@ const story = [
 			<section class="section" id="how">
 				<div class="wrap">
 					<h2>Three moves, then the merge stops.</h2>
-					<p class="lede">Adapt the access row, run the goldens, and gate the pull request.</p>
+					<p class="lede">Adapt the access row, run the checks, and gate the pull request.</p>
 					<div class="how-grid">
 						<ol class="steps">
 							<li class="step" data-step="adapt"><span class="step-bg"></span><strong>Adapt</strong></li>
@@ -254,33 +242,37 @@ const story = [
 				</div>
 			</section>
 
-			<section class="section" id="scenarios">
-				<div class="wrap">
-					<h2>Ten transitions, one access row.</h2>
-					<p class="lede">The fixture pack the CLI runs. Names match the goldens.</p>
-					<div class="bento">
-						<article class="tile tile-wide">
-							<h3 set:html={snakeTitle('past_due_denies_until_recovery')} />
-							<p>Access stays locked through past_due until invoice.paid.</p>
-							<div class="chips chip-track">
-								<span class="pchip">active</span><i></i>
-								<span class="pchip">past_due</span><i></i>
-								<span class="pchip">invoice.paid</span><i></i>
-								<span class="pchip">active</span>
-								<span class="lock-pop"><Icon name="lock" size={16} /></span>
+			<section class="section" id="scenarios" aria-label="Ten transitions, one access row.">
+				<div id="dial-track">
+					<div id="dial-stage">
+						<div class="dial-layout">
+							<div class="dial-copy">
+								<h2>Ten transitions, one access row.</h2>
+								<p class="lede">One customer goes around the dial. Every Stripe event turns the row open or locked. Gatefit flags the turn your app misses.</p>
+								<ul class="dial-legend">
+									<li><span class="swatch is-open"></span><span class="swatch is-locked"></span> outer ring: expected</li>
+									<li>inner ring: your app</li>
+									<li><span class="swatch is-open"></span> open</li>
+									<li><span class="swatch is-locked"></span> locked</li>
+									<li>rings disagree</li>
+								</ul>
 							</div>
-						</article>
-						<article class="tile tile-wide dispute-visual">
-							<h3 set:html={snakeTitle('dispute_revokes_or_flags')} />
-							<p>unpaid_after_retries_revokes sits in the same pack. Expected locked: true.</p>
-							<p class="dispute-line"><span>expected locked: true</span> <span class="got">got locked: false</span> <span class="pass-line">PASS</span></p>
-						</article>
-						{scenarios.map((item) => (
-							<article class:list={['tile', item.kind && `tile-${item.kind}`]}>
-								<h3 set:html={snakeTitle(item.name)} />
-								<p>{item.body}</p>
-							</article>
-						))}
+							<AccessDial uid="desk" labels />
+						</div>
+					</div>
+				</div>
+				<div class="dial-mobile-wrap">
+					<div class="wrap">
+						<h2>Ten transitions, one access row.</h2>
+						<p class="lede">One customer goes around the dial. Every Stripe event turns the row open or locked. Gatefit flags the turn your app misses.</p>
+						<AccessDial uid="mobile" card />
+						<ul class="dial-legend">
+							<li><span class="swatch is-open"></span><span class="swatch is-locked"></span> outer ring: expected</li>
+							<li>inner ring: your app</li>
+							<li><span class="swatch is-open"></span> open</li>
+							<li><span class="swatch is-locked"></span> locked</li>
+							<li>rings disagree</li>
+						</ul>
 					</div>
 				</div>
 			</section>
@@ -295,9 +287,8 @@ const story = [
 							<h3>Free CLI / Action</h3>
 							<p class="amount">$0</p>
 							<ul>
-								<li>Fixture goldens and <code>npx gatefit</code></li>
+								<li><code>npx gatefit</code></li>
 								<li>Composite GitHub Action</li>
-								<li>npm is coming soon</li>
 							</ul>
 							<a class="quiet" href="/quickstart/">Read the quickstart <Icon name="arrow-right" size={16} /></a>
 						</article>
@@ -309,10 +300,8 @@ const story = [
 							<ul>
 								<li>Gatefit Indie License</li>
 								<li>Optional updates about $19 a month</li>
-								<li>Polar is the merchant of record</li>
 							</ul>
 							<PolarBuyCta label="Buy for $49" />
-							<p class="live-note">Polar checkout is live.</p>
 						</article>
 					</div>
 				</div>
@@ -324,11 +313,11 @@ const story = [
 					<div class="faq">
 						<details>
 							<summary>Does the CLI cost money? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
-							<div class="faq-body"><div><p>No. The CLI and the GitHub Action stay free. npm is coming soon.</p></div></div>
+							<div class="faq-body"><div><p>No. The CLI and the GitHub Action stay free.</p></div></div>
 						</details>
 						<details>
 							<summary>What does the $49 license buy? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
-							<div class="faq-body"><div><p>The Gatefit Indie License, one time. Polar is the merchant of record. Optional updates are about $19 a month.</p></div></div>
+							<div class="faq-body"><div><p>The Gatefit Indie License, one time. Optional updates are about $19 a month.</p></div></div>
 						</details>
 						<details>
 							<summary>Does a Stripe 200 prove access? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
@@ -336,7 +325,7 @@ const story = [
 						</details>
 						<details>
 							<summary>What if I reduce motion? <span class="faq-plus"><Icon name="plus" size={16} /></span></summary>
-							<div class="faq-body"><div><p>The leak story stacks in place. Nothing pins, loops, or shakes.</p></div></div>
+							<div class="faq-body"><div><p>The dial shows the finished row. The leak story stacks in place. Nothing pins, loops, or shakes.</p></div></div>
 						</details>
 					</div>
 				</div>
@@ -358,7 +347,7 @@ const story = [
 
 		<footer class="site-foot">
 			<div class="wrap">
-				<p>Docs live at <a href="https://gatefit.io">gatefit.io</a>. npm is coming soon.</p>
+				<p><a href="https://gatefit.io">Docs</a></p>
 				<div class="foot-links">
 					<a href="/quickstart/">Quickstart</a>
 					<a href="/action/">Action</a>

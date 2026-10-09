@@ -30,7 +30,6 @@ function boot() {
 
 	initLeak();
 	initHow();
-	initTiles();
 	initPricing();
 	initSim();
 	initLoops();
@@ -153,26 +152,6 @@ function initHow() {
 	});
 }
 
-function initTiles() {
-	const mm = gsap.matchMedia();
-	mm.add('(min-width: 900px)', () => {
-		ScrollTrigger.batch('.tile', {
-			once: true,
-			start: 'top 85%',
-			onEnter: (batch) => {
-				gsap.to(batch, {
-					opacity: 1,
-					y: 0,
-					scale: 1,
-					duration: 0.6,
-					ease: 'expo.out',
-					stagger: { each: 0.05, grid: 'auto', from: 'start' },
-				});
-			},
-		});
-	});
-}
-
 function initPricing() {
 	const count = document.querySelector<HTMLElement>('[data-count]');
 	if (count && window.matchMedia('(min-width: 900px)').matches) {
@@ -285,7 +264,7 @@ function initSim() {
 }
 
 function initLoops() {
-	const nodes = document.querySelectorAll('.hero-field, .chip-track, .dispute-visual, #pricing');
+	const nodes = document.querySelectorAll('.hero-field, #pricing');
 	const io = new IntersectionObserver((entries) => {
 		for (const entry of entries) entry.target.classList.toggle('offscreen', !entry.isIntersecting);
 	});
@@ -297,7 +276,7 @@ function initLoops() {
 
 function initSpotlight() {
 	if (!window.matchMedia('(hover: hover)').matches) return;
-	document.querySelectorAll<HTMLElement>('.tile, .price-card').forEach((el) => {
+	document.querySelectorAll<HTMLElement>('.price-card').forEach((el) => {
 		let frame = 0;
 		el.addEventListener('pointermove', (event) => {
 			if (frame) return;
