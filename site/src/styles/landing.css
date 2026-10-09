@@ -623,18 +623,24 @@ h2 {
 	opacity: 0;
 	pointer-events: none;
 }
+@property --orbit-angle {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 0deg;
+}
 .orbit {
 	position: absolute;
 	inset: 0;
 	z-index: 0;
 	border-radius: inherit;
 	padding: 2px;
-	background: conic-gradient(from 0deg, transparent 0 70%, rgba(245, 184, 61, 0.85) 82%, transparent 92%);
+	--orbit-angle: 0deg;
+	background: conic-gradient(from var(--orbit-angle), transparent 0 70%, rgba(245, 184, 61, 0.85) 82%, transparent 92%);
 	opacity: 0;
 	pointer-events: none;
 	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-	mask-composite: exclude;
 	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
 	-webkit-mask-composite: xor;
 }
 .price-card h3 { color: var(--text); font-size: 1.25rem; letter-spacing: -0.03em; }
@@ -887,7 +893,7 @@ details[open] .faq-body > div { opacity: 1; }
 	.dispute-visual .got { animation: blink 6s linear infinite; }
 	.dispute-visual .pass-line { animation: pass-in 6s linear infinite; }
 	.lit .indie-glow { opacity: 0.7; animation: glow-settle 600ms var(--ease) both, breathe 3.2s var(--ease-io) 4.6s infinite alternate; }
-	.lit .orbit { opacity: 1; animation: spin 4s linear 1; }
+	.lit .orbit { animation: spin 4s linear 1 forwards; }
 	.offscreen, .offscreen * { animation-play-state: paused !important; }
 }
 
@@ -979,7 +985,11 @@ details[open] .faq-body > div { opacity: 1; }
 @keyframes shake-once { 0%, 40% { transform: none; } 42% { transform: translateX(-2px); } 44% { transform: translateX(2px); } 46% { transform: translateX(-2px); } 48%, 100% { transform: none; } }
 @keyframes land { from { opacity: 0.6; transform: scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes rise { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+	0% { opacity: 1; --orbit-angle: 0deg; }
+	88% { opacity: 1; }
+	100% { opacity: 0; --orbit-angle: 360deg; }
+}
 @keyframes glow-settle { from { opacity: 0; transform: scale(0.98); } to { opacity: 0.7; transform: none; } }
 @keyframes breathe { from { opacity: 0.4; } to { opacity: 0.9; } }
 @keyframes pulse { from { opacity: 0.6; transform: scale(1); } to { opacity: 0; transform: scale(1.6); } }

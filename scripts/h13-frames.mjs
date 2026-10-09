@@ -15,12 +15,17 @@
 // menu at 360 and 390 is an opaque sheet whose links do not cover the hero.
 // Under 900px the Indie glow must not paint across the title, price, or
 // bullets, including halfway through the orbit spin.
+// On desktop the Indie orbit is a border ring. At 1280 and 1440 the
+// title, $49, and one-time stay free of gold at early, mid, and settled
+// points of the 4s spin, and the orbit opacity is 0 once the spin ends.
+// During the spin, gold more than 4px inside the card border fails.
+// The Buy button is excluded. Mobile stays a static edge with no cone.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inflateSync } from 'node:zlib';
@@ -562,6 +567,10 @@ function decodePng(buf) {
   return { width, height, rgb };
 }
 
+function isAmber(r, g, b) {
+  return r > 140 && g > 80 && b < 170 && r > b + 40 && g > b + 25;
+}
+
 function amberInside(img, box, scaleX, scaleY) {
   const x0 = Math.max(0, Math.floor((box.x + 3) * scaleX));
   const y0 = Math.max(0, Math.floor((box.y + 3) * scaleY));
@@ -571,10 +580,35 @@ function amberInside(img, box, scaleX, scaleY) {
   for (let y = y0; y < y1; y += 1) {
     for (let x = x0; x < x1; x += 1) {
       const i = (y * img.width + x) * 3;
-      const r = img.rgb[i];
-      const g = img.rgb[i + 1];
-      const b = img.rgb[i + 2];
-      if (r > 140 && g > 80 && b < 170 && r > b + 40 && g > b + 25) count += 1;
+      if (isAmber(img.rgb[i], img.rgb[i + 1], img.rgb[i + 2])) count += 1;
+    }
+  }
+  return count;
+}
+
+function insideRoundedRect(x, y, w, h, radius) {
+  const r = Math.max(0, Math.min(radius, w / 2, h / 2));
+  const qx = Math.abs(x - w / 2) - (w / 2 - r);
+  const qy = Math.abs(y - h / 2) - (h / 2 - r);
+  return r - (Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)));
+}
+
+function isOrbitGold(r, g, b) {
+  return r > 70 && g > 45 && b < 100 && r > b + 35 && g > b + 20;
+}
+
+function amberPastBorder(img, scaleX, scaleY, radiusCss, holes) {
+  const w = img.width / scaleX;
+  const h = img.height / scaleY;
+  let count = 0;
+  for (let y = 0; y < img.height; y += 1) {
+    const cy = (y + 0.5) / scaleY;
+    for (let x = 0; x < img.width; x += 1) {
+      const cx = (x + 0.5) / scaleX;
+      if (insideRoundedRect(cx, cy, w, h, radiusCss) <= 4) continue;
+      if (holes.some((hole) => cx >= hole.x && cy >= hole.y && cx <= hole.x + hole.w && cy <= hole.y + hole.h)) continue;
+      const i = (y * img.width + x) * 3;
+      if (isOrbitGold(img.rgb[i], img.rgb[i + 1], img.rgb[i + 2])) count += 1;
     }
   }
   return count;
@@ -646,6 +680,123 @@ async function checkOrbitCone(width, height) {
       if (amber > 24) found.push(`cone over "${region.text}" at ${fraction} (${amber}px)`);
     }
     note(`cone ${width} ${fraction}`, found);
+  }
+  await page.close();
+}
+
+const desktopOrbitPhases = [
+  { name: 'early', fraction: 0.08 },
+  { name: 'mid', fraction: 0.5 },
+  { name: 'settled', fraction: 1 },
+];
+
+function orbitShot(width, phase) {
+  return join(shotDir, `h13c-orbit-${width}-${phase}.png`);
+}
+
+async function checkDesktopOrbit(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.locator('.price-indie').scrollIntoViewIfNeeded();
+  await settle(page);
+  await page.evaluate(() => {
+    document.querySelector('#pricing')?.classList.add('lit');
+    const card = document.querySelector('.price-indie');
+    if (!card) return;
+    card.classList.add('lit');
+    card.style.animation = 'none';
+    card.style.opacity = '1';
+    card.style.transform = 'none';
+  });
+  await settle(page);
+  for (const phase of desktopOrbitPhases) {
+    const label = `desktop orbit ${width} ${phase.name}`;
+    const primed = await page.evaluate((fraction) => {
+      const card = document.querySelector('.price-indie');
+      const orbit = card?.querySelector('.orbit');
+      if (!card || !orbit) return { ok: false, reason: 'indie orbit missing' };
+      const anims = orbit.getAnimations();
+      if (!anims.length) return { ok: false, reason: 'orbit animation missing' };
+      for (const anim of anims) {
+        anim.pause();
+        const dur = anim.effect.getComputedTiming().duration;
+        if (typeof dur !== 'number' || dur <= 0) return { ok: false, reason: 'orbit duration missing' };
+        anim.currentTime = dur * fraction;
+      }
+      const opacity = Number.parseFloat(getComputedStyle(orbit).opacity);
+      return { ok: true, opacity };
+    }, phase.fraction);
+    if (!primed.ok) {
+      note(label, [primed.reason]);
+      continue;
+    }
+    await settle(page);
+    const card = page.locator('.price-indie');
+    const cardBox = await card.boundingBox();
+    if (!cardBox) {
+      note(label, ['indie card missing']);
+      continue;
+    }
+    const png = await card.screenshot();
+    mkdirSync(shotDir, { recursive: true });
+    writeFileSync(orbitShot(width, phase.name), png);
+    const img = decodePng(png);
+    const scaleX = img.width / cardBox.width;
+    const scaleY = img.height / cardBox.height;
+    const geometry = await page.evaluate(() => {
+      const root = document.querySelector('.price-indie');
+      const cardRect = root.getBoundingClientRect();
+      const radius = Number.parseFloat(getComputedStyle(root).borderTopLeftRadius) || 0;
+      const buy = (root.querySelector('.buy-wrap') ?? root.querySelector('.buy'))?.getBoundingClientRect();
+      const hole = buy ? {
+        x: buy.left - cardRect.left - buy.width * 0.55,
+        y: buy.top - cardRect.top - buy.height * 0.55,
+        w: buy.width * 2.1,
+        h: buy.height * 2.1,
+      } : null;
+      return { radius, hole };
+    });
+    const regions = await page.evaluate(() => {
+      const root = document.querySelector('.price-indie');
+      const cardRect = root.getBoundingClientRect();
+      const pick = (sel) => {
+        const el = root.querySelector(sel);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return {
+          text: (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40),
+          x: rect.left - cardRect.left,
+          y: rect.top - cardRect.top,
+          w: rect.width,
+          h: rect.height,
+        };
+      };
+      return [pick('h3'), pick('.amount-figure'), pick('.amount-note')].filter(Boolean);
+    });
+    const found = [];
+    if (phase.name === 'settled' && primed.opacity > 0.05) {
+      found.push(`orbit still visible (opacity ${primed.opacity.toFixed(3)})`);
+    }
+    if (phase.name !== 'settled' && primed.opacity < 0.5) {
+      found.push(`orbit hidden during spin (opacity ${primed.opacity.toFixed(3)})`);
+    }
+    if (phase.name !== 'settled') {
+      const interior = amberPastBorder(img, scaleX, scaleY, geometry.radius, geometry.hole ? [geometry.hole] : []);
+      if (interior > 0) found.push(`gold inside border at ${phase.name} (${interior}px)`);
+    }
+    const expect = ['Indie License', '$49', 'one-time'];
+    if (regions.length < expect.length) found.push(`text area missing (${regions.map((region) => region.text).join(', ')})`);
+    for (const region of regions) {
+      if (region.w < 4 || region.h < 4) {
+        found.push(`missing "${region.text}"`);
+        continue;
+      }
+      const amber = amberInside(img, region, scaleX, scaleY);
+      if (amber > 24) found.push(`gold wedge over "${region.text}" at ${phase.name} (${amber}px)`);
+    }
+    note(label, found);
   }
   await page.close();
 }
@@ -941,6 +1092,8 @@ await checkOrbitBehindText(360, 740);
 await checkOrbitBehindText(390, 844);
 await checkOrbitCone(360, 740);
 await checkOrbitCone(390, 844);
+await checkDesktopOrbit(1280, 900);
+await checkDesktopOrbit(1440, 900);
 await checkEventNames(1280);
 await checkEventNames(1440);
 await checkEventNames(1920);
