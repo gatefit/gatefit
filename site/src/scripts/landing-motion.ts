@@ -109,67 +109,73 @@ function initLeak() {
 }
 
 function initHow() {
-	const lines = gsap.utils.toArray<HTMLElement>('.pane.is-on .how-inner');
-	const bar = document.querySelector('.how-bar');
-	const layer = document.querySelector('.uses-layer');
-	const cmd = document.querySelector('.out-cmd span');
-	const ok = document.querySelector('.out-ok');
-	ScrollTrigger.create({
-		trigger: '.how-window',
-		start: 'top 70%',
-		once: true,
-		onEnter: () => {
-			gsap.fromTo(lines, { xPercent: -100 }, {
-				xPercent: 0,
-				duration: 0.45,
-				stagger: 0.055,
-				ease: 'expo.out',
-				onComplete: () => {
-					if (bar) gsap.to(bar, { scaleY: 1, duration: 0.24, ease: 'expo.out' });
-					if (layer) gsap.to(layer, { opacity: 1, duration: 0.3 });
-					if (cmd) gsap.fromTo(cmd, { xPercent: -100 }, { xPercent: 0, duration: 0.38, delay: 0.15 });
-					if (ok) gsap.to(ok, { opacity: 1, duration: 0.3, delay: 0.7 });
-				},
-			});
-		},
-	});
+	const mm = gsap.matchMedia();
+	mm.add('(min-width: 900px)', () => {
+		const lines = gsap.utils.toArray<HTMLElement>('.pane.is-on .how-inner');
+		const bar = document.querySelector('.how-bar');
+		const layer = document.querySelector('.uses-layer');
+		const cmd = document.querySelector('.out-cmd span');
+		const ok = document.querySelector('.out-ok');
+		ScrollTrigger.create({
+			trigger: '.how-window',
+			start: 'top 70%',
+			once: true,
+			onEnter: () => {
+				gsap.fromTo(lines, { xPercent: -100 }, {
+					xPercent: 0,
+					duration: 0.45,
+					stagger: 0.055,
+					ease: 'expo.out',
+					onComplete: () => {
+						if (bar) gsap.to(bar, { scaleY: 1, duration: 0.24, ease: 'expo.out' });
+						if (layer) gsap.to(layer, { opacity: 1, duration: 0.3 });
+						if (cmd) gsap.fromTo(cmd, { xPercent: -100 }, { xPercent: 0, duration: 0.38, delay: 0.15 });
+						if (ok) gsap.to(ok, { opacity: 1, duration: 0.3, delay: 0.7 });
+					},
+				});
+			},
+		});
 
-	const steps = gsap.utils.toArray<HTMLElement>('.step');
-	ScrollTrigger.create({
-		trigger: '#how',
-		start: 'top 60%',
-		end: 'bottom 40%',
-		onUpdate: (self) => {
-			const idx = self.progress < 0.33 ? 0 : self.progress < 0.66 ? 1 : 2;
-			steps.forEach((step, i) => step.classList.toggle('is-active', i === idx));
-			document.querySelector('[data-tab="workflow"]')?.classList.toggle('is-on', idx !== 0);
-			document.querySelector('[data-tab="adapter"]')?.classList.toggle('is-on', idx === 0);
-			document.querySelector('[data-pane="workflow"]')?.classList.toggle('is-on', idx !== 0);
-			document.querySelector('[data-pane="adapter"]')?.classList.toggle('is-on', idx === 0);
-		},
+		const steps = gsap.utils.toArray<HTMLElement>('.step');
+		ScrollTrigger.create({
+			trigger: '#how',
+			start: 'top 60%',
+			end: 'bottom 40%',
+			onUpdate: (self) => {
+				const idx = self.progress < 0.33 ? 0 : self.progress < 0.66 ? 1 : 2;
+				steps.forEach((step, i) => step.classList.toggle('is-active', i === idx));
+				document.querySelector('[data-tab="workflow"]')?.classList.toggle('is-on', idx !== 0);
+				document.querySelector('[data-tab="adapter"]')?.classList.toggle('is-on', idx === 0);
+				document.querySelector('[data-pane="workflow"]')?.classList.toggle('is-on', idx !== 0);
+				document.querySelector('[data-pane="adapter"]')?.classList.toggle('is-on', idx === 0);
+			},
+		});
 	});
 }
 
 function initTiles() {
-	ScrollTrigger.batch('.tile', {
-		once: true,
-		start: 'top 85%',
-		onEnter: (batch) => {
-			gsap.to(batch, {
-				opacity: 1,
-				y: 0,
-				scale: 1,
-				duration: 0.6,
-				ease: 'expo.out',
-				stagger: { each: 0.05, grid: 'auto', from: 'start' },
-			});
-		},
+	const mm = gsap.matchMedia();
+	mm.add('(min-width: 900px)', () => {
+		ScrollTrigger.batch('.tile', {
+			once: true,
+			start: 'top 85%',
+			onEnter: (batch) => {
+				gsap.to(batch, {
+					opacity: 1,
+					y: 0,
+					scale: 1,
+					duration: 0.6,
+					ease: 'expo.out',
+					stagger: { each: 0.05, grid: 'auto', from: 'start' },
+				});
+			},
+		});
 	});
 }
 
 function initPricing() {
 	const count = document.querySelector<HTMLElement>('[data-count]');
-	if (count) {
+	if (count && window.matchMedia('(min-width: 900px)').matches) {
 		const obj = { n: 0 };
 		gsap.to(obj, {
 			n: 49,
