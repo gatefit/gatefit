@@ -15,12 +15,15 @@
 // menu at 360 and 390 is an opaque sheet whose links do not cover the hero.
 // Under 900px the Indie glow must not paint across the title, price, or
 // bullets, including halfway through the orbit spin.
+// On desktop the Indie orbit is a border ring. At 1280 and 1440 the
+// title, $49, and one-time stay free of gold at early, mid, and settled
+// points of the 4s spin, and the orbit opacity is 0 once the spin ends.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inflateSync } from 'node:zlib';
@@ -650,6 +653,108 @@ async function checkOrbitCone(width, height) {
   await page.close();
 }
 
+const desktopOrbitPhases = [
+  { name: 'early', fraction: 0.08 },
+  { name: 'mid', fraction: 0.5 },
+  { name: 'settled', fraction: 1 },
+];
+
+function orbitShot(width, phase) {
+  return join(shotDir, `h13c-orbit-${width}-${phase}.png`);
+}
+
+async function checkDesktopOrbit(width, height) {
+  const page = await browser.newPage();
+  await page.setViewportSize({ width, height });
+  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.locator('.price-indie').scrollIntoViewIfNeeded();
+  await settle(page);
+  await page.evaluate(() => {
+    document.querySelector('#pricing')?.classList.add('lit');
+    const card = document.querySelector('.price-indie');
+    if (!card) return;
+    card.classList.add('lit');
+    card.style.animation = 'none';
+    card.style.opacity = '1';
+    card.style.transform = 'none';
+  });
+  await settle(page);
+  for (const phase of desktopOrbitPhases) {
+    const label = `desktop orbit ${width} ${phase.name}`;
+    const primed = await page.evaluate((fraction) => {
+      const card = document.querySelector('.price-indie');
+      const orbit = card?.querySelector('.orbit');
+      if (!card || !orbit) return { ok: false, reason: 'indie orbit missing' };
+      const anims = orbit.getAnimations();
+      if (!anims.length) return { ok: false, reason: 'orbit animation missing' };
+      for (const anim of anims) {
+        anim.pause();
+        const dur = anim.effect.getComputedTiming().duration;
+        if (typeof dur !== 'number' || dur <= 0) return { ok: false, reason: 'orbit duration missing' };
+        anim.currentTime = dur * fraction;
+      }
+      const opacity = Number.parseFloat(getComputedStyle(orbit).opacity);
+      return { ok: true, opacity };
+    }, phase.fraction);
+    if (!primed.ok) {
+      note(label, [primed.reason]);
+      continue;
+    }
+    await settle(page);
+    const card = page.locator('.price-indie');
+    const cardBox = await card.boundingBox();
+    if (!cardBox) {
+      note(label, ['indie card missing']);
+      continue;
+    }
+    const png = await card.screenshot();
+    if (width === 1280 || (width === 1440 && phase.name === 'settled')) {
+      mkdirSync(shotDir, { recursive: true });
+      writeFileSync(orbitShot(width, phase.name), png);
+    }
+    const img = decodePng(png);
+    const scaleX = img.width / cardBox.width;
+    const scaleY = img.height / cardBox.height;
+    const regions = await page.evaluate(() => {
+      const root = document.querySelector('.price-indie');
+      const cardRect = root.getBoundingClientRect();
+      const pick = (sel) => {
+        const el = root.querySelector(sel);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return {
+          text: (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40),
+          x: rect.left - cardRect.left,
+          y: rect.top - cardRect.top,
+          w: rect.width,
+          h: rect.height,
+        };
+      };
+      return [pick('h3'), pick('.amount-figure'), pick('.amount-note')].filter(Boolean);
+    });
+    const found = [];
+    if (phase.name === 'settled' && primed.opacity > 0.05) {
+      found.push(`orbit still visible (opacity ${primed.opacity.toFixed(3)})`);
+    }
+    if (phase.name !== 'settled' && primed.opacity < 0.5) {
+      found.push(`orbit hidden during spin (opacity ${primed.opacity.toFixed(3)})`);
+    }
+    const expect = ['Indie License', '$49', 'one-time'];
+    if (regions.length < expect.length) found.push(`text area missing (${regions.map((region) => region.text).join(', ')})`);
+    for (const region of regions) {
+      if (region.w < 4 || region.h < 4) {
+        found.push(`missing "${region.text}"`);
+        continue;
+      }
+      const amber = amberInside(img, region, scaleX, scaleY);
+      if (amber > 24) found.push(`gold wedge over "${region.text}" at ${phase.name} (${amber}px)`);
+    }
+    note(label, found);
+  }
+  await page.close();
+}
+
 async function checkOrbitBehindText(width, height) {
   const page = await browser.newPage();
   await page.setViewportSize({ width, height });
@@ -941,6 +1046,8 @@ await checkOrbitBehindText(360, 740);
 await checkOrbitBehindText(390, 844);
 await checkOrbitCone(360, 740);
 await checkOrbitCone(390, 844);
+await checkDesktopOrbit(1280, 900);
+await checkDesktopOrbit(1440, 900);
 await checkEventNames(1280);
 await checkEventNames(1440);
 await checkEventNames(1920);
