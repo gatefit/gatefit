@@ -18,6 +18,8 @@
 // On desktop the Indie orbit is a border ring. At 1280 and 1440 the
 // title, $49, and one-time stay free of gold at early, mid, and settled
 // points of the 4s spin, and the orbit opacity is 0 once the spin ends.
+// During the spin, gold more than 4px inside the card border fails.
+// The Buy button is excluded. Mobile stays a static edge with no cone.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -565,6 +567,10 @@ function decodePng(buf) {
   return { width, height, rgb };
 }
 
+function isAmber(r, g, b) {
+  return r > 140 && g > 80 && b < 170 && r > b + 40 && g > b + 25;
+}
+
 function amberInside(img, box, scaleX, scaleY) {
   const x0 = Math.max(0, Math.floor((box.x + 3) * scaleX));
   const y0 = Math.max(0, Math.floor((box.y + 3) * scaleY));
@@ -574,10 +580,35 @@ function amberInside(img, box, scaleX, scaleY) {
   for (let y = y0; y < y1; y += 1) {
     for (let x = x0; x < x1; x += 1) {
       const i = (y * img.width + x) * 3;
-      const r = img.rgb[i];
-      const g = img.rgb[i + 1];
-      const b = img.rgb[i + 2];
-      if (r > 140 && g > 80 && b < 170 && r > b + 40 && g > b + 25) count += 1;
+      if (isAmber(img.rgb[i], img.rgb[i + 1], img.rgb[i + 2])) count += 1;
+    }
+  }
+  return count;
+}
+
+function insideRoundedRect(x, y, w, h, radius) {
+  const r = Math.max(0, Math.min(radius, w / 2, h / 2));
+  const qx = Math.abs(x - w / 2) - (w / 2 - r);
+  const qy = Math.abs(y - h / 2) - (h / 2 - r);
+  return r - (Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)));
+}
+
+function isOrbitGold(r, g, b) {
+  return r > 70 && g > 45 && b < 100 && r > b + 35 && g > b + 20;
+}
+
+function amberPastBorder(img, scaleX, scaleY, radiusCss, holes) {
+  const w = img.width / scaleX;
+  const h = img.height / scaleY;
+  let count = 0;
+  for (let y = 0; y < img.height; y += 1) {
+    const cy = (y + 0.5) / scaleY;
+    for (let x = 0; x < img.width; x += 1) {
+      const cx = (x + 0.5) / scaleX;
+      if (insideRoundedRect(cx, cy, w, h, radiusCss) <= 4) continue;
+      if (holes.some((hole) => cx >= hole.x && cy >= hole.y && cx <= hole.x + hole.w && cy <= hole.y + hole.h)) continue;
+      const i = (y * img.width + x) * 3;
+      if (isOrbitGold(img.rgb[i], img.rgb[i + 1], img.rgb[i + 2])) count += 1;
     }
   }
   return count;
@@ -709,13 +740,24 @@ async function checkDesktopOrbit(width, height) {
       continue;
     }
     const png = await card.screenshot();
-    if (width === 1280 || (width === 1440 && phase.name === 'settled')) {
-      mkdirSync(shotDir, { recursive: true });
-      writeFileSync(orbitShot(width, phase.name), png);
-    }
+    mkdirSync(shotDir, { recursive: true });
+    writeFileSync(orbitShot(width, phase.name), png);
     const img = decodePng(png);
     const scaleX = img.width / cardBox.width;
     const scaleY = img.height / cardBox.height;
+    const geometry = await page.evaluate(() => {
+      const root = document.querySelector('.price-indie');
+      const cardRect = root.getBoundingClientRect();
+      const radius = Number.parseFloat(getComputedStyle(root).borderTopLeftRadius) || 0;
+      const buy = (root.querySelector('.buy-wrap') ?? root.querySelector('.buy'))?.getBoundingClientRect();
+      const hole = buy ? {
+        x: buy.left - cardRect.left - buy.width * 0.55,
+        y: buy.top - cardRect.top - buy.height * 0.55,
+        w: buy.width * 2.1,
+        h: buy.height * 2.1,
+      } : null;
+      return { radius, hole };
+    });
     const regions = await page.evaluate(() => {
       const root = document.querySelector('.price-indie');
       const cardRect = root.getBoundingClientRect();
@@ -739,6 +781,10 @@ async function checkDesktopOrbit(width, height) {
     }
     if (phase.name !== 'settled' && primed.opacity < 0.5) {
       found.push(`orbit hidden during spin (opacity ${primed.opacity.toFixed(3)})`);
+    }
+    if (phase.name !== 'settled') {
+      const interior = amberPastBorder(img, scaleX, scaleY, geometry.radius, geometry.hole ? [geometry.hole] : []);
+      if (interior > 0) found.push(`gold inside border at ${phase.name} (${interior}px)`);
     }
     const expect = ['Indie License', '$49', 'one-time'];
     if (regions.length < expect.length) found.push(`text area missing (${regions.map((region) => region.text).join(', ')})`);
