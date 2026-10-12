@@ -1,6 +1,6 @@
 name: Gatefit
 description: Run Gatefit S1–S6 entitlement goldens against an AccessAdapter (access DB, not Stripe HTTP 200)
-author: edipert
+author: gatefit
 branding:
   icon: shield
   color: green
