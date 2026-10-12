@@ -15,9 +15,9 @@ Export `createAdapter()` (or `default`) with:
 
 `locked: true` means deny even if Stripe looks paid. Compare is declared-fields-only.
 
-Reference: [`src/adapters/sqlite.ts`](https://github.com/edipert/gatefit/blob/main/src/adapters/sqlite.ts) in the repo. Anti-pattern: [`src/adapters/naive.ts`](https://github.com/edipert/gatefit/blob/main/src/adapters/naive.ts) (HTTP 200 as access).
+Reference: [`src/adapters/sqlite.ts`](https://github.com/gatefit/gatefit/blob/main/src/adapters/sqlite.ts) in the repo. Anti-pattern: [`src/adapters/naive.ts`](https://github.com/gatefit/gatefit/blob/main/src/adapters/naive.ts) (HTTP 200 as access).
 
-Longer contract: [bring-your-adapter.md](https://github.com/edipert/gatefit/blob/main/docs/bring-your-adapter.md).
+Longer contract: [bring-your-adapter.md](https://github.com/gatefit/gatefit/blob/main/docs/bring-your-adapter.md).
 
 ## 2. Run
 

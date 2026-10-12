@@ -17,15 +17,15 @@ CI does **not** publish. There is no npm token in this repo. Do not paste tokens
 3. `npm pack` — tarball must contain `bin/gatefit.js`, `src/cli.ts`, `CHANGELOG.md`, `tests/entitlements/goldens/*.yaml`, `action.yml`, `LICENSE`. It must not contain `site/` or secret files.
 4. Smoke: `npm install --ignore-scripts ./gatefit-0.4.0.tgz` in a temp dir, then `npx gatefit adapter-check` (exit 0) and `npx gatefit --version`.
 5. When an npm login exists on a trusted machine: `npm publish --access public`. CI never runs that command.
-6. If the name is taken later, stop and use `@edipert/gatefit` — do not force a hijack.
+6. If the name is taken later, stop and use `@gatefit/gatefit` — do not force a hijack.
 
 ## GitHub Action
 
 Root `action.yml` is marketplace-ready (name, description, branding, composite `runs`). Listing on marketplace is optional.
 
 1. After merge to `main`, a human may tag `v0.4.0` on that SHA. This repo's CI does not create the tag.
-2. Callers: `uses: edipert/gatefit@v0.4.0`.
-3. Nested shim: `uses: edipert/gatefit/.github/actions/gatefit@v0.4.0`.
+2. Callers: `uses: gatefit/gatefit@v0.4.0`.
+3. Nested shim: `uses: gatefit/gatefit/.github/actions/gatefit@v0.4.0`.
 4. Submit to marketplace only from a human GitHub session (not this CI).
 
 ## Docs site
