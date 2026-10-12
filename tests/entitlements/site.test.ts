@@ -16,8 +16,8 @@ function read(rel: string): string {
 test("Starlight lives in site/ at the gatefit.io root", () => {
   const cfg = read("site/astro.config.mjs");
   assert.match(cfg, /https:\/\/gatefit\.io/);
-  assert.match(cfg, /base:\s*['\"]\/['\"]/);
-  assert.doesNotMatch(cfg, /base:\s*['\"]\/gatefit['\"]/);
+  assert.match(cfg, /base:\s*['"]\/['"]/);
+  assert.doesNotMatch(cfg, /base:\s*['"]\/gatefit['"]/);
   const pkg = JSON.parse(read("package.json")) as {
     version: string;
     files?: string[];
@@ -73,7 +73,7 @@ test("resolvePolarCheckoutUrl fails closed unless Polar Checkout Link", () => {
 
 test("Polar CTA has no polar.sh placeholder fallback", () => {
   const cta = read("site/src/components/PolarBuyCta.astro");
-  assert.doesNotMatch(cta, /\|\|\s*['\"]https:\/\/polar\.sh\/?['\"]/);
+  assert.doesNotMatch(cta, /\|\|\s*['"]https:\/\/polar\.sh\/?['"]/);
   assert.match(cta, /resolvePolarCheckoutUrl/);
   assert.match(cta, /target="_blank"/);
   assert.match(cta, /rel="noopener"/);
