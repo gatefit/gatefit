@@ -6,16 +6,16 @@ Draft GitHub Release notes for tag `v0.4.0`. Do not create the tag or the Releas
 
 Gatefit is a CI pack that asserts an access database survives ugly billing transitions. The CLI and the composite GitHub Action stay free.
 
-The docs site is live at https://gatefit.io. npm is **coming soon**. Polar checkout is live (Gatefit Indie License, $49 one-time). Nothing in this draft publishes npm or deploys the docs site.
+The docs site is live at https://gatefit.io. npm is live: `npx gatefit` (https://www.npmjs.com/package/gatefit), `gatefit@0.4.0`. Polar checkout is live (Gatefit Indie License, $49 one-time). This release does not deploy the docs site.
 
 ## Install
 
-Until npm is live, clone the repo:
-
 ```bash
-npm install
-node bin/gatefit.js adapter-check
+npx gatefit --version
+npx gatefit adapter-check
 ```
+
+Package: https://www.npmjs.com/package/gatefit (`gatefit@0.4.0`).
 
 `npm publish --dry-run` is what CI runs. It does not write the registry.
 
@@ -49,5 +49,4 @@ Live at https://gatefit.io. From `site/`: `npm run build`, then `npx wrangler@4 
 ## Not included
 
 - Making the repository public.
-- A real npm publish.
-- Docs site deploy and npm publish. Polar checkout is the committed Checkout Link in [docs/polar.md](polar.md).
+- A docs site deploy from this release. Polar checkout is the committed Checkout Link in [docs/polar.md](polar.md). npm is live: `npx gatefit` (https://www.npmjs.com/package/gatefit).

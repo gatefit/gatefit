@@ -2,7 +2,7 @@
 
 CI does **not** publish. There is no npm token in this repo. Do not paste tokens here.
 
-**npm:** coming soon. The named gate runs `npm publish --dry-run` only.
+**npm:** live. `npx gatefit` is `gatefit@0.4.0` at https://www.npmjs.com/package/gatefit. The named gate runs `npm publish --dry-run` only.
 
 **Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` copies `site/dist` or deploys the Cloudflare target.
 
@@ -38,4 +38,4 @@ Root `action.yml` is marketplace-ready (name, description, branding, composite `
 
 ## Out of scope here
 
-Live Stripe Test Clocks, seats/races, paid ads, Stripe Checkout, a real npm publish, and making the repository public.
+Live Stripe Test Clocks, seats/races, paid ads, Stripe Checkout, publishing from CI, and making the repository public.

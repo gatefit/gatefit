@@ -6,31 +6,31 @@ Fixture-first S1–S6 goldens, an `npx gatefit` CLI, and a GitHub Action. Node 2
 
 ## Distribution
 
-The CLI and GitHub Action in this repository stay free. The docs site is live. npm is not on the registry yet. Polar checkout is.
+The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). Polar checkout is.
 
 - **Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
-- **npm:** coming soon. `gatefit@0.4.0` packs locally. CI runs `npm publish --dry-run` only. The registry package is not published. H12 is on HOLD.
+- **npm:** live. `npx gatefit` is `gatefit@0.4.0` at https://www.npmjs.com/package/gatefit. CI runs `npm publish --dry-run` only.
 - **Polar checkout:** live. Gatefit Indie License is **$49** one-time at `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain `site` build and `scripts/deploy-site.sh` use that committed link. `PUBLIC_POLAR_CHECKOUT_URL` may override it. Any other value fails closed.
 
 Optional updates **~$19/month**. Fixture goldens, the CLI, and the Action stay free either way. See [docs/polar.md](docs/polar.md).
 
 ## Install / run
 
-Until npm is live, run from a clone:
+```bash
+npx gatefit --version
+npx gatefit adapter-check
+npx gatefit run --suite paid_grants_access --adapter ./src/your-access-adapter.ts
+```
+
+`gatefit@0.4.0`: https://www.npmjs.com/package/gatefit
+
+From a clone:
 
 ```bash
 npm install
 node bin/gatefit.js --version
 node bin/gatefit.js adapter-check
 node bin/gatefit.js run --suite paid_grants_access --adapter ./src/your-access-adapter.ts
-```
-
-After npm publish (coming soon):
-
-```bash
-npx gatefit --version
-npx gatefit adapter-check
-npx gatefit run --suite paid_grants_access --adapter ./src/your-access-adapter.ts
 ```
 
 Named verify gate (fixture-first; do not set `GATEFIT_LIVE_CLOCK`):

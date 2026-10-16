@@ -12,6 +12,6 @@ A plain `site` build bakes that link into the Buy CTA. `scripts/deploy-site.sh` 
 
 Checkout **fails closed** for any value that is not `https://buy.polar.sh/polar_cl_…`. Product paths, `https://polar.sh/`, and other hosts stay pending and do not fall back to the committed link.
 
-Docs site: live at https://gatefit.io (Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`). GitHub Pages needs a public repository or a paid plan and is not the live host. npm is coming soon.
+Docs site: live at https://gatefit.io (Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`). GitHub Pages needs a public repository or a paid plan and is not the live host. npm is live: `npx gatefit` (https://www.npmjs.com/package/gatefit).
 
 No Polar API tokens belong in this repo, in logs, or in fixtures. No Gumroad, Framer checkout, Next, or DIY Stripe Tax.
