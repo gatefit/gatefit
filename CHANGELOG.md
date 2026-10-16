@@ -13,6 +13,7 @@ Tag-ready pack. npm `gatefit@0.4.0` is live (`npx gatefit`, https://www.npmjs.co
 - Fixture goldens for paid, cancel, refund, trial, past_due, duplicate delivery, seats, cancel-at-period-end, upgrade race, dispute, and unpaid retries.
 - Starlight docs app under `site/` and GHA-free `scripts/deploy-site.sh`.
 - `npm publish --dry-run` inside `./ci-local.sh`, with tarball checks that the bin is present and `site/` and secrets are absent.
+- Pro pack license gate. `GATEFIT_LICENSE_KEY` is checked with Polar's public validate endpoint. Free packs do not call it. Chaos mode is not in this release.
 
 ### Not in this version
 

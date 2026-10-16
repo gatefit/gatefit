@@ -4,6 +4,8 @@ import { parseArgs } from "node:util";
 import { loadAdapter } from "./access-adapter.ts";
 import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
 import { LIVE_SCENARIO_IDS, runLiveLane, type LiveScenarioId } from "./live-scenarios.ts";
+import { ensureProLicense } from "./license.ts";
+import { getProPack, isProPack } from "./packs.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
 import {
   createStripeClockClient,
@@ -40,6 +42,18 @@ function resolveSuiteFiles(suite: string): string[] {
 }
 
 async function cmdRun(suite: string, adapterPath: string): Promise<number> {
+  if (isProPack(suite)) {
+    const gate = await ensureProLicense();
+    if (!gate.ok) {
+      console.error(gate.message);
+      return 1;
+    }
+    if (gate.warning) console.error(gate.warning);
+    const pack = getProPack(suite);
+    if (pack?.run) return pack.run({ adapterPath });
+    console.error(`gatefit: PASS ${suite}`);
+    return 0;
+  }
   const adapter = await loadAdapter(resolveUserOrPackage(adapterPath));
   const files = resolveSuiteFiles(suite);
   if (files.length === 0) {
