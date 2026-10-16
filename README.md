@@ -12,8 +12,6 @@ The CLI and GitHub Action in this repository stay free. The docs site is live. n
 - **npm:** live. `npx gatefit` is `gatefit@0.4.0` at https://www.npmjs.com/package/gatefit. CI runs `npm publish --dry-run` only.
 - **Polar checkout:** live. Gatefit Indie License is **$49** one-time at `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain `site` build and `scripts/deploy-site.sh` use that committed link. `PUBLIC_POLAR_CHECKOUT_URL` may override it. Any other value fails closed.
 
-Optional updates **~$19/month**. Fixture goldens, the CLI, and the Action stay free either way. See [docs/polar.md](docs/polar.md).
-
 ## Install / run
 
 ```bash
