@@ -36,12 +36,12 @@ Live clocks: see [docs/live-clock.md](live-clock.md) (`gatefit live`).
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: gatefit/gatefit@v0.4.0
+- uses: gatefit/gatefit@v0.5.0
   with:
     adapter: path/to/your-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo (example: `path/to/your-adapter.ts`); goldens default to Gatefit’s S1–S6 pack. In this repo, dogfood `src/adapters/sqlite.ts`. Nested H3 path `gatefit/gatefit/.github/actions/gatefit@v0.4.0` still works.
+The Action wraps `gatefit run`. Adapter path is in *your* repo (example: `path/to/your-adapter.ts`); goldens default to Gatefit’s S1–S6 pack. In this repo, dogfood `src/adapters/sqlite.ts`. Nested H3 path `gatefit/gatefit/.github/actions/gatefit@v0.5.0` still works.
 
 ## 4. Sanity
 

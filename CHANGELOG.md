@@ -1,12 +1,19 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.4.0` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.0` is not cut in this change.
 
-## [Unreleased]
+## [0.5.0] - 2026-10-16
 
 ### Added
 
 - Chaos mode, a Pro pack. `gatefit run --suite chaos` replays every golden under seeded perturbations and compares the access row to the in-order replay. It requires `GATEFIT_LICENSE_KEY`.
+- License gate (`GATEFIT_LICENSE_KEY`), first shipped in 0.4.0.
+- Token-free npm trusted publishing. An annotated tag `vX.Y.Z` runs `.github/workflows/publish.yml` with GitHub OIDC. The publish job uses the GitHub environment `npm`. Provenance is automatic.
+
+### Not in this version
+
+- Provider packs.
+- A monthly plan.
 
 ## [0.4.0] - 2026-10-16
 

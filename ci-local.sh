@@ -154,6 +154,17 @@ fi
 if [[ -n "${NPM_TOKEN:-}" || -n "${NODE_AUTH_TOKEN:-}" ]]; then
   dist_fail "npm token is set; refusing the publish lane"
 fi
+repo_url="$(node -p "require('./package.json').repository.url")"
+[[ "$repo_url" == "git+https://github.com/gatefit/gatefit.git" ]] || dist_fail "package.json repository.url must be git+https://github.com/gatefit/gatefit.git"
+publish_wf=".github/workflows/publish.yml"
+[[ -f "$publish_wf" ]] || dist_fail "missing ${publish_wf}"
+if [[ -f "$publish_wf" ]]; then
+  if grep -E -i 'NPM_TOKEN|NODE_AUTH_TOKEN' "$publish_wf" >/dev/null; then
+    dist_fail "publish.yml references an npm token"
+  fi
+  grep -q 'id-token: write' "$publish_wf" || dist_fail "publish.yml missing id-token: write"
+  grep -q 'environment: npm' "$publish_wf" || dist_fail "publish.yml publish job missing environment npm"
+fi
 
 [[ -f CHANGELOG.md ]] || dist_fail "missing CHANGELOG.md"
 [[ -f "docs/release-${expected_tag}.md" ]] || dist_fail "missing docs/release-${expected_tag}.md"
@@ -191,7 +202,7 @@ grep -q 'npx gatefit' README.md || dist_fail "README missing npx gatefit"
 if grep -q 'H12 is on HOLD\|npm is not on the registry\|registry package is not published' README.md; then
   dist_fail "README still marks npm unpublished or H12 on HOLD"
 fi
-if grep -q 'coming soon' README.md docs/publish.md docs/polar.md docs/release-v0.4.0.md CHANGELOG.md; then
+if grep -q 'coming soon' README.md docs/publish.md docs/polar.md docs/release-v0.4.0.md "docs/release-${expected_tag}.md" CHANGELOG.md; then
   dist_fail "docs still mark npm coming soon"
 fi
 grep -q 'https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0' README.md \
@@ -248,7 +259,7 @@ npx tsc --noEmit || fail "typecheck"
 npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts || fail "entitlement unit tests"
 
 ver_out="$(node bin/gatefit.js --version 2>&1)" || fail "gatefit --version"
-echo "$ver_out" | grep -q 'gatefit 0.4.0' || fail "unexpected --version: $ver_out"
+echo "$ver_out" | grep -q "gatefit ${pkg_ver}" || fail "unexpected --version: $ver_out"
 ok "gatefit --version"
 
 node bin/gatefit.js adapter-check || fail "adapter-check via bin"
@@ -296,7 +307,7 @@ ok "unpacked tarball (bin present, site/ and secrets absent)"
   cd "$user_dir"
   npm init -y >/dev/null
   npm install --ignore-scripts "$tgz" >/dev/null
-  npx gatefit --version | grep -q 'gatefit 0.4.0'
+  npx gatefit --version | grep -q "gatefit ${pkg_ver}"
   npx gatefit adapter-check
 ) || fail "tarball adapter-check"
 ok "npx from packed tarball"
