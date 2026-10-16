@@ -38,4 +38,4 @@ Root `action.yml` is marketplace-ready (name, description, branding, composite `
 
 ## Out of scope here
 
-Live Stripe Test Clocks, seats/races, paid ads, Stripe Checkout, publishing from CI, and making the repository public.
+Live Stripe Test Clocks, seats/races, paid ads, Stripe Checkout, and publishing from CI.

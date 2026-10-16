@@ -2,9 +2,9 @@
 
 All notable Gatefit changes are listed here. The heading version matches `package.json`. Tag `v0.4.0` is not cut in this change.
 
-## [0.4.0] - unreleased
+## [0.4.0] - 2026-10-16
 
-Tag-ready pack. The git tag and GitHub Release are not created here. npm `gatefit@0.4.0` is live (`npx gatefit`, https://www.npmjs.com/package/gatefit). The docs site is live at https://gatefit.io. Polar checkout is the committed Gatefit Indie License link.
+Tag-ready pack. npm `gatefit@0.4.0` is live (`npx gatefit`, https://www.npmjs.com/package/gatefit). The docs site is live at https://gatefit.io. Polar checkout is the committed Gatefit Indie License link.
 
 ### Added
 
@@ -16,6 +16,4 @@ Tag-ready pack. The git tag and GitHub Release are not created here. npm `gatefi
 
 ### Not in this version
 
-- Public GitHub repository.
-- A docs deploy from this changelog. The site is already live at https://gatefit.io. npm `gatefit@0.4.0` is live (`npx gatefit`, https://www.npmjs.com/package/gatefit).
-- Polar checkout.
+- A docs deploy from this changelog. The site is already live at https://gatefit.io.
