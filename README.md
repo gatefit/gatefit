@@ -65,3 +65,15 @@ The Action wraps `gatefit run`. Adapter path is in *your* repo; goldens default 
 Do not set `GATEFIT_LIVE_CLOCK` for the named gate. Do not use `sk_live`. Never treat Stripe HTTP 200 as proof of access.
 
 Opt-in live Test Clocks (not default CI): [docs/live-clock.md](docs/live-clock.md).
+
+## License
+
+S1–S6, seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar.
+
+The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is coming and is not in this release. Provider packs are not in this release. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
+
+```bash
+export GATEFIT_LICENSE_KEY='GATEFIT-…'
+```
+
+Validation is `POST https://api.polar.sh/v1/customer-portal/license-keys/validate` with the key and organization id `68556619-45ab-4a88-8ad8-08606c2b820e`. No Polar API token. A valid result is cached for 24 hours by sha256, never as the raw key. If Polar is unreachable, a cached valid result is reused with a warning. With no cache, the command warns and still runs. Details: [docs/license.md](docs/license.md).

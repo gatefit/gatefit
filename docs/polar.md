@@ -15,3 +15,5 @@ Checkout **fails closed** for any value that is not `https://buy.polar.sh/polar_
 Docs site: live at https://gatefit.io (Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`). GitHub Pages needs a public repository or a paid plan and is not the live host. npm is live: `npx gatefit` (https://www.npmjs.com/package/gatefit).
 
 No Polar API tokens belong in this repo, in logs, or in fixtures. No Gumroad, Framer checkout, Next, or DIY Stripe Tax.
+
+License checks use the public validate endpoint only. See [license.md](license.md).
