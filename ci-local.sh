@@ -161,7 +161,7 @@ fi
 [[ -f .npmignore ]] || dist_fail "missing .npmignore"
 
 if [[ -f CHANGELOG.md ]]; then
-  changelog_ver="$(grep -E '^## \[' CHANGELOG.md | head -1 | sed -E 's/^## \[([^]]+)\].*/\1/')"
+  changelog_ver="$(grep -E '^## \[[0-9]+' CHANGELOG.md | head -1 | sed -E 's/^## \[([^]]+)\].*/\1/')"
   [[ "$changelog_ver" == "$pkg_ver" ]] || dist_fail "CHANGELOG ${changelog_ver:-missing} != package.json ${pkg_ver}"
 fi
 rel="docs/release-${expected_tag}.md"

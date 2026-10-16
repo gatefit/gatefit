@@ -4,6 +4,7 @@ import { parseArgs } from "node:util";
 import { loadAdapter } from "./access-adapter.ts";
 import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
 import { LIVE_SCENARIO_IDS, runLiveLane, type LiveScenarioId } from "./live-scenarios.ts";
+import { resolveChaosSeed } from "./chaos.ts";
 import { ensureProLicense } from "./license.ts";
 import { getProPack, isProPack } from "./packs.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
@@ -21,6 +22,7 @@ function usage(): string {
   return [
     "Usage:",
     "  gatefit run --suite <dir|file|id> --adapter <path>",
+    "  gatefit run --suite chaos --adapter <path> [--seed <value>]",
     "  gatefit adapter-check",
     "  gatefit live --adapter <path> [--scenario <id>]",
     "  gatefit --version",
@@ -41,7 +43,7 @@ function resolveSuiteFiles(suite: string): string[] {
   throw new Error(`suite not found: ${suite}`);
 }
 
-async function cmdRun(suite: string, adapterPath: string): Promise<number> {
+async function cmdRun(suite: string, adapterPath: string, seed: string): Promise<number> {
   if (isProPack(suite)) {
     const gate = await ensureProLicense();
     if (!gate.ok) {
@@ -50,7 +52,7 @@ async function cmdRun(suite: string, adapterPath: string): Promise<number> {
     }
     if (gate.warning) console.error(gate.warning);
     const pack = getProPack(suite);
-    if (pack?.run) return pack.run({ adapterPath });
+    if (pack?.run) return pack.run({ adapterPath, seed });
     console.error(`gatefit: PASS ${suite}`);
     return 0;
   }
@@ -109,13 +111,14 @@ async function main(argv: string[]): Promise<number> {
       options: {
         suite: { type: "string" },
         adapter: { type: "string" },
+        seed: { type: "string" },
       },
     });
     if (!values.suite || !values.adapter) {
       console.error(usage());
       return 1;
     }
-    return cmdRun(values.suite, values.adapter);
+    return cmdRun(values.suite, values.adapter, resolveChaosSeed(values.seed, process.env.GATEFIT_CHAOS_SEED));
   }
   if (command === "live") {
     const { values } = parseArgs({

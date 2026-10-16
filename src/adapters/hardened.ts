@@ -13,6 +13,8 @@ export function createAdapter(): AccessAdapter {
     reset() {
       store.rows.clear();
       store.seen.clear();
+      store.events.length = 0;
+      store.arrival = 0;
     },
   };
 }

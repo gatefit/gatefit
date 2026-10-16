@@ -2,7 +2,7 @@
 
 S1–S6, seats/races, dispute/unpaid, and live Test Clocks stay free. Free packs do not read `GATEFIT_LICENSE_KEY` and do not contact Polar.
 
-The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is coming and is not in this release. Provider packs are not in this release. The buy page is https://gatefit.io/#pricing.
+The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is live and is the first Pro pack. Provider packs are not in this release. The buy page is https://gatefit.io/#pricing. See [chaos.md](chaos.md).
 
 ## Environment
 

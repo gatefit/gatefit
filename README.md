@@ -70,7 +70,13 @@ Opt-in live Test Clocks (not default CI): [docs/live-clock.md](docs/live-clock.m
 
 S1–S6, seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar.
 
-The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is coming and is not in this release. Provider packs are not in this release. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
+The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is live. Provider packs are not in this release. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
+
+```bash
+gatefit run --suite chaos --adapter src/adapters/hardened.ts --seed 1
+```
+
+Chaos mode replays every golden under a seeded set of delivery perturbations and compares the access row to the in-order replay. The perturbations are duplicated deliveries, reordered events, stale events, late events, dropped-then-replayed events, and the checkout-return page loading before the webhook. HTTP 200 is not access. The seed defaults to `1`. `--seed` wins over `GATEFIT_CHAOS_SEED`. The same seed prints the same bytes. A failure prints that seed and the perturbed events. Details: [docs/chaos.md](docs/chaos.md).
 
 ```bash
 export GATEFIT_LICENSE_KEY='GATEFIT-…'
