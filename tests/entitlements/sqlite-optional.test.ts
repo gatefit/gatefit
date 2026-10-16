@@ -67,14 +67,17 @@ test(
     const work = path.join(sandbox, "case");
     fs.mkdirSync(work);
     try {
-      const packed = spawnSync("npm", ["pack", "--json", "--pack-destination", work], {
+      const packed = spawnSync("npm", ["pack", "--pack-destination", work], {
         cwd: root,
         encoding: "utf8",
         env: cleanEnv(),
       });
-      assert.equal(packed.status, 0, packed.stderr);
-      const listed = JSON.parse(packed.stdout) as { filename: string }[];
-      const tgzName = listed[0]?.filename;
+      assert.equal(packed.status, 0, `${packed.stderr}${packed.stdout}`);
+      const tarballs = fs
+        .readdirSync(work)
+        .filter((name) => name.startsWith("gatefit-") && name.endsWith(".tgz"));
+      assert.equal(tarballs.length, 1, tarballs.join(","));
+      const tgzName = tarballs[0];
       assert.equal(tgzName, "gatefit-0.5.1.tgz");
       const tgz = path.join(work, tgzName!);
       const listing = execFileSync("tar", ["-tzf", tgz], { encoding: "utf8" });
