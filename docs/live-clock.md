@@ -25,7 +25,7 @@ node bin/gatefit.js live --adapter src/adapters/hardened.ts
 Workflow: `.github/workflows/live-clock.yml`
 
 - Nightly cron + `workflow_dispatch`
-- Pull requests **only** when labeled `live-clock` **and** the head repo is `edipert/gatefit` (fork PRs skip; no secrets)
+- Pull requests **only** when labeled `live-clock` **and** the head repo is `gatefit/gatefit` (fork PRs skip; no secrets)
 - Default `.github/workflows/ci.yml` does **not** run this lane
 - Repo secret name: `STRIPE_SECRET_KEY` (test-mode). If the secret is missing, the job no-ops instead of failing closed on billing-less forks/orgs.
 

@@ -47,7 +47,7 @@ Ops contract for the Cursor **Project coordinator**. Product FREEZE is separate;
 
 - **Announce** worker `bcId` on spawn (plus High id `gatefit#N` when one exists), on abort (`bcId` + reason; spawn a replacement from `main` if the High is still open), and on PR-up (`bcId` + PR URL). Keep a short chat registry: High → worker bcId → PR.
 - **Fresh branch from up-to-date `main` per High.** Never reuse a prior High’s PR or branch.
-- **Success** is a High-titled PR on that fresh branch. Title/body cite `gatefit#N` when a High exists. Highs are GitHub issues on `edipert/gatefit` until Linear capacity returns.
+- **Success** is a High-titled PR on that fresh branch. Title/body cite `gatefit#N` when a High exists. Highs are GitHub issues on `gatefit/gatefit` until Linear capacity returns.
 - **Coordinator `CloudAgent get` PR/branch is untrusted after the first High.** Ignore poisoned/stale get fields. After a High closes, say “High closed — ignore coordinator CloudAgent get PR/branch for the next High.”
 - **Empty-death (ships):** commits without push → same-worker push + PR only. Zero commits / plan missing → same-worker Extra High full implement (or a fresh worker from `main` if that worker is dead). Do not abort a live ship for Extra High without recording its `bcId`. Do not spawn parallel workers for the same High unless Lead asks.
 

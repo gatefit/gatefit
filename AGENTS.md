@@ -2,7 +2,7 @@
 
 **Product:** Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions.
 
-This file is the Cursor **coding-session entry** for `edipert/gatefit`. It is not a product-AI / Gemini blueprint.
+This file is the Cursor **coding-session entry** for `gatefit/gatefit`. It is not a product-AI / Gemini blueprint.
 
 ## How agents work here
 

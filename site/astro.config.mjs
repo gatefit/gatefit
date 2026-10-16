@@ -20,7 +20,7 @@ export default defineConfig({
 				ThemeSelect: './src/components/docs/ThemeSelect.astro',
 			},
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/edipert/gatefit' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/gatefit/gatefit' },
 			],
 			sidebar: [
 				{ label: 'Quickstart', slug: 'quickstart' },

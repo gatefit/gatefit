@@ -30,11 +30,11 @@ test("package is publishable as gatefit 0.4.0", () => {
 
 test("README documents npx, Action, and indie pricing", () => {
   assert.match(readme, /npx gatefit/);
-  assert.match(readme, /uses: edipert\/gatefit@v0\.4\.0/);
+  assert.match(readme, /uses: gatefit\/gatefit@v0\.4\.0/);
   assert.match(readme, /\$49/);
   assert.match(readme, /\$19/);
   assert.match(readme, /https:\/\/gatefit\.io/);
-  assert.doesNotMatch(readme, /edipert\.github\.io\/gatefit/);
+  assert.doesNotMatch(readme, /\.github\.io\/gatefit/);
   assert.match(readme, /polar/i);
   assert.match(readme, /polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0/);
   assert.match(readme, /Indie License/);

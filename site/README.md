@@ -1,6 +1,6 @@
 # Gatefit docs site
 
-Astro + Starlight app for [edipert/gatefit](https://github.com/edipert/gatefit). Not part of the published `gatefit@0.4.0` npm package.
+Astro + Starlight app for [gatefit/gatefit](https://github.com/gatefit/gatefit). Not part of the published `gatefit@0.4.0` npm package.
 
 ```bash
 npm ci
