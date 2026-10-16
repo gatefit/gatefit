@@ -66,7 +66,7 @@ test("gatefit run refuses GATEFIT_LIVE_CLOCK", () => {
 test("gatefit --version prints package version", () => {
   const result = run(["--version"]);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /gatefit 0\.4\.0/);
+  assert.match(result.stdout, /gatefit 0\.5\.0/);
 });
 
 test("gatefit run from another cwd uses bundled suite id and caller adapter", () => {
@@ -186,5 +186,5 @@ test("gatefit bin finds hoisted tsx outside the package directory", () => {
     env: { ...process.env, INIT_CWD: tmp },
   });
   assert.equal(result.status, 0, result.stderr + result.stdout);
-  assert.match(result.stdout, /gatefit 0\.4\.0/);
+  assert.match(result.stdout, /gatefit 0\.5\.0/);
 });

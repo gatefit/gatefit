@@ -9,7 +9,7 @@ Fixture-first S1–S6 goldens, an `npx gatefit` CLI, and a GitHub Action. Node 2
 The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). Polar checkout is.
 
 - **Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
-- **npm:** live. `npx gatefit` is `gatefit@0.4.0` at https://www.npmjs.com/package/gatefit. CI runs `npm publish --dry-run` only.
+- **npm:** live. `npx gatefit` is the last published tarball (`gatefit@0.4.0` until tag `v0.5.0`) at https://www.npmjs.com/package/gatefit. This repo is `0.5.0`. The named gate runs `npm publish --dry-run` only. A `v*` tag publishes with OIDC. See [Releasing](#releasing).
 - **Polar checkout:** live. Gatefit Indie License is **$49** one-time at `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain `site` build and `scripts/deploy-site.sh` use that committed link. `PUBLIC_POLAR_CHECKOUT_URL` may override it. Any other value fails closed.
 
 ## Install / run
@@ -20,7 +20,7 @@ npx gatefit adapter-check
 npx gatefit run --suite paid_grants_access --adapter ./src/your-access-adapter.ts
 ```
 
-`gatefit@0.4.0`: https://www.npmjs.com/package/gatefit
+This repo is `0.5.0`. Registry: https://www.npmjs.com/package/gatefit
 
 From a clone:
 
@@ -41,13 +41,13 @@ Bring your own AccessAdapter in ≤30 minutes: [docs/bring-your-adapter.md](docs
 
 ## GitHub Action
 
-Marketplace-ready Action lives at the repo root (`action.yml`). Tag `v0.4.0` is not cut yet. After a human tags the release commit:
+Marketplace-ready Action lives at the repo root (`action.yml`). Tag `v0.5.0` is not cut yet. After a human pushes the annotated tag:
 
 ```yaml
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: gatefit/gatefit@v0.4.0
+- uses: gatefit/gatefit@v0.5.0
   with:
     adapter: src/your-access-adapter.ts
 ```
@@ -55,16 +55,31 @@ Marketplace-ready Action lives at the repo root (`action.yml`). Tag `v0.4.0` is 
 Nested path still works:
 
 ```yaml
-- uses: gatefit/gatefit/.github/actions/gatefit@v0.4.0
+- uses: gatefit/gatefit/.github/actions/gatefit@v0.5.0
   with:
     adapter: src/your-access-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo; goldens default to Gatefit’s S1–S6 pack. See [docs/publish.md](docs/publish.md) and the release draft [docs/release-v0.4.0.md](docs/release-v0.4.0.md).
+The Action wraps `gatefit run`. Adapter path is in *your* repo; goldens default to Gatefit’s S1–S6 pack. See [docs/publish.md](docs/publish.md) and the release notes [docs/release-v0.5.0.md](docs/release-v0.5.0.md).
 
 Do not set `GATEFIT_LIVE_CLOCK` for the named gate. Do not use `sk_live`. Never treat Stripe HTTP 200 as proof of access.
 
 Opt-in live Test Clocks (not default CI): [docs/live-clock.md](docs/live-clock.md).
+
+## Releasing
+
+Bump `version` in `package.json` and the lockfile `version` field, and add the matching `CHANGELOG.md` heading, in a pull request. Merge to `main`. Then push an annotated tag whose name is `v` plus that version:
+
+```bash
+git tag -a vX.Y.Z -m "vX.Y.Z"
+git push origin vX.Y.Z
+```
+
+The tag must match `v*`. The workflow fails when the tag without the leading `v` is not `package.json` `version`. That push runs `.github/workflows/publish.yml`: unit tests (`npm test`), the tarball checks (bin present, no `site/`, no secrets), then `npm publish --access public`. Provenance is automatic. The publish job requires the GitHub environment `npm`, so a required reviewer can be added there. `workflow_dispatch` runs the checks and does not publish. Do not set a registry token.
+
+One-time setup on npmjs.com for package `gatefit`: open Package settings, Trusted Publisher, GitHub Actions. Organization or user `gatefit`, repository `gatefit`, workflow filename `publish.yml`, environment name `npm`, and allow `npm publish`. Then set Publishing access to **Require two-factor authentication and disallow tokens**.
+
+`./ci-local.sh` stays the merge gate. It runs `npm publish --dry-run` and does not push tags.
 
 ## License
 

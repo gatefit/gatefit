@@ -1,0 +1,86 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Ensure npm >= 11.5.1
+        run: |
+          npm install -g npm@latest
+          node -e 'const [a,b,c]=process.argv[1].split(".").map(Number); if(!(a>11||(a===11&&(b>5||(b===5&&c>=1))))){console.error("npm "+process.argv[1]+" is below 11.5.1"); process.exit(1)}' "$(npm --version)"
+      - name: Tag matches package.json version
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          if [[ "$tag" != "$version" ]]; then
+            echo "tag ${GITHUB_REF_NAME} (${tag}) != package.json ${version}" >&2
+            exit 1
+          fi
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Tarball checks
+        run: |
+          set -euo pipefail
+          pkg_ver="$(node -p "require('./package.json').version")"
+          pack_dir="$(mktemp -d)"
+          extract_dir="$(mktemp -d)"
+          npm pack --pack-destination "$pack_dir" >/dev/null
+          tgz="$(ls "$pack_dir"/gatefit-*.tgz)"
+          [[ "$(basename "$tgz")" == "gatefit-${pkg_ver}.tgz" ]]
+          tar -xzf "$tgz" -C "$extract_dir"
+          [[ -f "$extract_dir/package/bin/gatefit.js" ]]
+          [[ ! -d "$extract_dir/package/site" ]]
+          if find "$extract_dir/package" -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name 'id_rsa' | grep -q .; then
+            echo "tarball leaks env or key files" >&2
+            exit 1
+          fi
+          if grep -R -E -n 'sk_live_[A-Za-z0-9]{16,}|npm_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY' "$extract_dir/package" >/dev/null; then
+            echo "tarball contains secret material" >&2
+            exit 1
+          fi
+
+  publish:
+    needs: check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Ensure npm >= 11.5.1
+        run: |
+          npm install -g npm@latest
+          node -e 'const [a,b,c]=process.argv[1].split(".").map(Number); if(!(a>11||(a===11&&(b>5||(b===5&&c>=1))))){console.error("npm "+process.argv[1]+" is below 11.5.1"); process.exit(1)}' "$(npm --version)"
+      - name: Tag matches package.json version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          if [[ "$tag" != "$version" ]]; then
+            echo "tag ${GITHUB_REF_NAME} (${tag}) != package.json ${version}" >&2
+            exit 1
+          fi
+      - run: npm ci
+      - name: Publish to npm
+        run: npm publish --access public

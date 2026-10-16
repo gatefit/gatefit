@@ -16,9 +16,9 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"))
 const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
 const publishDoc = fs.readFileSync(path.join(root, "docs/publish.md"), "utf8");
 
-test("package is publishable as gatefit 0.4.0", () => {
+test("package is publishable as gatefit 0.5.0", () => {
   assert.equal(pkg.name, "gatefit");
-  assert.equal(pkg.version, "0.4.0");
+  assert.equal(pkg.version, "0.5.0");
   assert.notEqual(pkg.private, true);
   assert.equal(pkg.bin?.gatefit, "./bin/gatefit.js");
   assert.equal(pkg.license, "MIT");
@@ -30,7 +30,7 @@ test("package is publishable as gatefit 0.4.0", () => {
 
 test("README documents npx, Action, and indie pricing", () => {
   assert.match(readme, /npx gatefit/);
-  assert.match(readme, /uses: gatefit\/gatefit@v0\.4\.0/);
+  assert.match(readme, /uses: gatefit\/gatefit@v0\.5\.0/);
   assert.match(readme, /\$49/);
   assert.doesNotMatch(readme, /\$19/);
   assert.doesNotMatch(readme, /optional updates/i);
