@@ -183,6 +183,14 @@ grep -q 'https://gatefit.io' README.md || dist_fail "README missing https://gate
 if grep -q '\*\*Docs site:\*\* coming soon' README.md; then
   dist_fail "README still marks the docs site coming soon"
 fi
+grep -q 'https://www.npmjs.com/package/gatefit' README.md || dist_fail "README missing https://www.npmjs.com/package/gatefit"
+grep -q 'npx gatefit' README.md || dist_fail "README missing npx gatefit"
+if grep -q 'H12 is on HOLD\|npm is not on the registry\|registry package is not published' README.md; then
+  dist_fail "README still marks npm unpublished or H12 on HOLD"
+fi
+if grep -q 'coming soon' README.md docs/publish.md docs/polar.md docs/release-v0.4.0.md CHANGELOG.md; then
+  dist_fail "docs still mark npm coming soon"
+fi
 grep -q 'https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0' README.md \
   || dist_fail "README missing the Gatefit Indie License Checkout Link"
 grep -q '\$49' README.md || dist_fail "README missing \$49 Indie License price"
