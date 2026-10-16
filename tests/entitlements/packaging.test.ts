@@ -62,7 +62,12 @@ test("live clock docs and workflow exist and stay opt-in", () => {
   assert.doesNotMatch(liveDoc, /sk_live_[A-Za-z0-9]+/);
   assert.match(workflow, /GATEFIT_LIVE_CLOCK/);
   assert.match(workflow, /live-clock/);
+  assert.match(workflow, /workflow_dispatch/);
+  assert.match(workflow, /schedule/);
   assert.match(workflow, /head\.repo\.full_name == github\.repository/);
+  assert.match(workflow, /live-clock skipped: STRIPE_SECRET_KEY not configured/);
+  assert.doesNotMatch(workflow, /^ {2}push:/m);
+  assert.doesNotMatch(workflow, /if:.*secrets/);
   assert.doesNotMatch(ci, /GATEFIT_LIVE_CLOCK/);
   assert.match(readme, /docs\/live-clock\.md/);
 });

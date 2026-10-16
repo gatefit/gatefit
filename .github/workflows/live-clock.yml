@@ -27,11 +27,12 @@ jobs:
           cache: npm
       - run: npm install --ignore-scripts
       - name: Live Test Clock lane
-        if: ${{ secrets.STRIPE_SECRET_KEY != '' }}
         env:
           GATEFIT_LIVE_CLOCK: "1"
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-        run: node bin/gatefit.js live --adapter src/adapters/hardened.ts
-      - name: Skip when secret missing
-        if: ${{ secrets.STRIPE_SECRET_KEY == '' }}
-        run: echo "live-clock skipped: STRIPE_SECRET_KEY not configured"
+        run: |
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "live-clock skipped: STRIPE_SECRET_KEY not configured"
+            exit 0
+          fi
+          node bin/gatefit.js live --adapter src/adapters/hardened.ts

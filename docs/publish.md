@@ -15,7 +15,7 @@ The named gate does **not** publish. There is no npm token in this repo. Do not 
 1. `bash ./ci-local.sh` green on the release commit.
 2. Confirm `package.json` `name` is `gatefit`, `version` is the tag you will cut (today `0.5.1`), `private` is not `true`.
 3. `npm pack` — tarball must contain `bin/gatefit.js`, `src/cli.ts`, `CHANGELOG.md`, `tests/entitlements/goldens/*.yaml`, `action.yml`, `LICENSE`. It must not contain `site/` or secret files.
-4. Smoke: `npm install --ignore-scripts ./gatefit-0.5.1.tgz` in a temp dir, then `npx gatefit adapter-check` (exit 0) and `npx gatefit --version`. A SQLite adapter run without the native module exits non-zero and names `npm run build-release`.
+4. Smoke: `npm install --ignore-scripts ./gatefit-0.5.1.tgz` in a temp dir, then `npx gatefit adapter-check` (exit 0) and `npx gatefit --version`. A SQLite adapter run without the native module exits non-zero and names npm 10, `npm install --ignore-scripts`, or a C++ compiler.
 5. Publish with `npm publish --access public` from `.github/workflows/publish.yml` after the annotated tag is pushed. Provenance is automatic. Do not add a registry token.
 6. If the name is taken later, stop and use `@gatefit/gatefit` — do not force a hijack.
 
@@ -34,7 +34,7 @@ Root `action.yml` is marketplace-ready (name, description, branding, composite `
 2. Deploy: `npx wrangler@4 pages deploy dist --project-name gatefit` from `site/`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. The Pages project is `gatefit`. The hostname is `gatefit-bdu.pages.dev`.
 3. `GATEFIT_DEPLOY_TARGET=local GATEFIT_DEPLOY_DEST=/tmp/gatefit-site bash scripts/deploy-site.sh` copies that tree. `GATEFIT_DEPLOY_TARGET=cloudflare` runs the same wrangler deploy.
 4. `rsync` and `s3` targets are documented in `scripts/deploy-site.sh`. Set `GATEFIT_DEPLOY_REPLACE=1` because they replace destination contents.
-5. GitHub Pages needs a public repository or a paid plan. Do not expect Pages to serve a private free repo. The live site is https://gatefit.io.
+5. GitHub Pages needs a public repository or a paid plan and is not the live host. `.github/workflows/pages.yml` builds `site/` on pushes to `main` and does not deploy. The live site is https://gatefit.io via Cloudflare Pages.
 
 ## Out of scope here
 

@@ -91,12 +91,13 @@ test("Polar CTA has no polar.sh placeholder fallback", () => {
   assert.doesNotMatch(cta, /gumroad|stripe\.com\/checkout|docusaurus|framer/i);
 });
 
-test("GitHub Pages workflow builds site/ and stays out of live-clock CI", () => {
+test("pages workflow builds site/ and does not deploy to GitHub Pages", () => {
   const workflow = read(".github/workflows/pages.yml");
   assert.match(workflow, /withastro\/action/);
   assert.match(workflow, /path:\s*site/);
-  assert.match(workflow, /deploy-pages/);
   assert.match(workflow, /committed Checkout Link/);
+  assert.doesNotMatch(workflow, /deploy-pages/);
+  assert.doesNotMatch(workflow, /github-pages/);
   assert.doesNotMatch(workflow, /Empty \/ unset fails closed/);
   assert.doesNotMatch(workflow, /GATEFIT_LIVE_CLOCK/);
 });

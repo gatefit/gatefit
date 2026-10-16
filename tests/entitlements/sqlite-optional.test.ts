@@ -163,8 +163,11 @@ function assertSqliteError(stderr: string): void {
   assert.match(stderr, /better-sqlite3/);
   assert.match(stderr, /optional/);
   assert.match(stderr, /prebuild/);
-  assert.match(stderr, /npm run build-release/);
-  assert.match(stderr, /npm rebuild better-sqlite3 does not compile/);
-  assert.match(stderr, /C\+\+|compiler|Xcode|build-essential|make/);
+  assert.match(stderr, /npm 9/);
+  assert.match(stderr, /node-gyp/);
+  assert.match(stderr, /npm 10/);
+  assert.match(stderr, /ignore-scripts/);
+  assert.match(stderr, /compiler|C\+\+|Xcode|build-essential/);
   assert.match(stderr, /--version/);
+  assert.doesNotMatch(stderr, /does not compile during npm install/);
 }

@@ -1,6 +1,6 @@
 # Gatefit docs site
 
-Astro + Starlight app for [gatefit/gatefit](https://github.com/gatefit/gatefit). Not part of the published `gatefit@0.5.0` npm package.
+Astro + Starlight app for [gatefit/gatefit](https://github.com/gatefit/gatefit). Not part of the published `gatefit@0.5.1` npm package.
 
 ```bash
 npm ci
@@ -17,7 +17,7 @@ npx wrangler@4 pages deploy dist --project-name gatefit
 
 `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. Do not commit them.
 
-GitHub Pages needs a public repository or a paid plan (`.github/workflows/pages.yml` does not serve a private free repo). It is not the live host.
+GitHub Pages needs a public repository or a paid plan and is not the live host. `.github/workflows/pages.yml` builds this site on pushes to `main` and does not deploy.
 
 GHA-free copy of `site/dist`, or the Cloudflare target:
 

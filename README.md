@@ -8,8 +8,8 @@ Fixture-first S1–S6 goldens, an `npx gatefit` CLI, and a GitHub Action. Node 2
 
 The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). Polar checkout is.
 
-- **Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
-- **npm:** live. `npx gatefit` is the last published tarball (`gatefit@0.5.0` until tag `v0.5.1`) at https://www.npmjs.com/package/gatefit. This repo is `0.5.1`. The named gate runs `npm publish --dry-run` only. A `v*` tag publishes with OIDC. See [Releasing](#releasing).
+- **Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `.github/workflows/pages.yml` builds the site on pushes to `main` and does not deploy. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
+- **npm:** live. `npx gatefit` is the published tarball `gatefit@0.5.1` at https://www.npmjs.com/package/gatefit. This repo is `0.5.1`. The named gate runs `npm publish --dry-run` only. A `v*` tag publishes with OIDC. See [Releasing](#releasing).
 - **Polar checkout:** live. Gatefit Indie License is **$49** one-time at `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain `site` build and `scripts/deploy-site.sh` use that committed link. `PUBLIC_POLAR_CHECKOUT_URL` may override it. Any other value fails closed.
 
 ## Install / run
@@ -22,7 +22,7 @@ npx gatefit run --suite paid_grants_access --adapter ./src/your-access-adapter.t
 
 This repo is `0.5.1`. Registry: https://www.npmjs.com/package/gatefit
 
-`better-sqlite3` is optional and ships prebuilds for common platforms. It does not compile during `npm install`. `--version`, `--help`, and `adapter-check` run when the native module is missing. The reference SQLite adapter loads it only when that adapter runs. If the module is missing, that command tells you to reinstall the prebuild, or to install build tools and run `npm run build-release` in the `better-sqlite3` directory, then exits non-zero.
+`better-sqlite3` is optional and ships prebuilds for common platforms. npm 9 still runs node-gyp during install and drops the package when that compile fails. npm 10 and newer unpack the prebuild. `--version`, `--help`, and `adapter-check` run when the native module is missing. The reference SQLite adapter loads it only when that adapter runs. If the module is missing, that command tells you to upgrade npm to 10 or newer, reinstall with `npm install --ignore-scripts`, or install a C++ compiler, then exits non-zero.
 
 From a clone:
 
@@ -43,7 +43,7 @@ Bring your own AccessAdapter in ≤30 minutes: [docs/bring-your-adapter.md](docs
 
 ## GitHub Action
 
-Marketplace-ready Action lives at the repo root (`action.yml`). Tag `v0.5.0` is released. Tag `v0.5.1` is not cut yet. After a human pushes the annotated tag:
+Marketplace-ready Action lives at the repo root (`action.yml`). Tag `v0.5.1` is released.
 
 ```yaml
 - uses: actions/setup-node@v4
