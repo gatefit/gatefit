@@ -1,6 +1,12 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.0` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.1` is not cut in this change.
+
+## [0.5.1] - 2026-10-16
+
+### Fixed
+
+- `better-sqlite3` is optional and loads only when the SQLite adapter opens a database. `--version`, `--help`, and `adapter-check` run when that module is missing. A SQLite command that cannot load it prints what is missing, that the package ships prebuilds and does not compile on install, and how to reinstall the prebuild or run `npm run build-release`, then exits non-zero.
 
 ## [0.5.0] - 2026-10-16
 

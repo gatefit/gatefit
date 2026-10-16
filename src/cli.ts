@@ -25,6 +25,7 @@ function usage(): string {
     "  gatefit run --suite chaos --adapter <path> [--seed <value>]",
     "  gatefit adapter-check",
     "  gatefit live --adapter <path> [--scenario <id>]",
+    "  gatefit --help",
     "  gatefit --version",
   ].join("\n");
 }
@@ -96,9 +97,17 @@ function isVersionFlag(arg: string | undefined): boolean {
   return arg === "--version" || arg === "-v";
 }
 
+function isHelpFlag(arg: string | undefined): boolean {
+  return arg === "--help" || arg === "-h";
+}
+
 async function main(argv: string[]): Promise<number> {
   if (isVersionFlag(argv[0])) {
     console.log(`gatefit ${readPackageVersion()}`);
+    return 0;
+  }
+  if (isHelpFlag(argv[0])) {
+    console.log(usage());
     return 0;
   }
   const command = argv[0];

@@ -22,7 +22,7 @@ test("Starlight lives in site/ at the gatefit.io root", () => {
     version: string;
     files?: string[];
   };
-  assert.equal(pkg.version, "0.5.0");
+  assert.equal(pkg.version, "0.5.1");
   assert.ok(!pkg.files?.includes("site"));
 });
 
@@ -50,7 +50,7 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(quickstart, /adapter/i);
   assert.match(quickstart, /\/action\//);
   assert.doesNotMatch(quickstart, /\/gatefit\/action\//);
-  assert.match(action, /uses: gatefit\/gatefit@v0\.5\.0/);
+  assert.match(action, /uses: gatefit\/gatefit@v0\.5\.1/);
   assert.match(polar, /location\.replace\('\/#pricing'\)/);
   assert.doesNotMatch(polar, /import PolarRedirect/);
   assert.doesNotMatch(polar, /<PolarRedirect/);
