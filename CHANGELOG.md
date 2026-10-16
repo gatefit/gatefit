@@ -1,6 +1,12 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The heading version matches `package.json`. Tag `v0.4.0` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.4.0` is not cut in this change.
+
+## [Unreleased]
+
+### Added
+
+- Chaos mode, a Pro pack. `gatefit run --suite chaos` replays every golden under seeded perturbations and compares the access row to the in-order replay. It requires `GATEFIT_LICENSE_KEY`.
 
 ## [0.4.0] - 2026-10-16
 

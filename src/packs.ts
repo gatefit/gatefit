@@ -1,10 +1,10 @@
 /**
- * Pro pack registry. H17 plugs chaos mode in by calling `registerProPack`
- * with a `run` function. The stub has no runner and is not a user-facing feature.
+ * Pro pack registry. Chaos mode registers here and runs only after the license gate.
+ * The stub has no runner and is not a user-facing feature.
  */
 export type ProPack = {
   id: string;
-  run?: (ctx: { adapterPath: string }) => Promise<number>;
+  run?: (ctx: { adapterPath: string; seed: string }) => Promise<number>;
 };
 
 const proPacks = new Map<string, ProPack>();

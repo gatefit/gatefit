@@ -3,10 +3,12 @@ import type { AccessSnapshot, BillingEvent } from "./access-adapter.ts";
 export type AccessStore = {
   rows: Map<string, AccessSnapshot>;
   seen: Set<string>;
+  events: BillingEvent[];
+  arrival: number;
 };
 
 export function emptyStore(): AccessStore {
-  return { rows: new Map(), seen: new Set() };
+  return { rows: new Map(), seen: new Set(), events: [], arrival: 0 };
 }
 
 export function isPaid(event: BillingEvent): boolean {
@@ -96,9 +98,26 @@ export function nextSnapshot(current: AccessSnapshot, event: BillingEvent): Acce
   return current;
 }
 
+function foldCustomer(store: AccessStore, customerId: string): void {
+  const ordered = store.events.filter((event) => event.customerId === customerId);
+  ordered.sort((a, b) => {
+    const byCreated = (a.created ?? 0) - (b.created ?? 0);
+    if (byCreated !== 0) return byCreated;
+    if (a.id < b.id) return -1;
+    if (a.id > b.id) return 1;
+    return 0;
+  });
+  let snapshot: AccessSnapshot = { locked: true };
+  for (const event of ordered) snapshot = nextSnapshot(snapshot, event);
+  store.rows.set(customerId, snapshot);
+}
+
 export function applyBillingEvent(store: AccessStore, event: BillingEvent): void {
   if (store.seen.has(event.id)) return;
   store.seen.add(event.id);
-  const current = store.rows.get(event.customerId) ?? { locked: true };
-  store.rows.set(event.customerId, nextSnapshot(current, event));
+  const stamped: BillingEvent = { ...event };
+  if (stamped.created === undefined) stamped.created = store.arrival;
+  store.arrival += 1;
+  store.events.push(stamped);
+  foldCustomer(store, event.customerId);
 }

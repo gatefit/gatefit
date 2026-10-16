@@ -25,6 +25,8 @@ export type BillingEvent = {
   cancel_at_period_end?: boolean;
   period_end?: number;
   now?: number;
+  /** Original timeline position. Chaos folds on this so arrival order is not access. */
+  created?: number;
 };
 
 export type AccessAdapter = {
