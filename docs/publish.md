@@ -15,7 +15,7 @@ The named gate does **not** publish. There is no npm token in this repo. Do not 
 1. `bash ./ci-local.sh` green on the release commit.
 2. Confirm `package.json` `name` is `gatefit`, `version` is the tag you will cut (today `0.5.1`), `private` is not `true`.
 3. `npm pack` — tarball must contain `bin/gatefit.js`, `src/cli.ts`, `CHANGELOG.md`, `tests/entitlements/goldens/*.yaml`, `action.yml`, `LICENSE`. It must not contain `site/` or secret files.
-4. Smoke: `npm install --ignore-scripts ./gatefit-0.5.1.tgz` in a temp dir, then `npx gatefit adapter-check` (exit 0) and `npx gatefit --version`. A SQLite adapter run without the native module exits non-zero and names `npm rebuild better-sqlite3`.
+4. Smoke: `npm install --ignore-scripts ./gatefit-0.5.1.tgz` in a temp dir, then `npx gatefit adapter-check` (exit 0) and `npx gatefit --version`. A SQLite adapter run without the native module exits non-zero and names `npm run build-release`.
 5. Publish with `npm publish --access public` from `.github/workflows/publish.yml` after the annotated tag is pushed. Provenance is automatic. Do not add a registry token.
 6. If the name is taken later, stop and use `@gatefit/gatefit` — do not force a hijack.
 

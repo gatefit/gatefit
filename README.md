@@ -22,7 +22,7 @@ npx gatefit run --suite paid_grants_access --adapter ./src/your-access-adapter.t
 
 This repo is `0.5.1`. Registry: https://www.npmjs.com/package/gatefit
 
-`better-sqlite3` is optional. `--version`, `--help`, and `adapter-check` run without a C++ compiler. The reference SQLite adapter loads it only when that adapter runs. If the native module is missing, that command prints how to install build tools and run `npm rebuild better-sqlite3`, then exits non-zero.
+`better-sqlite3` is optional and ships prebuilds for common platforms. It does not compile during `npm install`. `--version`, `--help`, and `adapter-check` run when the native module is missing. The reference SQLite adapter loads it only when that adapter runs. If the module is missing, that command tells you to reinstall the prebuild, or to install build tools and run `npm run build-release` in the `better-sqlite3` directory, then exits non-zero.
 
 From a clone:
 

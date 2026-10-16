@@ -6,7 +6,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ### Fixed
 
-- `npx gatefit` installs on machines without make or a C++ compiler. `better-sqlite3` is optional and loads only for the SQLite adapter. `--version`, `--help`, and `adapter-check` run without it. A SQLite command that cannot load the module prints what is missing, why, and `npm rebuild better-sqlite3`, then exits non-zero.
+- `better-sqlite3` is optional and loads only when the SQLite adapter opens a database. `--version`, `--help`, and `adapter-check` run when that module is missing. A SQLite command that cannot load it prints what is missing, that the package ships prebuilds and does not compile on install, and how to reinstall the prebuild or run `npm run build-release`, then exits non-zero.
 
 ## [0.5.0] - 2026-10-16
 

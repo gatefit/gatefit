@@ -7,14 +7,14 @@ const require = createRequire(import.meta.url);
 function sqliteUnavailable(err: unknown): Error {
   const detail = err instanceof Error ? err.message : String(err);
   return new Error(
-    [
-      "gatefit: SQLite adapter cannot load better-sqlite3.",
-      "What is missing: the better-sqlite3 native module.",
-      "Why: better-sqlite3 is an optional dependency. Platforms without a usable prebuild compile it, and that compile needs make and a C++ compiler.",
-      "How to fix: install the build tools (Xcode Command Line Tools on macOS, or build-essential on Linux), then run npm rebuild better-sqlite3.",
-      "--version, --help, and adapter-check do not need this module.",
-      `Detail: ${detail}`,
-    ].join("\n"),
+      [
+        "gatefit: SQLite adapter cannot load better-sqlite3.",
+        "What is missing: the better-sqlite3 native module.",
+        "Why: better-sqlite3 is optional. Its package ships prebuilds for linux, darwin, and win32 (x64 and arm64) and does not compile during npm install. This process has no usable prebuild.",
+        "How to fix: reinstall so the prebuild is unpacked (npm install better-sqlite3, or reinstall gatefit). npm rebuild better-sqlite3 does not compile it. On a platform without a prebuild, install make and a C++ compiler (Xcode Command Line Tools on macOS, or build-essential on Linux), then in the better-sqlite3 directory run npm run build-release.",
+        "--version, --help, and adapter-check do not need this module.",
+        `Detail: ${detail}`,
+      ].join("\n"),
   );
 }
 

@@ -145,7 +145,9 @@ function assertSqliteError(stderr: string): void {
   assert.notEqual(stderr.trim(), "");
   assert.match(stderr, /better-sqlite3/);
   assert.match(stderr, /optional/);
-  assert.match(stderr, /npm rebuild better-sqlite3/);
+  assert.match(stderr, /prebuild/);
+  assert.match(stderr, /npm run build-release/);
+  assert.match(stderr, /npm rebuild better-sqlite3 does not compile/);
   assert.match(stderr, /C\+\+|compiler|Xcode|build-essential|make/);
   assert.match(stderr, /--version/);
 }
