@@ -466,6 +466,11 @@ ok "PUBLIC_POLAR_CHECKOUT_URL overrides the committed Checkout Link"
 build_polar_override ''
 assert_live_cta site/dist/index.html "$POLAR_CHECKOUT_URL"
 assert_h13_dist
+if grep -R -n --exclude-dir=node_modules '/cursor/stores' scripts >/dev/null; then
+  fail "scripts hard-code /cursor/stores"
+fi
+grep -q 'GATEFIT_H13_SHOT_DIR' scripts/h13-frames.mjs || fail "h13-frames missing shot dir override"
+grep -q '.artifacts/h13-frames' scripts/h13-frames.mjs || fail "h13-frames missing repo-relative shot dir"
 node scripts/h13-frames.mjs site/dist || fail "hero or leak frames overlap or clip"
 ok "hero and leak frames do not overlap"
 

@@ -27,9 +27,9 @@
 
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statfsSync, statSync, writeFileSync } from 'node:fs';
-import { extname, join, normalize } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, extname, join, normalize, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inflateSync } from 'node:zlib';
 
 const dist = process.argv[2];
@@ -845,17 +845,12 @@ async function checkOrbitBehindText(width, height) {
 
 const scrollSections = ['#leak', '#how', '#scenarios', '#pricing', '#final'];
 const scrollFractions = [0, 0.25, 0.5, 0.75, 1];
-const projectShotDir = '/cursor/stores/bc-0e25cb1c-5f8c-45e6-887e-4641b51f68a8/media';
-// mkdir of an unmounted agent-store id blocks inside FUSE. Use that directory
-// when it already exists (or when /cursor/stores is a normal filesystem).
+const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+
 function resolveShotDir() {
-  if (existsSync(projectShotDir)) return projectShotDir;
-  try {
-    if (statfsSync('/cursor/stores').type === 0x65735546) return '/tmp/gatefit-h13-shots';
-  } catch {
-    // /cursor/stores is absent on a normal CI runner.
-  }
-  return projectShotDir;
+  const fromEnv = process.env.GATEFIT_H13_SHOT_DIR?.trim();
+  if (fromEnv) return resolve(fromEnv);
+  return join(repoRoot, '.artifacts/h13-frames');
 }
 const shotDir = resolveShotDir();
 
