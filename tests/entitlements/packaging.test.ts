@@ -32,7 +32,8 @@ test("README documents npx, Action, and indie pricing", () => {
   assert.match(readme, /npx gatefit/);
   assert.match(readme, /uses: gatefit\/gatefit@v0\.4\.0/);
   assert.match(readme, /\$49/);
-  assert.match(readme, /\$19/);
+  assert.doesNotMatch(readme, /\$19/);
+  assert.doesNotMatch(readme, /optional updates/i);
   assert.match(readme, /https:\/\/gatefit\.io/);
   assert.doesNotMatch(readme, /\.github\.io\/gatefit/);
   assert.match(readme, /polar/i);

@@ -90,8 +90,11 @@ ok "live lane gated (not default CI; forks skip)"
 if ! grep -q 'npx gatefit' README.md; then
   fail "README missing npx gatefit DX"
 fi
-if ! grep -q '\$49' README.md || ! grep -q '\$19' README.md; then
+if ! grep -q '\$49' README.md; then
   fail "README missing indie pricing copy"
+fi
+if grep -Eq '\$19|optional updates' README.md; then
+  fail "README still mentions a monthly updates plan"
 fi
 ok "README DX + pricing"
 
@@ -424,6 +427,9 @@ fi
 grep -q '\$49' site/dist/index.html || fail "built landing missing \$49"
 grep -q 'Indie License' site/dist/index.html || fail "built landing missing Indie License"
 grep -q 'Buy for $49' site/dist/index.html || fail "built landing missing Buy for \$49"
+if grep -Eq '\$19|optional updates' site/dist/index.html; then
+  fail "built landing still mentions a monthly updates plan"
+fi
 assert_h13_dist
 ok "built site default Checkout Link"
 

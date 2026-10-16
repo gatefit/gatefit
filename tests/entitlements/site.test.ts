@@ -35,6 +35,8 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(index, /\$49/);
   assert.match(index, /Buy for \$49/);
   assert.match(index, /Indie License/);
+  assert.doesNotMatch(index, /\$19/);
+  assert.doesNotMatch(index, /optional updates/i);
   assert.doesNotMatch(index, /coming soon/i);
   assert.doesNotMatch(index, /checkout is live/i);
   assert.doesNotMatch(index, /merchant of record/i);
