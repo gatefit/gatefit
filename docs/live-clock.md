@@ -26,8 +26,9 @@ Workflow: `.github/workflows/live-clock.yml`
 
 - Nightly cron + `workflow_dispatch`
 - Pull requests **only** when labeled `live-clock` **and** the head repo is `gatefit/gatefit` (fork PRs skip; no secrets)
+- Ordinary pushes, including pushes to `main`, do not start this workflow
 - Default `.github/workflows/ci.yml` does **not** run this lane
-- Repo secret name: `STRIPE_SECRET_KEY` (test-mode). If the secret is missing, the job no-ops instead of failing closed on billing-less forks/orgs.
+- Repo secret name: `STRIPE_SECRET_KEY` (test-mode). If that secret is absent, the opt-in job prints `live-clock skipped: STRIPE_SECRET_KEY not configured` and exits 0. It does not call Stripe.
 
 ## Landmines
 

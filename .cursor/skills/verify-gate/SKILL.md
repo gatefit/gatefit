@@ -32,4 +32,4 @@ Exit 0 is green. Treat any non-zero as blocking.
 
 ## Merge
 
-GitHub Actions `ci.yml` runs the same script (plus an Action dogfood job). A local green never overrides a GHA red. Never merge unless the user says **Merge it**. Edip OVERRIDE for GATEFIT-H8: GHA billing may skip — do not block this High on Actions. Pages deploy is a separate `pages.yml` workflow.
+GitHub Actions `ci.yml` runs the same script (plus an Action dogfood job). A local green never overrides a GHA red. Never merge unless the user says **Merge it**. Edip OVERRIDE for GATEFIT-H8: GHA billing may skip — do not block this High on Actions. `pages.yml` builds `site/` on pushes to `main` and does not deploy. The live host is Cloudflare Pages.

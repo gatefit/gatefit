@@ -5,8 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  # withastro/action uploads a build artifact. The last green build used this
+  # permission for that upload. This workflow does not deploy.
   pages: write
-  id-token: write
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -22,12 +23,3 @@ jobs:
         env:
           # Empty / unset uses the committed Checkout Link. Any other non-polar_cl_ value fails closed.
           PUBLIC_POLAR_CHECKOUT_URL: ${{ vars.PUBLIC_POLAR_CHECKOUT_URL }}
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
