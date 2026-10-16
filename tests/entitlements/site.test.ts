@@ -39,12 +39,12 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.doesNotMatch(index, /checkout is live/i);
   assert.doesNotMatch(index, /merchant of record/i);
   assert.doesNotMatch(index, /docs live at/i);
-  assert.doesNotMatch(index, /\/gatefit\//);
+  assert.doesNotMatch(index, /["']\/gatefit\//);
   assert.match(quickstart, /npx gatefit/);
   assert.match(quickstart, /adapter/i);
   assert.match(quickstart, /\/action\//);
   assert.doesNotMatch(quickstart, /\/gatefit\/action\//);
-  assert.match(action, /uses: edipert\/gatefit@v0\.4\.0/);
+  assert.match(action, /uses: gatefit\/gatefit@v0\.4\.0/);
   assert.match(polar, /location\.replace\('\/#pricing'\)/);
   assert.doesNotMatch(polar, /import PolarRedirect/);
   assert.doesNotMatch(polar, /<PolarRedirect/);
@@ -59,7 +59,7 @@ test("resolvePolarCheckoutUrl fails closed unless Polar Checkout Link", () => {
   assert.equal(resolvePolarCheckoutUrl("   "), GATEFIT_CHECKOUT_URL);
   assert.match(GATEFIT_CHECKOUT_URL, POLAR_CHECKOUT_HREF_RE);
   assert.equal(resolvePolarCheckoutUrl("https://polar.sh/"), null);
-  assert.equal(resolvePolarCheckoutUrl("https://polar.sh/edipert/gatefit"), null);
+  assert.equal(resolvePolarCheckoutUrl("https://polar.sh/gatefit/gatefit"), null);
   assert.equal(resolvePolarCheckoutUrl("http://buy.polar.sh/polar_cl_abc"), null);
   assert.equal(resolvePolarCheckoutUrl("https://evil.example/polar_cl_abc"), null);
   assert.equal(resolvePolarCheckoutUrl("https://buy.polar.sh/"), null);
@@ -75,8 +75,12 @@ test("Polar CTA has no polar.sh placeholder fallback", () => {
   const cta = read("site/src/components/PolarBuyCta.astro");
   assert.doesNotMatch(cta, /\|\|\s*['"]https:\/\/polar\.sh\/?['"]/);
   assert.match(cta, /resolvePolarCheckoutUrl/);
-  assert.match(cta, /data-polar-checkout-pending/);
-  assert.match(cta, /data-polar-checkout/);
+  assert.match(cta, /target="_blank"/);
+  assert.match(cta, /rel="noopener"/);
+  assert.match(cta, /data-checkout-closed/);
+  assert.doesNotMatch(cta, /data-polar-checkout/);
+  assert.doesNotMatch(cta, /embed\.global\.js/);
+  assert.doesNotMatch(cta, /@polar-sh\/checkout/);
   assert.doesNotMatch(cta, /buy now/i);
   assert.doesNotMatch(cta, /gumroad|stripe\.com\/checkout|docusaurus|framer/i);
 });

@@ -4,7 +4,7 @@
   "description": "Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions",
   "type": "module",
   "license": "MIT",
-  "author": "edipert",
+  "author": "gatefit",
   "bin": {
     "gatefit": "./bin/gatefit.js"
   },
@@ -28,12 +28,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/edipert/gatefit.git"
+    "url": "git+https://github.com/gatefit/gatefit.git"
   },
   "bugs": {
-    "url": "https://github.com/edipert/gatefit/issues"
+    "url": "https://github.com/gatefit/gatefit/issues"
   },
-  "homepage": "https://github.com/edipert/gatefit#readme",
+  "homepage": "https://github.com/gatefit/gatefit#readme",
   "keywords": [
     "stripe",
     "entitlements",

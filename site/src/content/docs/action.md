@@ -11,7 +11,7 @@ The Action is at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. T
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: edipert/gatefit@v0.4.0
+- uses: gatefit/gatefit@v0.4.0
   with:
     adapter: src/your-access-adapter.ts
 ```
@@ -19,7 +19,7 @@ The Action is at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. T
 The nested path also works:
 
 ```yaml
-- uses: edipert/gatefit/.github/actions/gatefit@v0.4.0
+- uses: gatefit/gatefit/.github/actions/gatefit@v0.4.0
   with:
     adapter: src/your-access-adapter.ts
 ```
@@ -32,4 +32,4 @@ The nested path also works:
 - Do not use `sk_live`.
 - Never treat Stripe HTTP 200 as proof of access.
 
-Publish / tag checklist: [docs/publish.md](https://github.com/edipert/gatefit/blob/main/docs/publish.md) in the repo.
+Publish / tag checklist: [docs/publish.md](https://github.com/gatefit/gatefit/blob/main/docs/publish.md) in the repo.

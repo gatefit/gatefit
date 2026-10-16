@@ -3,11 +3,11 @@ import { resolvePolarCheckoutUrl } from '../lib/polarCheckout';
 
 interface Props {
 	label?: string;
-	embed?: boolean;
+	closedNote?: boolean;
 	size?: 'nav' | 'lg';
 }
 
-const { label = 'Buy for $49', embed = false, size = 'lg' } = Astro.props;
+const { label = 'Buy for $49', closedNote = false, size = 'lg' } = Astro.props;
 const checkoutUrl = resolvePolarCheckoutUrl(import.meta.env.PUBLIC_POLAR_CHECKOUT_URL);
 ---
 
@@ -17,8 +17,8 @@ const checkoutUrl = resolvePolarCheckoutUrl(import.meta.env.PUBLIC_POLAR_CHECKOU
 			<a
 				class:list={['buy', size === 'nav' && 'buy-nav']}
 				href={checkoutUrl}
-				data-polar-checkout
-				data-polar-checkout-theme="dark"
+				target="_blank"
+				rel="noopener"
 			>
 				{label}
 			</a>
@@ -27,25 +27,15 @@ const checkoutUrl = resolvePolarCheckoutUrl(import.meta.env.PUBLIC_POLAR_CHECKOU
 		<span
 			class:list={['buy', 'is-closed', size === 'nav' && 'buy-nav']}
 			role="status"
-			data-polar-checkout-pending
+			data-checkout-closed
 		>
 			{label}
 		</span>
 	)
 }
 {
-	embed && checkoutUrl && (
-		<script
-			is:inline
-			defer
-			data-auto-init
-			src="https://cdn.jsdelivr.net/npm/@polar-sh/checkout@latest/dist/embed.global.js"
-		/>
-	)
-}
-{
-	embed && !checkoutUrl && (
-		<p role="status" data-polar-checkout-pending>
+	closedNote && !checkoutUrl && (
+		<p role="status" data-checkout-closed>
 			This <code>PUBLIC_POLAR_CHECKOUT_URL</code> is not a Checkout Link, so the Buy CTA stays
 			closed. Product paths, polar.sh home, and other hosts fail closed. npm and the GitHub Action
 			stay free.

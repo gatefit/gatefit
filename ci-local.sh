@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Named verify gate for Gatefit (edipert/gatefit).
+# Named verify gate for Gatefit (gatefit/gatefit).
 # Harness integrity plus GATEFIT-H4 packaging / npx / Action, and H3 S1–S6 goldens.
 set -euo pipefail
 
@@ -163,13 +163,13 @@ if [[ -f CHANGELOG.md ]]; then
 fi
 rel="docs/release-${expected_tag}.md"
 if [[ -f "$rel" ]]; then
-  grep -q "uses: edipert/gatefit@${expected_tag}" "$rel" || dist_fail "release notes missing root Action uses path"
-  grep -q "uses: edipert/gatefit/.github/actions/gatefit@${expected_tag}" "$rel" || dist_fail "release notes missing nested Action uses path"
+  grep -q "uses: gatefit/gatefit@${expected_tag}" "$rel" || dist_fail "release notes missing root Action uses path"
+  grep -q "uses: gatefit/gatefit/.github/actions/gatefit@${expected_tag}" "$rel" || dist_fail "release notes missing nested Action uses path"
 fi
 for uses_doc in README.md docs/publish.md site/src/content/docs/action.md; do
-  grep -q "uses: edipert/gatefit@${expected_tag}" "$uses_doc" || dist_fail "${uses_doc} missing root Action uses path"
-  grep -q "uses: edipert/gatefit/.github/actions/gatefit@${expected_tag}" "$uses_doc" || dist_fail "${uses_doc} missing nested Action uses path"
-  if grep -q 'uses: edipert/gatefit/action.yml@' "$uses_doc"; then
+  grep -q "uses: gatefit/gatefit@${expected_tag}" "$uses_doc" || dist_fail "${uses_doc} missing root Action uses path"
+  grep -q "uses: gatefit/gatefit/.github/actions/gatefit@${expected_tag}" "$uses_doc" || dist_fail "${uses_doc} missing nested Action uses path"
+  if grep -q 'uses: gatefit/gatefit/action.yml@' "$uses_doc"; then
     dist_fail "${uses_doc} has the wrong Action uses path"
   fi
 done
@@ -214,8 +214,8 @@ if [[ -f .npmignore ]]; then
 fi
 
 while IFS= read -r honesty_file; do
-  if grep -q 'edipert.github.io/gatefit' "$honesty_file"; then
-    dist_fail "${honesty_file} still points the docs site at edipert.github.io/gatefit"
+  if grep -q '.github.io/gatefit' "$honesty_file"; then
+    dist_fail "${honesty_file} still points the docs site at a github.io/gatefit host"
   fi
 done < <(find README.md docs site/README.md site/src -type f \( -name '*.md' -o -name '*.mdx' -o -name '*.astro' -o -name '*.css' \))
 
@@ -314,8 +314,21 @@ need_file site/src/content/docs/action.md
 need_file site/src/pages/polar.astro
 need_file docs/polar.md
 need_file .github/workflows/pages.yml
-if ! grep -q 'data-polar-checkout' site/src/components/PolarBuyCta.astro; then
-  fail "Polar CTA missing data-polar-checkout"
+if grep -q 'data-polar-checkout' site/src/components/PolarBuyCta.astro; then
+  fail "Polar CTA still uses a data-polar-checkout embed attribute"
+fi
+if grep -R -n --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.astro \
+  -e 'embed.global.js' -e '@polar-sh/checkout' -e 'data-polar-checkout' site >/dev/null; then
+  fail "site still loads the Polar checkout embed"
+fi
+if ! grep -q 'target="_blank"' site/src/components/PolarBuyCta.astro; then
+  fail "Polar CTA missing target=_blank"
+fi
+if ! grep -q 'rel="noopener"' site/src/components/PolarBuyCta.astro; then
+  fail "Polar CTA missing rel=noopener"
+fi
+if ! grep -q 'data-checkout-closed' site/src/components/PolarBuyCta.astro; then
+  fail "Polar CTA missing closed marker for an invalid Checkout Link"
 fi
 if grep -q 'GATEFIT_LIVE_CLOCK' .github/workflows/pages.yml; then
   fail "pages.yml must not set GATEFIT_LIVE_CLOCK"
@@ -353,17 +366,29 @@ assert_h13_dist() {
     || fail "built /polar/ does not redirect to /#pricing"
 }
 POLAR_CHECKOUT_URL='https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0'
+assert_no_polar_embed() {
+  local html="$1"
+  if grep -q 'data-polar-checkout' "$html"; then
+    fail "Polar embed attribute present in ${html}"
+  fi
+  if grep -q -e 'embed.global.js' -e '@polar-sh/checkout' "$html"; then
+    fail "Polar checkout embed script present in ${html}"
+  fi
+}
 assert_live_cta() {
   local html="$1" expected="$2"
   grep -q "href=\"${expected}\"" "$html" || fail "CTA href != ${expected} in ${html}"
-  grep -q 'data-polar-checkout' "$html" || fail "missing data-polar-checkout in ${html}"
-  if grep -q 'data-polar-checkout-pending' "$html"; then
-    fail "live CTA marked pending in ${html}"
+  grep -q 'target="_blank"' "$html" || fail "CTA missing target=_blank in ${html}"
+  grep -q 'rel="noopener"' "$html" || fail "CTA missing rel=noopener in ${html}"
+  assert_no_polar_embed "$html"
+  if grep -q 'data-checkout-closed' "$html"; then
+    fail "live CTA marked closed in ${html}"
   fi
 }
 assert_pending_cta() {
   local html="$1" bad="$2"
-  grep -q 'data-polar-checkout-pending' "$html" || fail "override ${bad} did not stay pending in ${html}"
+  grep -q 'data-checkout-closed' "$html" || fail "override ${bad} did not stay closed in ${html}"
+  assert_no_polar_embed "$html"
   if grep -q "href=\"${bad}\"" "$html"; then
     fail "override ${bad} leaked into CTA href"
   fi

@@ -16,7 +16,7 @@ const workflow = [
 	'      - uses: actions/setup-node@v4',
 	'        with:',
 	'          node-version: "22"',
-	'      - uses: edipert/gatefit@v0.4.0',
+	'      - uses: gatefit/gatefit@v0.4.0',
 	'        with:',
 	'          adapter: src/access-adapter.ts',
 ];
@@ -93,7 +93,7 @@ const story = [
 						</h1>
 						<p class="hero-sub">CI checks the access row after refunds, replays, and past_due. A 200 from Stripe is not access.</p>
 						<div class="hero-cta">
-							<PolarBuyCta embed label="Buy for $49" />
+							<PolarBuyCta closedNote label="Buy for $49" />
 							<a class="quiet" href="/quickstart/">Read the quickstart <Icon name="arrow-right" size={16} /></a>
 						</div>
 					</div>
@@ -226,9 +226,9 @@ const story = [
 									<span class="check"><Icon name="check" size={16} /></span>
 								</button>
 								<pre class="pane is-on" data-pane="workflow"><code>{workflow.map((line) => (
-									<span class:list={['how-line', line.includes('edipert/gatefit@v0.4.0') && 'is-uses']}>
-										{line.includes('edipert/gatefit@v0.4.0') && <span class="how-bar" />}
-										{line.includes('edipert/gatefit@v0.4.0') && <span class="uses-layer" />}
+									<span class:list={['how-line', line.includes('gatefit/gatefit@v0.4.0') && 'is-uses']}>
+										{line.includes('gatefit/gatefit@v0.4.0') && <span class="how-bar" />}
+										{line.includes('gatefit/gatefit@v0.4.0') && <span class="uses-layer" />}
 										<span class="how-inner">{line || ' '}</span>
 									</span>
 								))}</code></pre>
@@ -352,7 +352,7 @@ const story = [
 					<a href="/quickstart/">Quickstart</a>
 					<a href="/action/">Action</a>
 					<a href="#pricing">Pricing</a>
-					<a href="https://github.com/edipert/gatefit" aria-label="GitHub"><Icon name="github-logo" size={18} /></a>
+					<a href="https://github.com/gatefit/gatefit" aria-label="GitHub"><Icon name="github-logo" size={18} /></a>
 				</div>
 			</div>
 		</footer>

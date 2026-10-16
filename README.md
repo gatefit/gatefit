@@ -49,7 +49,7 @@ Marketplace-ready Action lives at the repo root (`action.yml`). Tag `v0.4.0` is 
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: edipert/gatefit@v0.4.0
+- uses: gatefit/gatefit@v0.4.0
   with:
     adapter: src/your-access-adapter.ts
 ```
@@ -57,7 +57,7 @@ Marketplace-ready Action lives at the repo root (`action.yml`). Tag `v0.4.0` is 
 Nested path still works:
 
 ```yaml
-- uses: edipert/gatefit/.github/actions/gatefit@v0.4.0
+- uses: gatefit/gatefit/.github/actions/gatefit@v0.4.0
   with:
     adapter: src/your-access-adapter.ts
 ```

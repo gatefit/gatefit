@@ -27,7 +27,7 @@ After a human tags this release commit (not done here):
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: edipert/gatefit@v0.4.0
+- uses: gatefit/gatefit@v0.4.0
   with:
     adapter: src/your-access-adapter.ts
 ```
@@ -35,12 +35,12 @@ After a human tags this release commit (not done here):
 Nested path:
 
 ```yaml
-- uses: edipert/gatefit/.github/actions/gatefit@v0.4.0
+- uses: gatefit/gatefit/.github/actions/gatefit@v0.4.0
   with:
     adapter: src/your-access-adapter.ts
 ```
 
-Both paths wrap `gatefit run` via `scripts/action-run.sh`. Do not use `edipert/gatefit/action.yml@…`.
+Both paths wrap `gatefit run` via `scripts/action-run.sh`. Do not use `gatefit/gatefit/action.yml@…`.
 
 ## Docs site
 
