@@ -1,6 +1,6 @@
 {
   "name": "gatefit",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions",
   "type": "module",
   "license": "MIT",
@@ -46,9 +46,11 @@
     "access": "public"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.3",
     "tsx": "^4.20.5",
     "yaml": "^2.8.1"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

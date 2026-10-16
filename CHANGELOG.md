@@ -1,6 +1,12 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.0` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.1` is not cut in this change.
+
+## [0.5.1] - 2026-10-16
+
+### Fixed
+
+- `npx gatefit` installs on machines without make or a C++ compiler. `better-sqlite3` is optional and loads only for the SQLite adapter. `--version`, `--help`, and `adapter-check` run without it. A SQLite command that cannot load the module prints what is missing, why, and `npm rebuild better-sqlite3`, then exits non-zero.
 
 ## [0.5.0] - 2026-10-16
 

@@ -3,7 +3,31 @@ import type { AccessAdapter, AccessSnapshot, BillingEvent } from "../access-adap
 import { nextSnapshot } from "../access-rules.ts";
 
 const require = createRequire(import.meta.url);
-const Database = require("better-sqlite3") as typeof import("better-sqlite3");
+
+function sqliteUnavailable(err: unknown): Error {
+  const detail = err instanceof Error ? err.message : String(err);
+  return new Error(
+    [
+      "gatefit: SQLite adapter cannot load better-sqlite3.",
+      "What is missing: the better-sqlite3 native module.",
+      "Why: better-sqlite3 is an optional dependency. Platforms without a usable prebuild compile it, and that compile needs make and a C++ compiler.",
+      "How to fix: install the build tools (Xcode Command Line Tools on macOS, or build-essential on Linux), then run npm rebuild better-sqlite3.",
+      "--version, --help, and adapter-check do not need this module.",
+      `Detail: ${detail}`,
+    ].join("\n"),
+  );
+}
+
+function loadDatabase(): typeof import("better-sqlite3") {
+  try {
+    const Database = require("better-sqlite3") as typeof import("better-sqlite3");
+    const probe = new Database(":memory:");
+    probe.close();
+    return Database;
+  } catch (err) {
+    throw sqliteUnavailable(err);
+  }
+}
 
 type AccessRow = {
   customer_id: string;
@@ -24,6 +48,7 @@ function rowToSnapshot(row: AccessRow | undefined): AccessSnapshot {
 
 export function createAdapter(): AccessAdapter {
   const filename = process.env.GATEFIT_SQLITE_PATH ?? ":memory:";
+  const Database = loadDatabase();
   const db = new Database(filename);
   db.exec(`
     CREATE TABLE IF NOT EXISTS access (
