@@ -61,7 +61,11 @@ test(
     assert.equal(pkg.dependencies?.["better-sqlite3"], undefined);
     assert.equal(pkg.optionalDependencies?.["better-sqlite3"], "^13.0.3");
 
-    const work = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-optional-"));
+    const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-optional-"));
+    const strayModules = path.join(sandbox, "node_modules");
+    fs.mkdirSync(strayModules);
+    const work = path.join(sandbox, "case");
+    fs.mkdirSync(work);
     try {
       const packed = spawnSync("npm", ["pack", "--json", "--pack-destination", work], {
         cwd: root,
@@ -81,12 +85,22 @@ test(
 
       const installDir = path.join(work, "app");
       fs.mkdirSync(installDir);
+      fs.writeFileSync(
+        path.join(installDir, "package.json"),
+        JSON.stringify({ name: "gatefit-optional-probe", private: true }),
+      );
+      const installEnv = cleanEnv();
+      delete installEnv.npm_config_prefix;
+      delete installEnv.NPM_CONFIG_PREFIX;
+      delete installEnv.npm_config_local_prefix;
+      installEnv.npm_config_prefix = installDir;
       const installed = spawnSync(
         "npm",
-        ["install", "--ignore-scripts", "--no-fund", "--no-audit", "--no-package-lock", tgz],
-        { cwd: installDir, encoding: "utf8", env: cleanEnv() },
+        ["install", "--prefix", installDir, "--ignore-scripts", "--no-fund", "--no-audit", "--no-package-lock", tgz],
+        { cwd: installDir, encoding: "utf8", env: installEnv },
       );
-      assert.equal(installed.status, 0, installed.stderr);
+      assert.equal(installed.status, 0, `${installed.stderr}${installed.stdout}`);
+      assert.equal(fs.existsSync(path.join(strayModules, "gatefit")), false);
 
       const packedPkg = JSON.parse(
         fs.readFileSync(path.join(installDir, "node_modules/gatefit/package.json"), "utf8"),
@@ -136,7 +150,7 @@ test(
       const stillCheck = run(bin, ["adapter-check"], installDir);
       assert.equal(stillCheck.status, 0, stillCheck.stderr);
     } finally {
-      fs.rmSync(work, { recursive: true, force: true });
+      fs.rmSync(sandbox, { recursive: true, force: true });
     }
   },
 );
