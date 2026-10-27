@@ -2,7 +2,7 @@
 
 Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions.
 
-Fixture-first goldens (S1–S9), an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI.
+Fixture-first goldens, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI. S7–S9 are in this repository. They are not in the published tarball `gatefit@0.5.1` or on tag `v0.5.1`.
 
 ## Distribution
 
@@ -62,7 +62,7 @@ Nested path still works:
     adapter: src/your-access-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo; goldens default to Gatefit’s bundled pack (S1–S9 and the Phase 2 fixtures). See [docs/publish.md](docs/publish.md) and the release notes [docs/release-v0.5.1.md](docs/release-v0.5.1.md).
+The Action wraps `gatefit run`. Adapter path is in *your* repo. `uses: gatefit/gatefit@v0.5.1` defaults to that tag’s goldens (S1–S6 and the Phase 2 fixtures). S7–S9 are in this repository and are not on tag `v0.5.1`. See [docs/publish.md](docs/publish.md) and the release notes [docs/release-v0.5.1.md](docs/release-v0.5.1.md).
 
 Do not set `GATEFIT_LIVE_CLOCK` for the named gate. Do not use `sk_live`. Never treat Stripe HTTP 200 as proof of access.
 
@@ -85,7 +85,7 @@ One-time setup on npmjs.com for package `gatefit`: open Package settings, Truste
 
 ## License
 
-S1–S6, S7–S9 (no-card trial, portal downgrade, active entitlement summary), seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar.
+S1–S6, S7–S9 (no-card trial, portal downgrade, active entitlement summary), seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar. S7–S9 are in this repository and are not in the published tarball `gatefit@0.5.1`.
 
 The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is live. Provider packs are not in this release. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
 
