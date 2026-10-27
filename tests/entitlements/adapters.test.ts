@@ -75,7 +75,13 @@ const h7 = [
   "unpaid_after_retries_revokes.yaml",
 ];
 
-for (const name of [...s3s6, ...h6, ...h7]) {
+const s7s9 = [
+  "trial_no_card.yaml",
+  "portal_downgrade_period_end_vs_immediate.yaml",
+  "entitlements_active_summary.yaml",
+];
+
+for (const name of [...s3s6, ...h6, ...h7, ...s7s9]) {
   test(`hardened adapter passes ${name}`, async () => {
     const adapter = await loadAdapter(path.join(root, "src/adapters/hardened.ts"));
     const result = await runGolden(adapter, loadGolden(path.join(goldensDir, name)));
@@ -113,7 +119,7 @@ function withoutSqlitePath<T>(fn: () => Promise<T>): Promise<T> {
   });
 }
 
-test("sqlite adapter passes all S1–S6 goldens", async () => {
+test("sqlite adapter passes every bundled golden", async () => {
   await withoutSqlitePath(async () => {
     const adapter = await loadAdapter(path.join(root, "src/adapters/sqlite.ts"));
     for (const file of fs.readdirSync(goldensDir).filter((n) => n.endsWith(".yaml"))) {

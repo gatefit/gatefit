@@ -1,5 +1,5 @@
 name: Gatefit
-description: Run Gatefit S1–S6 entitlement goldens against an AccessAdapter (access DB, not Stripe HTTP 200)
+description: Run Gatefit entitlement goldens against an AccessAdapter (access DB, not Stripe HTTP 200)
 author: gatefit
 branding:
   icon: shield
@@ -9,7 +9,7 @@ inputs:
     description: Path to the AccessAdapter module, relative to the caller workspace
     required: true
   suite:
-    description: Golden file, directory, or id. Defaults to bundled S1–S6 goldens
+    description: Golden file, directory, or id. Defaults to the bundled goldens (S1–S9 and Phase 2 fixtures)
     required: false
     default: ""
 runs:

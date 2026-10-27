@@ -29,6 +29,22 @@ test("gatefit run hardened goldens exits 0", () => {
   assert.equal(result.status, 0, result.stderr);
 });
 
+const s7s9 = [
+  "trial_no_card",
+  "portal_downgrade_period_end_vs_immediate",
+  "entitlements_active_summary",
+];
+
+test("gatefit run S7–S9: hardened passes and naive fails each golden", () => {
+  for (const id of s7s9) {
+    const hardened = run(["run", "--suite", id, "--adapter", "src/adapters/hardened.ts"]);
+    assert.equal(hardened.status, 0, hardened.stderr);
+    const naive = run(["run", "--suite", id, "--adapter", "src/adapters/naive.ts"]);
+    assert.equal(naive.status, 1, naive.stderr);
+    assert.match(naive.stderr, new RegExp(`FAIL ${id}`));
+  }
+});
+
 test("gatefit run naive S1 exits 1", () => {
   const result = run([
     "run",

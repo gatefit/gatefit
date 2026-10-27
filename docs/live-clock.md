@@ -9,6 +9,8 @@ H6 seats / CAPE / upgrade-race are **fixture goldens** (`period_end` + `now` on 
 
 H7 dispute / unpaid-exhaust are **fixture goldens**. They are not default `gatefit live` ids. Stripe Test Clocks plus `charge.dispute.created` flake (auto-cancel delay); do not port them to the live lane for merge.
 
+S7–S9 (`trial_no_card`, `portal_downgrade_period_end_vs_immediate`, `entitlements_active_summary`) are **fixture goldens**. They are not default `gatefit live` ids. The API version pin for fixtures and the live client is `2025-10-29.clover` in `src/stripe-clock.ts`.
+
 ## Local
 
 ```bash

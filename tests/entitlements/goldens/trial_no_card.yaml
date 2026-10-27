@@ -1,0 +1,71 @@
+# S7. Trial started with no card. Stripe API version 2025-10-29.clover
+# (src/stripe-clock.ts). Fixture-only; not a live Test Clock id.
+# trial_will_end must not grant and must not revoke. A failed first charge,
+# pause, and cancel stay locked. HTTP 200 is not access. No license key.
+id: trial_no_card
+subject: cus_s7
+steps:
+  - event:
+      id: evt_s7_trialing
+      type: customer.subscription.updated
+      customerId: cus_s7
+      status: trialing
+      plan: pro
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s7_will_end
+      type: customer.subscription.trial_will_end
+      customerId: cus_s7
+      status: trialing
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s7_first_charge_failed
+      type: invoice.payment_failed
+      customerId: cus_s7
+      status: past_due
+      plan: pro
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s7_paused
+      type: customer.subscription.updated
+      customerId: cus_s7
+      status: paused
+      plan: pro
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s7_canceled
+      type: customer.subscription.deleted
+      customerId: cus_s7
+      status: canceled
+      canceled: true
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s7_paid_later
+      type: invoice.paid
+      customerId: cus_s7
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s7_will_end_after_paid
+      type: customer.subscription.trial_will_end
+      customerId: cus_s7
+      status: trialing
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro

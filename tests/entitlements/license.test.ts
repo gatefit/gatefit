@@ -101,19 +101,28 @@ function assertNoKey(text: string, key: string): void {
   assert.equal(text.includes(key), false, "raw license key leaked");
 }
 
+const freeSuites = [
+  "paid_grants_access",
+  "trial_no_card",
+  "portal_downgrade_period_end_vs_immediate",
+  "entitlements_active_summary",
+];
+
 test("free packs run with no key and do not call Polar", async () => {
   const cache = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-lic-")), "cache.json");
   const mock = await listen(() => {
     throw new Error("free pack contacted the license endpoint");
   });
   try {
-    const result = await run(
-      ["run", "--suite", "paid_grants_access", "--adapter", "src/adapters/hardened.ts"],
-      { GATEFIT_LICENSE_VALIDATE_URL: mock.url },
-      cache,
-    );
-    assert.equal(result.status, 0, output(result));
-    assert.equal(mock.hits.length, 0);
+    for (const suite of freeSuites) {
+      const result = await run(
+        ["run", "--suite", suite, "--adapter", "src/adapters/hardened.ts"],
+        { GATEFIT_LICENSE_VALIDATE_URL: mock.url },
+        cache,
+      );
+      assert.equal(result.status, 0, `${suite}\n${output(result)}`);
+      assert.equal(mock.hits.length, 0, suite);
+    }
     assert.equal(fs.existsSync(cache), false);
   } finally {
     await mock.close();
@@ -126,14 +135,16 @@ test("free packs ignore a set key and still do not call Polar", async () => {
     throw new Error("free pack contacted the license endpoint");
   });
   try {
-    const result = await run(
-      ["run", "--suite", "paid_grants_access", "--adapter", "src/adapters/hardened.ts"],
-      { GATEFIT_LICENSE_KEY: VALID_KEY, GATEFIT_LICENSE_VALIDATE_URL: mock.url },
-      cache,
-    );
-    assert.equal(result.status, 0, output(result));
-    assert.equal(mock.hits.length, 0);
-    assertNoKey(output(result), VALID_KEY);
+    for (const suite of freeSuites) {
+      const result = await run(
+        ["run", "--suite", suite, "--adapter", "src/adapters/hardened.ts"],
+        { GATEFIT_LICENSE_KEY: VALID_KEY, GATEFIT_LICENSE_VALIDATE_URL: mock.url },
+        cache,
+      );
+      assert.equal(result.status, 0, `${suite}\n${output(result)}`);
+      assert.equal(mock.hits.length, 0, suite);
+      assertNoKey(output(result), VALID_KEY);
+    }
     assert.equal(fs.existsSync(cache), false);
   } finally {
     await mock.close();

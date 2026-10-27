@@ -35,7 +35,7 @@ node bin/gatefit.js adapter-check
 node bin/gatefit.js run --suite tests/entitlements/goldens --adapter ./src/your-access-adapter.ts
 ```
 
-Exit 0 means the checks passed against that adapter.
+Exit 0 means the checks passed against that adapter. The bundled checks, including free S7–S9, are listed in [Goldens](/goldens/).
 
 ## 3. Named gate
 
