@@ -11,7 +11,7 @@ The Action is at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. T
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: gatefit/gatefit@v0.5.1
+- uses: gatefit/gatefit@v0.5.2
   with:
     adapter: src/your-access-adapter.ts
 ```
@@ -19,7 +19,7 @@ The Action is at the Gatefit repo root (`action.yml`). It wraps `gatefit run`. T
 The nested path also works:
 
 ```yaml
-- uses: gatefit/gatefit/.github/actions/gatefit@v0.5.1
+- uses: gatefit/gatefit/.github/actions/gatefit@v0.5.2
   with:
     adapter: src/your-access-adapter.ts
 ```

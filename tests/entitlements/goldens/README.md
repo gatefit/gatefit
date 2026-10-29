@@ -4,7 +4,7 @@ Fixture-first access checks. Each file is one customer and a list of `event` / `
 
 The Stripe API version is the pin in `src/stripe-clock.ts`: `2025-10-29.clover`. These files do not call Stripe. `sk_live` is refused. An event `httpStatus` of 200 is not access; the `expect` block is the access row.
 
-S1–S6, the Phase 2 packs, and S7–S9 are free. They do not read `GATEFIT_LICENSE_KEY` and do not call Polar. The $49 Indie License unlocks Pro packs. Chaos mode is live. Provider packs are not in this release. S7–S9 are in this repository. They are not in the published tarball `gatefit@0.5.1` or on tag `v0.5.1`.
+S1–S6, the Phase 2 packs, and S7–S9 are free. They do not read `GATEFIT_LICENSE_KEY` and do not call Polar. The $49 Indie License unlocks Pro packs. Chaos mode is live. Provider packs are not in this release. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.5.2`.
 
 | Id | Pack | Access row |
 | --- | --- | --- |

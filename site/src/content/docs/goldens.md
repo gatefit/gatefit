@@ -5,7 +5,7 @@ description: Fixture access checks shipped with Gatefit. S7–S9 are free.
 
 Gatefit compares the access row after each billing event. Stripe HTTP 200 is not access. The Stripe API version pin is `2025-10-29.clover` (`src/stripe-clock.ts`). These checks are fixtures. They do not call Stripe, and `sk_live` is refused.
 
-S1–S6, seats and cancel-at-period-end, dispute and unpaid, and S7–S9 are free. They do not read a license key and do not call Polar. The $49 Indie License unlocks Pro packs. Chaos mode is live. Provider packs are not in this release. S7–S9 are in this repository. They are not in the published npm tarball `gatefit@0.5.1` or on tag `v0.5.1`.
+S1–S6, seats and cancel-at-period-end, dispute and unpaid, and S7–S9 are free. They do not read a license key and do not call Polar. The $49 Indie License unlocks Pro packs. Chaos mode is live. Provider packs are not in this release. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.5.2`.
 
 ## S1–S6
 

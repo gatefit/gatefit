@@ -57,7 +57,7 @@ test(
   { timeout: 180_000 },
   () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as PackageJson;
-    assert.equal(pkg.version, "0.5.1");
+    assert.equal(pkg.version, "0.5.2");
     assert.equal(pkg.dependencies?.["better-sqlite3"], undefined);
     assert.equal(pkg.optionalDependencies?.["better-sqlite3"], "^13.0.3");
 
@@ -78,7 +78,7 @@ test(
         .filter((name) => name.startsWith("gatefit-") && name.endsWith(".tgz"));
       assert.equal(tarballs.length, 1, tarballs.join(","));
       const tgzName = tarballs[0];
-      assert.equal(tgzName, "gatefit-0.5.1.tgz");
+      assert.equal(tgzName, "gatefit-0.5.2.tgz");
       const tgz = path.join(work, tgzName!);
       const listing = execFileSync("tar", ["-tzf", tgz], { encoding: "utf8" });
       assert.match(listing, /package\/bin\/gatefit\.js/);
@@ -114,7 +114,7 @@ test(
       const bin = path.join(installDir, "node_modules/gatefit/bin/gatefit.js");
       const version = run(bin, ["--version"], installDir);
       assert.equal(version.status, 0, version.stderr);
-      assert.match(version.stdout, /^gatefit 0\.5\.1\n?$/);
+      assert.match(version.stdout, /^gatefit 0\.5\.2\n?$/);
 
       const help = run(bin, ["--help"], installDir);
       assert.equal(help.status, 0, help.stderr + help.stdout);
@@ -149,7 +149,7 @@ test(
 
       const stillVersion = run(bin, ["--version"], installDir);
       assert.equal(stillVersion.status, 0, stillVersion.stderr);
-      assert.match(stillVersion.stdout, /gatefit 0\.5\.1/);
+      assert.match(stillVersion.stdout, /gatefit 0\.5\.2/);
       const stillCheck = run(bin, ["adapter-check"], installDir);
       assert.equal(stillCheck.status, 0, stillCheck.stderr);
     } finally {

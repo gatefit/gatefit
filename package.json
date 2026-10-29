@@ -1,6 +1,6 @@
 {
   "name": "gatefit",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions",
   "type": "module",
   "license": "MIT",

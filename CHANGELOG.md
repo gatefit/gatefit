@@ -1,8 +1,10 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.1` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.2` is not cut in this change.
 
-## [Unreleased]
+## [0.5.2] - 2026-10-29
+
+0.5.2 is the first release that ships the free S7–S9 goldens. This change does not publish the package and does not create the tag.
 
 ### Added
 
@@ -10,6 +12,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ### Fixed
 
+- The missing-`better-sqlite3` error no longer says the package fails to compile on every install. npm 9 still runs node-gyp and drops this optional package when that compile fails. npm 10 and newer unpack the shipped prebuild. The message says to upgrade npm to 10 or newer and reinstall, reinstall with `npm install --ignore-scripts`, or install a C++ compiler and reinstall.
 - `./ci-local.sh` reads `npm pack --json` on npm 9 through 12. npm 12 returns an object keyed by package name. The same gate treats npm 12's dry-run refusal of an already published version as a non-write.
 
 ## [0.5.1] - 2026-10-16
