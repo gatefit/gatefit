@@ -26,7 +26,7 @@ From a Gatefit clone before registry publish:
 node bin/gatefit.js run --suite tests/entitlements/goldens --adapter /abs/path/to/your-adapter.ts
 ```
 
-From this clone, exit 0 means the goldens in the tree passed, including S7–S9. Tag `v0.5.1` and the published tarball `gatefit@0.5.1` do not include S7–S9. Do not set `GATEFIT_LIVE_CLOCK`. Do not use `sk_live`.
+From this clone, exit 0 means the goldens in the tree passed, including free S7–S9. 0.5.2 is the first release that ships them. This change does not publish that tag. Do not set `GATEFIT_LIVE_CLOCK`. Do not use `sk_live`.
 
 Live clocks: see [docs/live-clock.md](live-clock.md) (`gatefit live`).
 
@@ -36,12 +36,12 @@ Live clocks: see [docs/live-clock.md](live-clock.md) (`gatefit live`).
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: gatefit/gatefit@v0.5.1
+- uses: gatefit/gatefit@v0.5.2
   with:
     adapter: path/to/your-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo (example: `path/to/your-adapter.ts`). `uses: gatefit/gatefit@v0.5.1` defaults to that tag’s goldens (S1–S6 and the Phase 2 fixtures). S7–S9 are in this repository and are not on tag `v0.5.1`. In this repo, dogfood `src/adapters/sqlite.ts`. Nested H3 path `gatefit/gatefit/.github/actions/gatefit@v0.5.1` still works.
+The Action wraps `gatefit run`. Adapter path is in *your* repo (example: `path/to/your-adapter.ts`). `uses: gatefit/gatefit@v0.5.2` runs this repo’s goldens, including free S7–S9. This change does not publish that tag. In this repo, dogfood `src/adapters/sqlite.ts`. Nested path `gatefit/gatefit/.github/actions/gatefit@v0.5.2` still works.
 
 ## 4. Sanity
 
