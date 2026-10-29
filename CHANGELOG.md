@@ -2,6 +2,16 @@
 
 All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.1` is not cut in this change.
 
+## [Unreleased]
+
+### Added
+
+- Free fixture goldens S7–S9: `trial_no_card` (no-card trial, `customer.subscription.trial_will_end`, failed first charge, pause, and cancel), `portal_downgrade_period_end_vs_immediate` (Customer Portal downgrade at period end versus immediate), and `entitlements_active_summary` (Stripe active entitlement summary). They do not read a license key and do not call Polar. Stripe API version stays `2025-10-29.clover`.
+
+### Fixed
+
+- `./ci-local.sh` reads `npm pack --json` on npm 9 through 12. npm 12 returns an object keyed by package name. The same gate treats npm 12's dry-run refusal of an already published version as a non-write.
+
 ## [0.5.1] - 2026-10-16
 
 ### Fixed

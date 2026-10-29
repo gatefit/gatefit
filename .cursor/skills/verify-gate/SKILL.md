@@ -22,6 +22,7 @@ Exit 0 is green. Treat any non-zero as blocking.
 - Hardened and SQLite S1–S6 goldens: `paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`.
 - H6 fixture goldens: `seat_qty_vs_db_cap`, `cancel_at_period_end_keeps_access_until_end`, `upgrade_plus_cape_race` (time via fixture `period_end` / `now`, not wall clock).
 - H7 fixture goldens: `dispute_revokes_or_flags`, `unpaid_after_retries_revokes` (dispute+clocks flake; fixtures only).
+- Free S7–S9 fixture goldens: `trial_no_card`, `portal_downgrade_period_end_vs_immediate`, `entitlements_active_summary` (no license key, no Polar call; fixtures only).
 - Naive directory run must fail.
 - Composite Action wraps `gatefit run` (repo-root `action.yml` plus nested `.github/actions/gatefit/action.yml`) and `docs/bring-your-adapter.md`.
 - Packaging: publishable `gatefit` bin at the `package.json` version, `npm pack`, tarball `npx gatefit adapter-check`, `npm publish --dry-run` (no registry write; tarball has `bin/gatefit.js`, no `site/`, no secrets). `.github/workflows/publish.yml` is the tag publish path (OIDC, GitHub environment `npm`) and must not reference an npm token.

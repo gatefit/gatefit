@@ -1,6 +1,6 @@
 # License key (GATEFIT-H16)
 
-S1–S6, seats/races, dispute/unpaid, and live Test Clocks stay free. Free packs do not read `GATEFIT_LICENSE_KEY` and do not contact Polar.
+S1–S6, S7–S9 (no-card trial, portal downgrade, active entitlement summary), seats/races, dispute/unpaid, and live Test Clocks stay free. Free packs do not read `GATEFIT_LICENSE_KEY` and do not contact Polar. S7–S9 are in this repository and are not in the published tarball `gatefit@0.5.1`.
 
 The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is live and is the first Pro pack. Provider packs are not in this release. The buy page is https://gatefit.io/#pricing. See [chaos.md](chaos.md).
 

@@ -1,0 +1,52 @@
+# S9. Stripe Entitlements API active entitlement summary.
+# Stripe API version 2025-10-29.clover (src/stripe-clock.ts).
+# features on the event are the summary lookup keys. The access row features
+# must match that active set. The summary does not grant or revoke access.
+# HTTP 200 is not access. Fixture-only; not a live Test Clock id. No license key.
+id: entitlements_active_summary
+subject: cus_s9
+steps:
+  - event:
+      id: evt_s9_summary_unpaid
+      type: entitlements.active_entitlement_summary.updated
+      customerId: cus_s9
+      features:
+        - priority
+      httpStatus: 200
+    expect:
+      locked: true
+      features:
+        - priority
+  - event:
+      id: evt_s9_paid
+      type: invoice.paid
+      customerId: cus_s9
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+      features:
+        - priority
+  - event:
+      id: evt_s9_summary_active
+      type: entitlements.active_entitlement_summary.updated
+      customerId: cus_s9
+      features:
+        - priority
+        - exports
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+      features:
+        - priority
+        - exports
+  - event:
+      id: evt_s9_summary_empty
+      type: entitlements.active_entitlement_summary.updated
+      customerId: cus_s9
+      features: []
+    expect:
+      locked: false
+      plan: pro
+      features: []

@@ -24,6 +24,7 @@ export default defineConfig({
 			],
 			sidebar: [
 				{ label: 'Quickstart', slug: 'quickstart' },
+				{ label: 'Goldens', slug: 'goldens' },
 				{ label: 'GitHub Action', slug: 'action' },
 				{ label: 'Polar checkout', link: '/polar/' },
 				{ label: 'Pricing', link: '/#pricing' },

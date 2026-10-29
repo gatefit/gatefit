@@ -55,6 +55,10 @@ need_file tests/entitlements/goldens/cancel_at_period_end_keeps_access_until_end
 need_file tests/entitlements/goldens/upgrade_plus_cape_race.yaml
 need_file tests/entitlements/goldens/dispute_revokes_or_flags.yaml
 need_file tests/entitlements/goldens/unpaid_after_retries_revokes.yaml
+need_file tests/entitlements/goldens/trial_no_card.yaml
+need_file tests/entitlements/goldens/portal_downgrade_period_end_vs_immediate.yaml
+need_file tests/entitlements/goldens/entitlements_active_summary.yaml
+need_file tests/entitlements/goldens/README.md
 need_file .github/actions/gatefit/action.yml
 need_file docs/bring-your-adapter.md
 need_file action.yml
@@ -270,15 +274,25 @@ node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapter
 naive_out="$(node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapters/naive.ts 2>&1 || true)"
 echo "$naive_out" >&2
 echo "$naive_out" | grep -q 'gatefit: FAIL' || fail "naive did not report FAIL"
-ok "entitlement CLI + S1–S6 goldens (hardened/sqlite pass, naive fails)"
+ok "entitlement CLI + goldens (hardened/sqlite pass, naive fails)"
 
 pack_json_file="$(mktemp)"
 npm pack --dry-run --json >"$pack_json_file"
+# npm 9 and 10 print an array. npm 12 prints { "<name>": { files } }.
 pack_listing="$(node -e '
 const fs = require("fs");
 const parsed = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-const entry = Array.isArray(parsed) ? parsed[0] : parsed;
-for (const file of entry.files || []) console.log(file.path);
+function withFiles(value) {
+  return value && Array.isArray(value.files) ? value : null;
+}
+let entry = null;
+if (Array.isArray(parsed)) entry = parsed.find(withFiles) || null;
+else entry = withFiles(parsed) || Object.values(parsed).find(withFiles) || null;
+if (!entry) {
+  console.error("npm pack --json had no files list");
+  process.exit(1);
+}
+for (const file of entry.files) console.log(file.path);
 ' "$pack_json_file")"
 rm -f "$pack_json_file"
 echo "$pack_listing" | grep -q 'bin/gatefit.js' || fail "npm pack missing bin/gatefit.js"
@@ -313,9 +327,14 @@ ok "unpacked tarball (bin present, site/ and secrets absent)"
 ok "npx from packed tarball"
 
 publish_log="$(mktemp)"
+# npm 12 contacts the registry during --dry-run and exits non-zero when this
+# version is already published. That refusal is not a registry write. npm 9–11
+# exit 0 for the same dry-run.
 if ! npm publish --dry-run --ignore-scripts >"$publish_log" 2>&1; then
-  cat "$publish_log" >&2
-  fail "npm publish --dry-run"
+  if ! grep -F -q "cannot publish over the previously published versions: ${pkg_ver}" "$publish_log"; then
+    cat "$publish_log" >&2
+    fail "npm publish --dry-run"
+  fi
 fi
 grep -q '(dry-run)' "$publish_log" || fail "npm publish --dry-run marker missing"
 grep -q "gatefit@${pkg_ver}" "$publish_log" || fail "npm publish --dry-run package version mismatch"

@@ -23,6 +23,10 @@ export type BillingEvent = {
   httpStatus?: number;
   stripeHttpStatus?: number;
   cancel_at_period_end?: boolean;
+  /** Portal downgrade held until now >= period_end. Not applied while the flag is set early. */
+  downgrade_at_period_end?: boolean;
+  /** Plan to apply when a scheduled portal downgrade is due. Ignored until then. */
+  pending_plan?: string;
   period_end?: number;
   now?: number;
   /** Original timeline position. Chaos folds on this so arrival order is not access. */

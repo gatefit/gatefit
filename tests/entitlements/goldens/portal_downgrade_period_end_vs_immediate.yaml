@@ -1,0 +1,104 @@
+# S8. Customer Portal downgrade. Stripe API version 2025-10-29.clover
+# (src/stripe-clock.ts). Fixture now/period_end, not the wall clock.
+# Scheduled downgrade waits until now >= period_end. Immediate downgrade
+# changes the plan on that event. Never early, never late. HTTP 200 is not
+# access. Fixture-only; not a live Test Clock id. No license key.
+id: portal_downgrade_period_end_vs_immediate
+subject: cus_s8
+steps:
+  - event:
+      id: evt_s8_paid
+      type: invoice.paid
+      customerId: cus_s8
+      plan: pro
+      seats: 5
+      features:
+        - priority
+    expect:
+      locked: false
+      plan: pro
+      seats: 5
+      features:
+        - priority
+  - event:
+      id: evt_s8_scheduled
+      type: customer.subscription.updated
+      customerId: cus_s8
+      plan: starter
+      pending_plan: starter
+      downgrade_at_period_end: true
+      period_end: 1577923200
+      now: 1577836800
+      seats: 1
+      features:
+        - starter_support
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+      seats: 5
+      features:
+        - priority
+  - event:
+      id: evt_s8_one_second_early
+      type: customer.subscription.updated
+      customerId: cus_s8
+      plan: starter
+      pending_plan: starter
+      downgrade_at_period_end: true
+      period_end: 1577923200
+      now: 1577923199
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 5
+      features:
+        - priority
+  - event:
+      id: evt_s8_period_end
+      type: customer.subscription.updated
+      customerId: cus_s8
+      pending_plan: starter
+      downgrade_at_period_end: true
+      period_end: 1577923200
+      now: 1577923200
+      seats: 1
+      features:
+        - starter_support
+    expect:
+      locked: false
+      plan: starter
+      seats: 1
+      features:
+        - starter_support
+  - event:
+      id: evt_s8_reupgrade
+      type: invoice.paid
+      customerId: cus_s8
+      plan: pro
+      seats: 5
+      features:
+        - priority
+    expect:
+      locked: false
+      plan: pro
+      seats: 5
+      features:
+        - priority
+  - event:
+      id: evt_s8_immediate
+      type: customer.subscription.updated
+      customerId: cus_s8
+      plan: starter
+      seats: 1
+      features:
+        - starter_support
+      period_end: 1578009600
+      now: 1577923200
+    expect:
+      locked: false
+      plan: starter
+      seats: 1
+      features:
+        - starter_support
