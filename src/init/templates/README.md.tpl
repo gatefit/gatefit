@@ -26,5 +26,5 @@ Each golden prints `gatefit: PASS <id>` or `gatefit: FAIL <id>` with the mismatc
 ## Safety
 
 - `DATABASE_URL` must point at a local or CI database. The adapter truncates `gatefit_access` and `gatefit_seen_events` between goldens and refuses a non-local host unless `GATEFIT_ALLOW_REMOTE_DB=1`.
-- Gatefit refuses `sk_live` keys. Fixture goldens need no Stripe key at all.
+- Gatefit refuses live-mode Stripe secret keys. Fixture goldens need no Stripe key at all.
 - `STRIPE_API_VERSION` in `adapter.ts` is the Stripe API version the goldens model. Pin your Stripe client to it.
