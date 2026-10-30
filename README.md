@@ -41,6 +41,8 @@ bash ./ci-local.sh
 
 Bring your own AccessAdapter in ≤30 minutes: [docs/bring-your-adapter.md](docs/bring-your-adapter.md).
 
+`gatefit init` (free) generates a Postgres adapter for drizzle, Prisma, Supabase, or plain `pg` and runs every free golden against it. It is not shipped in 0.5.2 and arrives in the next release; from a clone, run `node bin/gatefit.js init`. See [site/src/content/docs/init.md](site/src/content/docs/init.md) for templates, safety rules, and its exit codes (2 usage, 3 would overwrite, 4 live key refused).
+
 ## GitHub Action
 
 Marketplace-ready Action lives at the repo root (`action.yml`). Snippets use `@v0.5.2`. That tag is not cut in this change. Tag `v0.5.1` is the last release.

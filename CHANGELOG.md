@@ -2,6 +2,12 @@
 
 All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.2` is not cut in this change.
 
+## [Unreleased]
+
+### Added
+
+- `gatefit init` (free): writes a Postgres access adapter, migration, and README for `drizzle`, `prisma`, `supabase`, or `generic` (detected from `package.json`). Never overwrites without `--force`, writes all-or-nothing, refuses live Stripe keys, and pins Stripe API `2025-10-29.clover` from the existing constant. Exit codes 2/3/4 apply to `init` only. Not part of 0.5.2; it ships in the next release.
+
 ## [0.5.2] - 2026-10-29
 
 0.5.2 is the first release that ships the free S7–S9 goldens. This change does not publish the package and does not create the tag.

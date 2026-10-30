@@ -260,7 +260,18 @@ npm install --ignore-scripts >&2
 unset GATEFIT_LIVE_CLOCK
 npx tsc --noEmit || fail "typecheck"
 # Files share process.env (GATEFIT_LIVE_CLOCK probe); keep the test runner serial.
-npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts || fail "entitlement unit tests"
+unit_log="$(mktemp)"
+npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts 2>&1 | tee "$unit_log" || fail "entitlement unit tests"
+# init Postgres lane (H23) needs local initdb/pg_ctl/psql; it skips with a reason otherwise.
+if grep -q 'gatefit init: Postgres lane ran' "$unit_log"; then
+  for t in drizzle prisma supabase generic; do
+    grep -q "gatefit init: Postgres lane ${t} PASS" "$unit_log" || fail "init Postgres lane ${t} did not pass"
+  done
+  ok "init Postgres lane: ran (drizzle, prisma, supabase, generic)"
+else
+  echo "ci-local: init Postgres lane: SKIPPED (no initdb/pg_ctl/psql; set GATEFIT_PG_BIN)" >&2
+fi
+rm -f "$unit_log"
 
 ver_out="$(node bin/gatefit.js --version 2>&1)" || fail "gatefit --version"
 echo "$ver_out" | grep -q "gatefit ${pkg_ver}" || fail "unexpected --version: $ver_out"
@@ -323,7 +334,9 @@ ok "unpacked tarball (bin present, site/ and secrets absent)"
   npm install --ignore-scripts "$tgz" >/dev/null
   npx gatefit --version | grep -q "gatefit ${pkg_ver}"
   npx gatefit adapter-check
-) || fail "tarball adapter-check"
+  npx gatefit init --template generic >/dev/null
+  [[ -f gatefit/adapter.ts && -f gatefit/migration.sql ]]
+) || fail "tarball adapter-check / init"
 ok "npx from packed tarball"
 
 publish_log="$(mktemp)"
