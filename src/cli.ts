@@ -5,6 +5,7 @@ import { loadAdapter } from "./access-adapter.ts";
 import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
 import { LIVE_SCENARIO_IDS, runLiveLane, type LiveScenarioId } from "./live-scenarios.ts";
 import { resolveChaosSeed } from "./chaos.ts";
+import { runInit } from "./init.ts";
 import { ensureProLicense } from "./license.ts";
 import { getProPack, isProPack } from "./packs.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
@@ -21,6 +22,8 @@ const HARDENED = () => path.join(packageRoot(), "src/adapters/hardened.ts");
 function usage(): string {
   return [
     "Usage:",
+    "  gatefit init [--template drizzle|prisma|supabase|generic] [--dir <path>] [--force] [--dry-run]",
+    "               [--no-prompt] [--print-workflow | --write-workflow]",
     "  gatefit run --suite <dir|file|id> --adapter <path>",
     "  gatefit run --suite chaos --adapter <path> [--seed <value>]",
     "  gatefit adapter-check",
@@ -111,6 +114,9 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   }
   const command = argv[0];
+  if (command === "init") {
+    return runInit(argv.slice(1));
+  }
   if (command === "adapter-check") {
     return cmdAdapterCheck();
   }
