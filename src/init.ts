@@ -172,7 +172,7 @@ function blockedParents(cwd: string, plan: PlannedFile[]): string[] {
 }
 
 /** Stage every file, then rename into place. On any error, remove what this run created. */
-function writeAll(plan: PlannedFile[]): void {
+export function writeAll(plan: PlannedFile[], _ops: typeof fs = fs): void {
   const createdDirs: string[] = [];
   const staged: { tmp: string; abs: string }[] = [];
   const renamed: string[] = [];

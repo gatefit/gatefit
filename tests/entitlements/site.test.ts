@@ -56,6 +56,20 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.doesNotMatch(polar, /<PolarRedirect/);
 });
 
+test("init docs page exists, says init is free, and quickstart points to it", () => {
+  const init = read("site/src/content/docs/init.md");
+  const quickstart = read("site/src/content/docs/quickstart.md");
+  assert.match(init, /init.*is free/i);
+  assert.match(init, /not shipped in 0\.5\.2/i);
+  assert.match(init, /next release/i);
+  assert.match(init, /\$49 one-time/);
+  assert.doesNotMatch(init, /\$19/);
+  assert.doesNotMatch(init, /monthly|coming soon|optional updates/i);
+  assert.doesNotMatch(init, /GATEFIT_LICENSE_KEY/);
+  assert.match(quickstart, /No adapter yet\? `npx gatefit init`/);
+  assert.match(read("site/astro.config.mjs"), /slug: 'init'/);
+});
+
 const GATEFIT_CHECKOUT_URL =
   "https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0";
 
