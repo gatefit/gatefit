@@ -21,10 +21,10 @@ Each golden prints `gatefit: PASS <id>` or `gatefit: FAIL <id>` with the mismatc
 
 ## Make it test your code
 
-`decide()` in `adapter.ts` uses Gatefit's reference rules, so the goldens pass on a fresh install. Replace it with the function your Stripe webhook handler uses to turn an event into access. If that function writes your own entitlement table, change `SELECT_ROW` and the upsert to read and write that table instead of `gatefit_access`.
+`decide()` in `adapter.ts` uses the reference rules copied into `access-rules.ts` (which also holds the adapter contract types), so the goldens pass on a fresh install. None of these files import Gatefit. Replace it with the function your Stripe webhook handler uses to turn an event into access. If that function writes your own entitlement table, change `SELECT_ROW` and the upsert to read and write that table instead of `gatefit_access`.
 
 ## Safety
 
-- `DATABASE_URL` must point at a local or CI database. The adapter truncates `gatefit_access` and `gatefit_seen_events` between goldens and refuses a non-local host unless `GATEFIT_ALLOW_REMOTE_DB=1`.
+- `DATABASE_URL` must point at a local or CI database. The adapter truncates `gatefit_access` and `gatefit_seen_events` between goldens and refuses a non-local host unless `GATEFIT_ALLOW_REMOTE_DB=1`. Local hosts are `localhost`, `127.0.0.1`, `::1`, and the CI service names `postgres` and `db`.
 - Gatefit refuses live-mode Stripe secret keys. Fixture goldens need no Stripe key at all.
 - `STRIPE_API_VERSION` in `adapter.ts` is the Stripe API version the goldens model. Pin your Stripe client to it.

@@ -1,7 +1,7 @@
 // Postgres access for the Gatefit adapter ({{TEMPLATE}} template).
 // {{DB_NOTE}}
 // The connection string comes from DATABASE_URL at run time. Never commit it.
-import pg from "pg";
+import type { Pool } from "pg";
 
 export type Query = <T = Record<string, unknown>>(text: string, params?: unknown[]) => Promise<T[]>;
 export type Sql = {
@@ -33,12 +33,16 @@ function requireLocalUrl(): string {
 }
 
 export function connect(): Sql {
-  const pool = new pg.Pool({ connectionString: requireLocalUrl(), max: 2 });
-  const query: Query = async (text, params) => (await pool.query(text, params)).rows;
+  const connectionString = requireLocalUrl();
+  // pg loads on first query, so a missing DATABASE_URL is reported first.
+  let pool: Promise<Pool> | undefined;
+  const getPool = () =>
+    (pool ??= import("pg").then(({ default: pg }) => new pg.Pool({ connectionString, max: 2 })));
+  const query: Query = async (text, params) => (await (await getPool()).query(text, params)).rows;
   return {
     query,
     async transaction(fn) {
-      const client = await pool.connect();
+      const client = await (await getPool()).connect();
       try {
         await client.query("BEGIN");
         const result = await fn({ query: async (text, params) => (await client.query(text, params)).rows });

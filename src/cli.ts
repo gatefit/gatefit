@@ -23,6 +23,7 @@ function usage(): string {
   return [
     "Usage:",
     "  gatefit init [--template drizzle|prisma|supabase|generic] [--dir <path>] [--force] [--dry-run]",
+    "               [--no-prompt] [--print-workflow | --write-workflow]",
     "  gatefit run --suite <dir|file|id> --adapter <path>",
     "  gatefit run --suite chaos --adapter <path> [--seed <value>]",
     "  gatefit adapter-check",

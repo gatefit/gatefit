@@ -4,11 +4,11 @@
 //
 // Run: npx gatefit run --suite tests/entitlements/goldens --adapter {{DIR}}/adapter.ts
 //
-// decide() uses Gatefit's reference rules so the free goldens pass out of the
-// box. Replace it with the entitlement function your webhook handler calls, so
-// CI tests your logic instead of Gatefit's.
-import type { AccessAdapter, AccessSnapshot, BillingEvent } from "gatefit/src/access-adapter.ts";
-import { nextSnapshot } from "gatefit/src/access-rules.ts";
+// decide() uses the reference rules in ./access-rules.ts so the free goldens pass
+// out of the box. Replace it with the entitlement function your webhook handler
+// calls, so CI tests your logic instead of the reference copy.
+// This file imports nothing from Gatefit; `gatefit run` only calls createAdapter().
+import { nextSnapshot, type AccessAdapter, type AccessSnapshot, type BillingEvent } from "./access-rules.ts";
 import { connect, type Sql } from "./db.ts";
 
 /** Pin your Stripe client to this version (new Stripe(key, { apiVersion })). */
