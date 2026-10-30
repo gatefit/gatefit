@@ -37,6 +37,10 @@ fi
 
 need_file package.json
 need_file src/cli.ts
+need_file src/init.ts
+need_file src/init/templates/adapter.ts.tpl
+need_file src/init/templates/access-rules.ts.tpl
+need_file src/init/templates/workflow.yml.tpl
 need_file src/paths.ts
 need_file src/access-adapter.ts
 need_file src/access-rules.ts
@@ -308,6 +312,9 @@ for (const file of entry.files) console.log(file.path);
 rm -f "$pack_json_file"
 echo "$pack_listing" | grep -q 'bin/gatefit.js' || fail "npm pack missing bin/gatefit.js"
 echo "$pack_listing" | grep -q 'src/cli.ts' || fail "npm pack missing src/cli.ts"
+for tpl in adapter.ts.tpl access-rules.ts.tpl db.ts.tpl migration.sql.tpl workflow.yml.tpl drizzle/schema.ts.tpl prisma/access.prisma.tpl; do
+  echo "$pack_listing" | grep -q "src/init/templates/${tpl}" || fail "npm pack missing src/init/templates/${tpl}"
+done
 echo "$pack_listing" | grep -q 'CHANGELOG.md' || fail "npm pack missing CHANGELOG.md"
 pack_listing_ok "$pack_listing" || fail "npm pack listing failed the leak/bin checker"
 ok "npm pack dry-run"
@@ -334,9 +341,37 @@ ok "unpacked tarball (bin present, site/ and secrets absent)"
   npm install --ignore-scripts "$tgz" >/dev/null
   npx gatefit --version | grep -q "gatefit ${pkg_ver}"
   npx gatefit adapter-check
-  npx gatefit init --template generic >/dev/null
-  [[ -f gatefit/adapter.ts && -f gatefit/migration.sql ]]
+  # init from the INSTALLED tarball (node_modules/gatefit is a real install, not a repo link).
+  # errexit is off inside `( ... ) ||`, so every check exits explicitly.
+  [[ -d node_modules/gatefit && ! -L node_modules/gatefit ]] || exit 1
+  CI=true npx gatefit init --template generic >/dev/null || exit 1
+  [[ -f gatefit/adapter.ts && -f gatefit/access-rules.ts && -f gatefit/migration.sql && -f gatefit.config.json ]] || exit 1
+  if grep -R -E "from ['\"]gatefit" gatefit; then exit 1; fi
+  npx gatefit init --template generic --print-workflow | grep -q "uses: gatefit/gatefit@v${pkg_ver}" || exit 1
 ) || fail "tarball adapter-check / init"
+# Typecheck the generated adapter standalone. pg types come from this checkout;
+# nothing maps the gatefit package, so a stray gatefit import would fail here.
+cat >"$user_dir/tsconfig.json" <<EOF
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "typeRoots": ["$ROOT/node_modules/@types"],
+    "types": ["node"],
+    "paths": { "pg": ["$ROOT/node_modules/@types/pg/index.d.ts"] }
+  },
+  "files": ["gatefit/adapter.ts"]
+}
+EOF
+node "$ROOT/node_modules/typescript/bin/tsc" -p "$user_dir/tsconfig.json" || fail "tarball init: generated adapter typecheck"
+# Load it through the installed CLI: no DATABASE_URL must fail closed with a clear message.
+tarball_run="$(cd "$user_dir" && env -u DATABASE_URL npx gatefit run --suite paid_grants_access --adapter gatefit/adapter.ts 2>&1 || true)"
+echo "$tarball_run" | grep -q 'set DATABASE_URL' || fail "tarball init: generated adapter did not load or did not fail closed: $tarball_run"
+ok "tarball init (installed package, standalone typecheck, adapter loads and fails closed)"
 ok "npx from packed tarball"
 
 publish_log="$(mktemp)"

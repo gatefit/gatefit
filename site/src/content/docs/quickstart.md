@@ -7,6 +7,8 @@ Gatefit checks **your access DB**, not Stripe HTTP 200. Node 22+.
 
 ## 1. Adapter
 
+No adapter yet? `npx gatefit init` generates one for drizzle, Prisma, Supabase, or plain `pg`. It is free and arrives in the next release; see [gatefit init](/init/).
+
 Export `createAdapter()` (or `default`) with:
 
 - `apply(event)`: ingest one billing event

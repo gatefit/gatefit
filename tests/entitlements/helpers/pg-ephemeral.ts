@@ -69,28 +69,43 @@ export async function startEphemeralPg(binDir: string, database = "gatefit"): Pr
   const base = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-pg-"));
   const data = path.join(base, "data");
   const sock = path.join(base, "sock");
-  fs.mkdirSync(sock);
-  const port = await freePort();
   const bin = (name: string) => path.join(binDir, name);
-  must(bin("initdb"), ["-D", data, "-A", "trust", "-U", "postgres", "--no-sync", "-E", "UTF8"], "initdb");
-  must(
-    bin("pg_ctl"),
-    [
-      "-D",
-      data,
-      "-l",
-      path.join(base, "pg.log"),
-      "-w",
-      "-o",
-      `-p ${port} -k ${sock} -c listen_addresses=127.0.0.1 -c fsync=off`,
-      "start",
-    ],
-    "pg_ctl start",
-  );
-  const admin = `postgres://postgres@127.0.0.1:${port}/postgres`;
-  must(bin("psql"), [admin, "-v", "ON_ERROR_STOP=1", "-qc", `CREATE DATABASE ${database}`], "createdb");
-  const url = `postgres://postgres@127.0.0.1:${port}/${database}`;
   let stopped = false;
+  const teardown = () => {
+    if (stopped) return;
+    stopped = true;
+    if (fs.existsSync(path.join(data, "postmaster.pid"))) {
+      spawnSync(bin("pg_ctl"), ["-D", data, "-m", "immediate", "-w", "stop"], { encoding: "utf8" });
+    }
+    fs.rmSync(base, { recursive: true, force: true });
+  };
+  let url: string;
+  try {
+    fs.mkdirSync(sock);
+    const port = await freePort();
+    must(bin("initdb"), ["-D", data, "-A", "trust", "-U", "postgres", "--no-sync", "-E", "UTF8"], "initdb");
+    must(
+      bin("pg_ctl"),
+      [
+        "-D",
+        data,
+        "-l",
+        path.join(base, "pg.log"),
+        "-w",
+        "-o",
+        `-p ${port} -k ${sock} -c listen_addresses=127.0.0.1 -c fsync=off`,
+        "start",
+      ],
+      "pg_ctl start",
+    );
+    const admin = `postgres://postgres@127.0.0.1:${port}/postgres`;
+    must(bin("psql"), [admin, "-v", "ON_ERROR_STOP=1", "-qc", `CREATE DATABASE ${database}`], "createdb");
+    url = `postgres://postgres@127.0.0.1:${port}/${database}`;
+  } catch (err) {
+    // A failed start must not leave a running server or a temp dir behind.
+    teardown();
+    throw err;
+  }
   return {
     url,
     psql(sql: string) {
@@ -99,11 +114,6 @@ export async function startEphemeralPg(binDir: string, database = "gatefit"): Pr
     psqlFile(file: string) {
       return must(bin("psql"), [url, "-v", "ON_ERROR_STOP=1", "-qAtf", file], "psql -f");
     },
-    stop() {
-      if (stopped) return;
-      stopped = true;
-      spawnSync(bin("pg_ctl"), ["-D", data, "-m", "immediate", "-w", "stop"], { encoding: "utf8" });
-      fs.rmSync(base, { recursive: true, force: true });
-    },
+    stop: teardown,
   };
 }
