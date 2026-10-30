@@ -6,7 +6,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ### Added
 
-- `gatefit init` (free): writes a Postgres access adapter, migration, and README for `drizzle`, `prisma`, `supabase`, or `generic` (detected from `package.json`). Never overwrites without `--force`, writes all-or-nothing, refuses live Stripe keys, and pins Stripe API `2025-10-29.clover` from the existing constant. Exit codes 2/3/4 apply to `init` only. Not part of 0.5.2; it ships in the next release.
+- `gatefit init` (free): writes a self-contained Postgres access adapter (raw `pg`, local `access-rules.ts`, no imports from Gatefit), migration, README, and `gatefit.config.json` for `drizzle`, `prisma`, `supabase`, or `generic`. Uses the one ORM in `package.json`, otherwise asks or exits 2. `--print-workflow` / `--write-workflow` render a `gatefit/gatefit@v<version>` job. Never overwrites without `--force`, writes all-or-nothing, refuses live Stripe keys (arguments, environment, `.env*`) before anything else, and pins Stripe API `2025-10-29.clover` from the existing constant. Exit codes 2/3/4 apply to `init` only. Not part of 0.5.2; it ships in the next release.
 
 ## [0.5.2] - 2026-10-29
 
