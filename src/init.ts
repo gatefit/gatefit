@@ -334,7 +334,17 @@ type InitFlags = {
   help?: boolean;
 };
 
-export async function runInit(argv: string[]): Promise<number> {
+/**
+ * `out.quiet` is set for `--help` and every usage error (exit 2), so telemetry skips
+ * them like the top-level help and usage errors.
+ */
+export async function runInit(argv: string[], out: { quiet: boolean } = { quiet: false }): Promise<number> {
+  const code = await initMain(argv, out);
+  if (code === INIT_USAGE) out.quiet = true;
+  return code;
+}
+
+async function initMain(argv: string[], out: { quiet: boolean }): Promise<number> {
   const cwd = path.resolve(userCwd());
 
   // Live keys first: before parsing, so neither a usage error nor a template
@@ -370,6 +380,7 @@ export async function runInit(argv: string[]): Promise<number> {
     return INIT_USAGE;
   }
   if (values.help) {
+    out.quiet = true;
     console.log(initUsage());
     return INIT_OK;
   }

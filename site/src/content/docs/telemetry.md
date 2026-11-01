@@ -35,7 +35,7 @@ The first rule that matches decides:
 6. `gatefit telemetry on` was run: on.
 7. Otherwise: off.
 
-When it is on, the CLI sends one POST to `https://t.gatefit.io/v1/event` after `init`, `run`, `adapter-check`, or `live` finishes. `telemetry`, `--help`, `--version`, and usage errors never send. The request times out after about 1.5 seconds, fails silently, prints nothing, and never changes the exit code or output.
+When it is on, the CLI sends one POST to `https://t.gatefit.io/v1/event` after `init`, `run`, `adapter-check`, or `live` finishes. `telemetry`, `--help`, `--version`, `init --help`, and usage errors (including every `init` exit 2) never send. The request times out after about 1.5 seconds, fails silently, prints nothing, and never changes the exit code or output.
 
 The config lives at `$XDG_CONFIG_HOME/gatefit/telemetry.json`, else `%APPDATA%\gatefit\telemetry.json` on Windows, else `~/.config/gatefit/telemetry.json`. An unreadable config counts as off.
 

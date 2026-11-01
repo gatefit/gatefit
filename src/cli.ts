@@ -145,7 +145,10 @@ async function main(argv: string[]): Promise<number> {
     return cmdTelemetry(argv.slice(1));
   }
   if (command === "init") {
-    return runInit(argv.slice(1));
+    const out = { quiet: false };
+    const code = await runInit(argv.slice(1), out);
+    usageError = out.quiet;
+    return code;
   }
   if (command === "adapter-check") {
     return cmdAdapterCheck();
