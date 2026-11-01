@@ -12,6 +12,18 @@ export default defineConfig({
 			description:
 				'Stripe Entitlement Edge Pack. CI that asserts the access DB survives ugly billing transitions.',
 			favicon: '/favicon.svg',
+			// Cloudflare Web Analytics: cookieless page views. Keep "automatic setup" off for
+			// the Pages project or every page view counts twice.
+			head: [
+				{
+					tag: 'script',
+					attrs: {
+						defer: true,
+						src: 'https://static.cloudflareinsights.com/beacon.min.js',
+						'data-cf-beacon': '{"token": "82ff14a5563c492d869b6db741aac128"}',
+					},
+				},
+			],
 			customCss: ['./src/styles/docs.css'],
 			expressiveCode: {
 				themes: ['github-dark'],
@@ -28,6 +40,7 @@ export default defineConfig({
 				{ label: 'Goldens', slug: 'goldens' },
 				{ label: 'GitHub Action', slug: 'action' },
 				{ label: 'Polar pack', slug: 'polar-pack' },
+				{ label: 'Telemetry', slug: 'telemetry' },
 				{ label: 'Polar checkout', link: '/polar/' },
 				{ label: 'Pricing', link: '/#pricing' },
 			],

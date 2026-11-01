@@ -62,6 +62,7 @@ const story = [
 				setTimeout(ready, 300);
 			}
 		</script>
+		<!-- Cloudflare Web Analytics --><script is:inline defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "82ff14a5563c492d869b6db741aac128"}'></script><!-- End Cloudflare Web Analytics -->
 	</head>
 	<body>
 		<a class="skip" href="#hero">Skip to content</a>
@@ -380,6 +381,15 @@ const story = [
 			navLinks?.addEventListener('click', (event) => {
 				const target = event.target;
 				if (target instanceof Element && target.closest('a')) setNavOpen(false);
+			});
+			// Count Buy clicks. Fire-and-forget: navigation to the Checkout Link is never
+			// blocked or changed, and nothing is stored in the browser.
+			document.addEventListener('click', (event) => {
+				const target = event.target;
+				if (!(target instanceof Element) || !target.closest('a[data-gf-buy]')) return;
+				try {
+					navigator.sendBeacon?.('https://t.gatefit.io/v1/site', '{"event":"buy_click"}');
+				} catch {}
 			});
 			const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 			const sim = document.querySelector<HTMLElement>('#sim');

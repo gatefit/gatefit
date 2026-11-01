@@ -1,0 +1,17 @@
+# GATEFIT-H25 telemetry collector. Deployed by hand (see README.md); not part of CI
+# and not in the npm tarball. No credentials live here.
+name = "gatefit-telemetry"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+routes = [
+  { pattern = "t.gatefit.io", custom_domain = true },
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gatefit-telemetry"
+# Placeholder: replace with the id printed by `npx wrangler@4 d1 create gatefit-telemetry`.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

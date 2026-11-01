@@ -151,3 +151,54 @@ test("repo Polar setup documents fail-closed checkout env", () => {
   assert.match(envExample, /PUBLIC_POLAR_CHECKOUT_URL=/);
   assert.doesNotMatch(envExample, /PUBLIC_POLAR_CHECKOUT_URL=https:\/\/polar\.sh/);
 });
+
+const CF_BEACON_TOKEN = "82ff14a5563c492d869b6db741aac128";
+
+test("H25: Cloudflare beacon in both heads, telemetry page in the sidebar", () => {
+  const cfg = read("site/astro.config.mjs");
+  const index = read("site/src/pages/index.astro");
+  for (const src of [cfg, index]) {
+    assert.match(src, /https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js/);
+    assert.ok(src.includes(CF_BEACON_TOKEN), "beacon token");
+  }
+  assert.match(cfg, /slug:\s*'telemetry'/);
+  assert.doesNotMatch(read("site/src/pages/polar.astro"), /cloudflareinsights/);
+});
+
+test("H25: Buy click beacon never blocks navigation and stores nothing", () => {
+  const cta = read("site/src/components/PolarBuyCta.astro");
+  const anchor = cta.slice(cta.indexOf("<a"), cta.indexOf("</a>"));
+  assert.match(anchor, /data-gf-buy/);
+  assert.match(anchor, /target="_blank"/);
+  assert.match(anchor, /rel="noopener"/);
+  assert.doesNotMatch(cta, /data-polar-checkout/);
+  const closed = cta.slice(cta.indexOf(") : ("), cta.indexOf("data-checkout-closed"));
+  assert.doesNotMatch(closed, /data-gf-buy/, "closed CTA is never counted");
+  const index = read("site/src/pages/index.astro");
+  assert.equal((index.match(/<PolarBuyCta/g) ?? []).length, 4, "exactly 4 Buy CTAs");
+  assert.match(index, /a\[data-gf-buy\]/);
+  assert.match(index, /https:\/\/t\.gatefit\.io\/v1\/site/);
+  assert.match(index, /sendBeacon/);
+  for (const banned of [/cookie/i, /localStorage/, /sessionStorage/, /preventDefault/, /stopPropagation/]) {
+    assert.doesNotMatch(index, banned);
+  }
+});
+
+test("H25: telemetry docs list every payload key and stay honest", async () => {
+  const { PAYLOAD_KEYS } = await import("../../src/telemetry.ts");
+  const page = read("site/src/content/docs/telemetry.md");
+  const readme = read("README.md");
+  for (const doc of [page, readme]) {
+    for (const key of PAYLOAD_KEYS) assert.ok(doc.includes(`\`${key}\``), `docs missing ${key}`);
+    assert.match(doc, /opt-in/i);
+    assert.match(doc, /off by default/i);
+    assert.match(doc, /DO_NOT_TRACK/);
+    assert.match(doc, /no cookies/i);
+    assert.match(doc, /not shipped in 0\.5\.2/);
+    assert.match(doc, /gatefit telemetry off/);
+    assert.match(doc, /t\.gatefit\.io/);
+    for (const banned of [/coming soon/i, /\$19/, /monthly/i, /optional updates/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i]) {
+      assert.doesNotMatch(doc, banned);
+    }
+  }
+});

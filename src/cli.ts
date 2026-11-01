@@ -8,6 +8,7 @@ import { resolveChaosSeed } from "./chaos.ts";
 import "./polar-pack.ts";
 import { runInit } from "./init.ts";
 import { ensureProLicense } from "./license.ts";
+import { cmdTelemetry, maybeSendTelemetry, type Outcome } from "./telemetry.ts";
 import { getProPack, isProPack, proPackOwning } from "./packs.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
 import {
@@ -30,6 +31,7 @@ function usage(): string {
     "  gatefit run --suite polar --adapter <path>",
     "  gatefit adapter-check",
     "  gatefit live --adapter <path> [--scenario <id>]",
+    "  gatefit telemetry on|off|status",
     "  gatefit --help",
     "  gatefit --version",
   ].join("\n");
@@ -115,6 +117,14 @@ function isHelpFlag(arg: string | undefined): boolean {
   return arg === "--help" || arg === "-h";
 }
 
+/** Set on a usage error so telemetry skips it (help, version, and usage never ping). */
+let usageError = false;
+
+function isUsageError(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  return typeof code === "string" && code.startsWith("ERR_PARSE_ARGS");
+}
+
 async function main(argv: string[]): Promise<number> {
   if (isVersionFlag(argv[0])) {
     console.log(`gatefit ${readPackageVersion()}`);
@@ -125,6 +135,9 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   }
   const command = argv[0];
+  if (command === "telemetry") {
+    return cmdTelemetry(argv.slice(1));
+  }
   if (command === "init") {
     return runInit(argv.slice(1));
   }
@@ -141,6 +154,7 @@ async function main(argv: string[]): Promise<number> {
       },
     });
     if (!values.suite || !values.adapter) {
+      usageError = true;
       console.error(usage());
       return 1;
     }
@@ -155,6 +169,7 @@ async function main(argv: string[]): Promise<number> {
       },
     });
     if (!values.adapter) {
+      usageError = true;
       console.error(usage());
       return 1;
     }
@@ -183,10 +198,18 @@ async function main(argv: string[]): Promise<number> {
   return 1;
 }
 
+const argv = process.argv.slice(2);
+let code: number;
+let outcome: Outcome;
 try {
-  const code = await main(process.argv.slice(2));
-  process.exit(code);
+  code = await main(argv);
+  outcome = code === 0 ? "pass" : "fail";
 } catch (err) {
   console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+  code = 1;
+  outcome = "error";
+  if (isUsageError(err)) usageError = true;
 }
+// Opt-in only, bounded, silent. The exit code above is already fixed.
+if (!usageError) await maybeSendTelemetry(argv, outcome);
+process.exit(code);
