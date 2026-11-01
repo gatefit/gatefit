@@ -1,4 +1,5 @@
 import type { AccessSnapshot, BillingEvent } from "./access-adapter.ts";
+import { isPolarEvent, nextPolarSnapshot } from "./polar-rules.ts";
 
 export type AccessStore = {
   rows: Map<string, AccessSnapshot>;
@@ -94,6 +95,8 @@ function withEntitlements(base: AccessSnapshot, event: BillingEvent): AccessSnap
 }
 
 export function nextSnapshot(current: AccessSnapshot, event: BillingEvent): AccessSnapshot {
+  // Polar provider pack events dispatch on exact Polar type names only.
+  if (isPolarEvent(event)) return nextPolarSnapshot(current, event);
   if (isDispute(event)) {
     return { ...current, locked: true, features: [] };
   }

@@ -29,6 +29,8 @@ export type BillingEvent = {
   pending_plan?: string;
   period_end?: number;
   now?: number;
+  /** Polar benefit key for benefit_grant.* events. Set-added or removed from features. */
+  benefit?: string;
   /** Original timeline position. Chaos folds on this so arrival order is not access. */
   created?: number;
 };
@@ -49,6 +51,20 @@ const LIVE_KEY = /\bsk_live(?:_[A-Za-z0-9_]*)?/;
 export function assertNoLiveStripeSecret(haystack: string): void {
   if (LIVE_KEY.test(haystack)) {
     throw new Error("refuse sk_live: Gatefit will not load a live Stripe secret");
+  }
+}
+
+const POLAR_TOKEN = /\bpolar_(?:oat|pat)_[A-Za-z0-9]{16,}/;
+
+/**
+ * Provider packs refuse live Stripe secrets and Polar organization or personal
+ * access tokens. The message never echoes the matched value. polar_cl_ checkout
+ * links are public and are not refused.
+ */
+export function assertNoLiveSecret(haystack: string): void {
+  assertNoLiveStripeSecret(haystack);
+  if (POLAR_TOKEN.test(haystack)) {
+    throw new Error("refuse Polar access token: Gatefit will not load a polar_oat_ or polar_pat_ token");
   }
 }
 
