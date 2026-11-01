@@ -1,0 +1,38 @@
+# P4. A stale Polar subscription.updated arrives after subscription.revoked.
+# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
+# The late update (status active, created 2) predates the revoke (created 3). The row stays locked.
+# HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.
+id: polar_late_stale_update_after_revoke
+subject: cus_polar_p4
+steps:
+  - event:
+      id: wh_p4_active
+      type: subscription.active
+      customerId: cus_polar_p4
+      status: active
+      plan: pro
+      created: 1
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: wh_p4_revoked
+      type: subscription.revoked
+      customerId: cus_polar_p4
+      status: canceled
+      created: 3
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: wh_p4_stale_updated
+      type: subscription.updated
+      customerId: cus_polar_p4
+      status: active
+      plan: pro
+      httpStatus: 200
+      created: 2
+    expect:
+      locked: true
+      plan: pro

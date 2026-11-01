@@ -1,0 +1,27 @@
+# P3. Polar subscription.revoked delivered before subscription.active.
+# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
+# revoked (created 2) arrives first; active (created 1) arrives late. Access folds on created, so it ends locked.
+# HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.
+id: polar_out_of_order_revoked_before_active
+subject: cus_polar_p3
+steps:
+  - event:
+      id: wh_p3_revoked
+      type: subscription.revoked
+      customerId: cus_polar_p3
+      status: canceled
+      created: 2
+    expect:
+      locked: true
+  - event:
+      id: wh_p3_active
+      type: subscription.active
+      customerId: cus_polar_p3
+      status: active
+      plan: pro
+      httpStatus: 200
+      created: 1
+    expect:
+      locked: true
+      plan: pro

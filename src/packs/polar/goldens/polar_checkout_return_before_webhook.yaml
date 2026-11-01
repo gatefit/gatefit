@@ -1,0 +1,26 @@
+# P7. The Polar checkout return lands before the webhook.
+# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
+# checkout.updated with status succeeded and HTTP 200 is the success page, not access. order.paid opens.
+# HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.
+id: polar_checkout_return_before_webhook
+subject: cus_polar_p7
+steps:
+  - event:
+      id: wh_p7_checkout_succeeded
+      type: checkout.updated
+      customerId: cus_polar_p7
+      status: succeeded
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+  - event:
+      id: wh_p7_order_paid
+      type: order.paid
+      customerId: cus_polar_p7
+      status: paid
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
