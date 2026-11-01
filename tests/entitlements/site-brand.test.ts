@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
@@ -98,10 +97,23 @@ test("H27: brand palette tokens replace the old amber everywhere on the site", a
   }
 });
 
+function over(fg: string, alpha: number, bg: string): string {
+  return "#" + [1, 3, 5].map((i) => {
+    const c = parseInt(fg.slice(i, i + 2), 16) * alpha + parseInt(bg.slice(i, i + 2), 16) * (1 - alpha);
+    return Math.round(c).toString(16).padStart(2, "0");
+  }).join("");
+}
+
+function rule(css: string, selector: string): string {
+  const i = css.indexOf(`\n${selector} {`);
+  assert.ok(i >= 0, `missing rule ${selector}`);
+  return css.slice(i, css.indexOf("}", i));
+}
+
 test("H27: text tokens pass WCAG AA on navy and surface; CTA navy-on-mint passes", async () => {
   const { BRAND } = await import("../../site/src/lib/brand.ts");
   for (const bg of [BRAND.navy, BRAND.navyDeep, BRAND.surface]) {
-    for (const k of ["text", "body", "muted", "faint", "mint", "red"] as const) {
+    for (const k of ["text", "body", "muted", "faint", "mint", "red", "redHigh"] as const) {
       const ratio = contrast(BRAND[k], bg);
       assert.ok(ratio >= 4.5, `${k} ${BRAND[k]} on ${bg} is ${ratio.toFixed(2)}:1`);
     }
@@ -111,21 +123,41 @@ test("H27: text tokens pass WCAG AA on navy and surface; CTA navy-on-mint passes
   assert.ok(contrast(BRAND.mintHigh, BRAND.mintLow) >= 4.5, "chip text on mint-low");
   // The CSS must use the same values the test checked.
   const landing = read("site/src/styles/landing.css").toUpperCase();
-  for (const k of ["navy", "surface", "text", "body", "muted", "faint", "mint", "red"] as const) {
+  for (const k of ["navy", "surface", "surface2", "text", "body", "muted", "faint", "mint", "red", "redHigh"] as const) {
     assert.ok(landing.includes(BRAND[k].toUpperCase()), `landing.css missing ${k} ${BRAND[k]}`);
   }
 });
 
-test("H27: brand images come from committed outlined SVG and re-render byte-identically", () => {
+test("H27: text on the raised surface-2 (.sim, .dial-card) and the leak pill passes WCAG AA", async () => {
+  const { BRAND } = await import("../../site/src/lib/brand.ts");
+  const dial = read("site/src/styles/dial.css");
+  const landing = read("site/src/styles/landing.css");
+  // The leak pill is a translucent red tint over surface-2; check its composited colour.
+  const tint = /\.dial-leak \{[^}]*background: rgba\(242, 85, 90, ([\d.]+)\)/.exec(dial);
+  assert.ok(tint, "dial-leak tint not found");
+  const pill = over(BRAND.red, Number(tint[1]), BRAND.surface2);
+  for (const k of ["text", "body", "muted", "mint", "redHigh"] as const) {
+    const ratio = contrast(BRAND[k], BRAND.surface2);
+    assert.ok(ratio >= 4.5, `${k} ${BRAND[k]} on surface-2 is ${ratio.toFixed(2)}:1`);
+  }
+  const pillRatio = contrast(BRAND.redHigh, pill);
+  assert.ok(pillRatio >= 4.5, `redHigh on leak pill ${pill} is ${pillRatio.toFixed(2)}:1`);
+  // faint and base red fail on surface-2, so the labels there must not use them.
+  assert.match(rule(landing, ".sim-top"), /color: var\(--muted\)/, ".sim-top colour");
+  assert.match(rule(dial, ".dial-card-kicker"), /color: var\(--muted\)/, ".dial-card-kicker colour");
+  assert.match(rule(dial, ".dial-card .dial-leak"), /color: var\(--red-high\)/, ".dial-card .dial-leak colour");
+  for (const [sel, css] of [[".dial-card", dial], [".sim", landing]] as const) {
+    assert.doesNotMatch(rule(css, sel), /color: var\(--(faint|red)\)/, `${sel} text colour`);
+  }
+});
+
+test("H27: brand images come from committed outlined SVG sources", () => {
   for (const f of ["site/brand/favicon.svg", "site/brand/og.svg"]) {
     const svg = read(f);
     assert.doesNotMatch(svg, /<text\b/, `${f} must be outlined paths only`);
     assert.doesNotMatch(svg, /<image\b|href="http/, `${f} must be self-contained`);
   }
+  // Byte-identical re-render (`brand-assets.mjs --check`) needs sharp from site/node_modules,
+  // so ./ci-local.sh runs it after the site/ install instead of here.
   assert.match(read("site/package.json"), /"brand":\s*"node scripts\/brand-assets\.mjs"/);
-  const run = spawnSync(process.execPath, ["scripts/brand-assets.mjs", "--check"], {
-    cwd: path.join(root, "site"),
-    encoding: "utf8",
-  });
-  assert.equal(run.status, 0, `brand-assets --check failed:\n${run.stdout}${run.stderr}`);
 });

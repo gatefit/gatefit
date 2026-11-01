@@ -550,6 +550,10 @@ assert_pending_cta() {
   PUBLIC_POLAR_CHECKOUT_URL= npm run build
 ) || fail "starlight site build"
 ok "starlight site build"
+# H27: needs sharp from site/node_modules, so it runs after the site/ install, not in unit tests.
+(cd site && node scripts/brand-assets.mjs --check) \
+  || fail "brand assets drifted from site/brand/*.svg (re-run 'npm run brand' in site/; a sharp/libvips version change can also shift PNG bytes)"
+ok "brand assets re-render byte-identically"
 assert_live_cta site/dist/index.html "$POLAR_CHECKOUT_URL"
 if grep -R -n 'buy.polar.sh/products/' site/dist >/dev/null; then
   fail "built site advertises a buy.polar.sh/products/ URL"

@@ -13,6 +13,8 @@ export const BRAND = {
 	mintHigh: '#A8F0CF',
 	mintLow: '#123F3A',
 	red: '#F2555A',
+	// Text red on the raised surface-2 and the red-tinted leak pill (AA there).
+	redHigh: '#FF8487',
 } as const;
 
 /** Open/pass state. Merged into the brand mint (H27); red stays locked/fail. */

@@ -22,6 +22,8 @@
 	--mint-high: #A8F0CF;
 	--mint-low: #123F3A;
 	--red: #F2555A;
+	--red-high: #FF8487;
+	--text-rgb: 244, 247, 251;
 	--ease: cubic-bezier(0.16, 1, 0.3, 1);
 	--ease-io: cubic-bezier(0.65, 0, 0.35, 1);
 	--r-card: 16px;
@@ -239,7 +241,7 @@ h1 {
 	justify-content: space-between;
 	gap: 12px;
 }
-.sim-top { margin-bottom: 12px; color: var(--faint); font-family: var(--mono); font-size: 0.75rem; }
+.sim-top { margin-bottom: 12px; color: var(--muted); font-family: var(--mono); font-size: 0.75rem; }
 .replaying-dot {
 	width: 8px; height: 8px; border-radius: 999px; background: var(--mint);
 }
@@ -274,7 +276,7 @@ h1 {
 	opacity: 0;
 	pointer-events: none;
 }
-.row-hl { background: rgba(var(--mint-rgb), 0.14); box-shadow: inset 0 0 0 1px rgba(244, 247, 251, 0.55); }
+.row-hl { background: rgba(var(--mint-rgb), 0.14); box-shadow: inset 0 0 0 1px rgba(var(--text-rgb), 0.55); }
 .row-sweep {
 	background: linear-gradient(90deg, transparent, rgba(var(--mint-rgb), 0.7), transparent);
 	transform: translateX(-100%);

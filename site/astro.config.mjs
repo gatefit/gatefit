@@ -16,8 +16,11 @@ export default defineConfig({
 			// the Pages project or every page view counts twice.
 			head: [
 				// H27: brand icons and the 1200x630 share card. Starlight already emits
-				// og:title/description/url and twitter:card, so only add what it lacks.
+				// og:title/description/url. Its default twitter:card is replaced by ours
+				// below (Starlight dedupes meta by name), so the page keeps exactly one.
+				// The svg icon repeats the favicon option with sizes="any" so it beats the ICO.
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '32x32' } },
+				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' } },
 				{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
 				{ tag: 'meta', attrs: { name: 'theme-color', content: '#0B1B3A' } },
 				{ tag: 'meta', attrs: { property: 'og:image', content: 'https://gatefit.io/og.png' } },
