@@ -1,19 +1,29 @@
-// Cloudflare entry: wires the pure handler to D1. Never imported by repo tests.
+/**
+ * Cloudflare Worker entry for the GATEFIT-H25 collector. Thin D1 adapter around the
+ * pure handler. Minimal local D1 types keep this free of new dependencies; the repo
+ * tests never import this file.
+ */
 import { handleRequest, type CountRow, type Stats, type TelemetryStore } from "./handler.ts";
 
-// Minimal local D1 surface, so the Worker adds no dependency to the repo.
+interface D1Result<T> {
+  results: T[];
+}
+
 interface D1PreparedStatement {
   bind(...values: unknown[]): D1PreparedStatement;
   run(): Promise<unknown>;
-  all<T>(): Promise<{ results: T[] }>;
+  all<T>(): Promise<D1Result<T>>;
 }
+
 interface D1Database {
   prepare(sql: string): D1PreparedStatement;
 }
 
-type Env = { DB: D1Database };
+interface Env {
+  DB: D1Database;
+}
 
-const COUNT_COLUMNS = [
+const COLUMNS = [
   "day",
   "kind",
   "command",
@@ -33,10 +43,10 @@ function d1Store(db: D1Database): TelemetryStore {
     async increment(row) {
       await db
         .prepare(
-          `INSERT INTO counts (${COUNT_COLUMNS.join(", ")}, n) VALUES (${COUNT_COLUMNS.map(() => "?").join(", ")}, 1)
-           ON CONFLICT (${COUNT_COLUMNS.join(", ")}) DO UPDATE SET n = n + 1`,
+          `INSERT INTO counts (${COLUMNS.join(",")}, n) VALUES (${COLUMNS.map(() => "?").join(",")}, 1)
+           ON CONFLICT (${COLUMNS.join(",")}) DO UPDATE SET n = n + 1`,
         )
-        .bind(...COUNT_COLUMNS.map((c) => row[c]))
+        .bind(...COLUMNS.map((c) => row[c]))
         .run();
     },
     async addInstall(day, hash) {
@@ -44,27 +54,20 @@ function d1Store(db: D1Database): TelemetryStore {
     },
     async stats(sinceDay) {
       const counts = await db
-        .prepare(`SELECT ${COUNT_COLUMNS.join(", ")}, n FROM counts WHERE day >= ? ORDER BY day, kind`)
+        .prepare(`SELECT ${COLUMNS.join(",")}, n FROM counts WHERE day >= ? ORDER BY day, kind`)
         .bind(sinceDay)
         .all<Stats["counts"][number]>();
       const installs = await db
-        .prepare("SELECT day, COUNT(*) AS distinct_installs FROM installs WHERE day >= ? GROUP BY day ORDER BY day")
+        .prepare('SELECT day, COUNT(*) AS "distinct" FROM installs WHERE day >= ? GROUP BY day ORDER BY day')
         .bind(sinceDay)
-        .all<{ day: string; distinct_installs: number }>();
-      return {
-        counts: counts.results,
-        installs: installs.results.map((r) => ({ day: r.day, distinct: r.distinct_installs })),
-      };
+        .all<Stats["installs"][number]>();
+      return { counts: counts.results, installs: installs.results };
     },
   };
 }
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
-    try {
-      return await handleRequest(req, d1Store(env.DB), new Date());
-    } catch {
-      return new Response(null, { status: 500 });
-    }
+  fetch(req: Request, env: Env): Promise<Response> {
+    return handleRequest(req, d1Store(env.DB));
   },
 };

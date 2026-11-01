@@ -7,3 +7,5 @@ site/
 id_rsa
 id_rsa.*
 worker/
+# GATEFIT-H25: the telemetry collector Worker is deployed by hand, never shipped.
+worker/

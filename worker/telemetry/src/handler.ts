@@ -1,11 +1,14 @@
-// GATEFIT-H25 collector. Pure request handler: standard Request/Response/crypto.subtle
-// only, so the repo typecheck and tests can load it without Cloudflare types.
-// No logging, no client IP, no user agent. Counts are aggregates; the install id is
-// reduced to a 16-hex SHA-256 prefix for the per-day distinct table and then dropped.
-
+/**
+ * GATEFIT-H25 telemetry collector. Pure request handler: standard Request/Response and
+ * crypto.subtle only, so it runs on Workers and under the repo tests. Storage is behind
+ * TelemetryStore; the Cloudflare D1 binding lives in index.ts.
+ *
+ * Privacy: every value is allowlisted, the raw install id is hashed to a 16-hex day key
+ * and dropped, nothing is logged, and client IPs and user agents are never read.
+ */
 export const SITE_ORIGIN = "https://gatefit.io";
 
-/** Must equal PAYLOAD_KEYS in src/telemetry.ts (a test asserts it). */
+/** Must equal PAYLOAD_KEYS in src/telemetry.ts (asserted by the tests). */
 export const EVENT_KEYS = [
   "v",
   "install_id",
@@ -20,7 +23,6 @@ export const EVENT_KEYS = [
   "suite",
 ] as const;
 
-/** Must equal the CLI allowlists in src/telemetry.ts (a test asserts it). */
 export const ALLOWED = {
   command: ["init", "run", "adapter-check", "live"],
   outcome: ["pass", "fail", "error"],
@@ -49,9 +51,10 @@ export const ALLOWED = {
   ],
 } as const satisfies Record<string, readonly string[]>;
 
-const MAX_EVENT_BYTES = 1024;
-const MAX_SITE_BYTES = 64;
+const EVENT_MAX_BYTES = 1024;
+const SITE_MAX_BYTES = 64;
 const MAX_DAYS = 90;
+const DEFAULT_DAYS = 30;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/;
 const NODE_MAJOR = /^\d{1,3}$/;
@@ -86,45 +89,44 @@ function empty(status: number, headers: Record<string, string> = {}): Response {
   return new Response(null, { status, headers });
 }
 
-function day(now: Date, minusDays = 0): string {
-  return new Date(now.getTime() - minusDays * 86_400_000).toISOString().slice(0, 10);
+function dayOf(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
-async function readCapped(req: Request, max: number): Promise<string | null> {
-  const declared = Number(req.headers.get("content-length") ?? "0");
-  if (declared > max) return null;
-  const text = await req.text();
-  return new TextEncoder().encode(text).length > max ? null : text;
+async function readBounded(req: Request, max: number): Promise<string | null> {
+  const bytes = new Uint8Array(await req.arrayBuffer());
+  if (bytes.byteLength > max) return null;
+  return new TextDecoder().decode(bytes);
 }
 
 function parseObject(text: string): Record<string, unknown> | null {
+  let value: unknown;
   try {
-    const value = JSON.parse(text) as unknown;
-    return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+    value = JSON.parse(text);
   } catch {
     return null;
   }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function oneOf(list: readonly string[], value: unknown): value is string {
+  return typeof value === "string" && list.includes(value);
 }
 
 function validEvent(body: Record<string, unknown>): boolean {
   const keys = Object.keys(body);
-  if (keys.length !== EVENT_KEYS.length || !EVENT_KEYS.every((k) => keys.includes(k))) return false;
+  if (keys.length !== EVENT_KEYS.length) return false;
+  if (!EVENT_KEYS.every((key) => Object.hasOwn(body, key))) return false;
   if (body.v !== 1) return false;
-  for (const key of EVENT_KEYS) {
-    if (key !== "v" && typeof body[key] !== "string") return false;
-  }
-  if (!UUID_V4.test(body.install_id as string)) return false;
-  const version = body.version as string;
-  if (version.length > 32 || !SEMVER.test(version)) return false;
-  if (!NODE_MAJOR.test(body.node as string)) return false;
-  for (const [key, allowed] of Object.entries(ALLOWED)) {
-    if (!(allowed as readonly string[]).includes(body[key] as string)) return false;
-  }
-  return true;
+  if (typeof body.install_id !== "string" || !UUID_V4.test(body.install_id)) return false;
+  if (typeof body.version !== "string" || !SEMVER.test(body.version)) return false;
+  if (typeof body.node !== "string" || !NODE_MAJOR.test(body.node)) return false;
+  return (Object.keys(ALLOWED) as (keyof typeof ALLOWED)[]).every((key) => oneOf(ALLOWED[key], body[key]));
 }
 
-async function installHash(id: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(id));
+async function installHash(installId: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(installId));
   return [...new Uint8Array(digest)]
     .slice(0, 8)
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -132,46 +134,45 @@ async function installHash(id: string): Promise<string> {
 }
 
 async function handleEvent(req: Request, store: TelemetryStore, now: Date): Promise<Response> {
-  const text = await readCapped(req, MAX_EVENT_BYTES);
+  const text = await readBounded(req, EVENT_MAX_BYTES);
   if (text === null) return empty(413);
   const body = parseObject(text);
   if (!body || !validEvent(body)) return empty(400);
-  const today = day(now);
+  const day = dayOf(now);
+  const s = body as Record<(typeof EVENT_KEYS)[number], string>;
   await store.increment({
-    day: today,
+    day,
     kind: "cli",
-    command: body.command as string,
-    version: body.version as string,
-    node: body.node as string,
-    platform: body.platform as string,
-    arch: body.arch as string,
-    outcome: body.outcome as string,
-    template: body.template as string,
-    pack: body.pack as string,
-    suite: body.suite as string,
+    command: s.command,
+    version: s.version,
+    node: s.node,
+    platform: s.platform,
+    arch: s.arch,
+    outcome: s.outcome,
+    template: s.template,
+    pack: s.pack,
+    suite: s.suite,
     event: "",
   });
-  await store.addInstall(today, await installHash(body.install_id as string));
+  await store.addInstall(day, await installHash(s.install_id));
   return empty(204);
 }
 
 const SITE_CORS = {
   "access-control-allow-origin": SITE_ORIGIN,
   "access-control-allow-methods": "POST",
-  "access-control-allow-headers": "content-type",
   vary: "Origin",
 };
 
 async function handleSite(req: Request, store: TelemetryStore, now: Date): Promise<Response> {
   if (req.headers.get("origin") !== SITE_ORIGIN) return empty(403);
   if (req.method === "OPTIONS") return empty(204, SITE_CORS);
-  const text = await readCapped(req, MAX_SITE_BYTES);
+  const text = await readBounded(req, SITE_MAX_BYTES);
   if (text === null) return empty(413, SITE_CORS);
   const body = parseObject(text);
-  const keys = body ? Object.keys(body) : [];
-  if (!body || keys.length !== 1 || body.event !== "buy_click") return empty(400, SITE_CORS);
+  if (!body || Object.keys(body).length !== 1 || body.event !== "buy_click") return empty(400, SITE_CORS);
   await store.increment({
-    day: day(now),
+    day: dayOf(now),
     kind: "site",
     command: "",
     version: "",
@@ -189,28 +190,15 @@ async function handleSite(req: Request, store: TelemetryStore, now: Date): Promi
 
 async function handleStats(url: URL, store: TelemetryStore, now: Date): Promise<Response> {
   const raw = url.searchParams.get("days");
-  const days = raw === null ? 30 : /^\d+$/.test(raw) ? Number(raw) : NaN;
-  if (!Number.isInteger(days) || days < 1 || days > MAX_DAYS) return empty(400);
-  const stats = await store.stats(day(now, days - 1));
-  const body: Stats = {
-    counts: stats.counts.map((r) => ({
-      day: r.day,
-      kind: r.kind,
-      command: r.command,
-      version: r.version,
-      node: r.node,
-      platform: r.platform,
-      arch: r.arch,
-      outcome: r.outcome,
-      template: r.template,
-      pack: r.pack,
-      suite: r.suite,
-      event: r.event,
-      n: r.n,
-    })),
-    installs: stats.installs.map((r) => ({ day: r.day, distinct: r.distinct })),
-  };
-  return new Response(JSON.stringify(body), {
+  let days = DEFAULT_DAYS;
+  if (raw !== null) {
+    if (!/^\d{1,3}$/.test(raw)) return empty(400);
+    days = Number(raw);
+    if (days < 1 || days > MAX_DAYS) return empty(400);
+  }
+  const since = dayOf(new Date(now.getTime() - (days - 1) * 86_400_000));
+  const stats = await store.stats(since);
+  return new Response(JSON.stringify(stats), {
     status: 200,
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });
@@ -218,16 +206,14 @@ async function handleStats(url: URL, store: TelemetryStore, now: Date): Promise<
 
 export async function handleRequest(req: Request, store: TelemetryStore, now: Date = new Date()): Promise<Response> {
   const url = new URL(req.url);
-  if (url.pathname === "/v1/event") {
-    return req.method === "POST" ? handleEvent(req, store, now) : empty(405, { allow: "POST" });
+  switch (url.pathname) {
+    case "/v1/event":
+      return req.method === "POST" ? handleEvent(req, store, now) : empty(405);
+    case "/v1/site":
+      return req.method === "POST" || req.method === "OPTIONS" ? handleSite(req, store, now) : empty(405);
+    case "/v1/stats":
+      return req.method === "GET" ? handleStats(url, store, now) : empty(405);
+    default:
+      return empty(404);
   }
-  if (url.pathname === "/v1/site") {
-    return req.method === "POST" || req.method === "OPTIONS"
-      ? handleSite(req, store, now)
-      : empty(405, { allow: "POST, OPTIONS" });
-  }
-  if (url.pathname === "/v1/stats") {
-    return req.method === "GET" ? handleStats(url, store, now) : empty(405, { allow: "GET" });
-  }
-  return empty(404);
 }

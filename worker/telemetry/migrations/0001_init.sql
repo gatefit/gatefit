@@ -1,6 +1,6 @@
--- GATEFIT-H25 collector schema. Aggregates only. '' instead of NULL so the primary
--- key deduplicates. counts has no install column, so an install cannot be linked to
--- the commands it ran; installs holds a 16-hex SHA-256 prefix per day for distinct counts.
+-- GATEFIT-H25 collector schema. Aggregates only: counts has no install column, and
+-- installs holds a 16-hex SHA-256 prefix per day for distinct-install counts.
+-- '' instead of NULL so the primary key deduplicates.
 CREATE TABLE counts (
   day TEXT NOT NULL,
   kind TEXT NOT NULL CHECK (kind IN ('cli', 'site')),

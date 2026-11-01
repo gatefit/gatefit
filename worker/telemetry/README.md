@@ -1,36 +1,40 @@
 # gatefit telemetry collector (Cloudflare Worker + D1)
 
-Receives opt-in CLI pings (`POST /v1/event`) and landing-page Buy clicks
-(`POST /v1/site`, Origin `https://gatefit.io` only), and serves aggregate counts
-(`GET /v1/stats?days=N`, N ≤ 90, default 30). It never logs bodies and never reads the
-client IP or user agent. See `site/src/content/docs/telemetry.md` for the payload.
+Receives the opt-in CLI ping (`POST /v1/event`) and the site Buy-click beacon
+(`POST /v1/site`), and serves aggregates at `GET /v1/stats?days=N` (1–90, default 30).
+Not part of `./ci-local.sh`, not in the npm tarball. The pure handler
+(`src/handler.ts`) is covered by `tests/entitlements/telemetry-worker.test.ts`.
 
-This directory is not part of the npm package (`.npmignore`, `package.json` `files`)
-and is not deployed by CI. The handler (`src/handler.ts`) is tested by
-`tests/entitlements/telemetry-worker.test.ts` through `./ci-local.sh`.
+What it stores: daily counters per allowlisted value (`counts`) and a 16-hex SHA-256
+prefix of the random install id per day (`installs`) for distinct-install counts. It
+never stores the raw install id, never reads client IPs or user agents, and never logs
+request bodies. No retention job in v1.
 
-## Deploy (by hand, once)
+## Deploy (by hand, from this directory)
 
-Needs a Cloudflare account with the `gatefit.io` zone. Run from this directory.
+1. Create the database and paste the printed `database_id` into `wrangler.toml`
+   (replace the all-zero placeholder), then commit that change:
 
-```bash
-cd worker/telemetry
-npx wrangler@4 login                       # or export CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID
-npx wrangler@4 d1 create gatefit-telemetry
-# Copy the printed database_id into wrangler.toml (replace the all-zero placeholder) and commit it.
-npx wrangler@4 d1 migrations apply gatefit-telemetry --remote
-npx wrangler@4 deploy                      # creates the t.gatefit.io custom domain from routes
-```
+       npx wrangler@4 d1 create gatefit-telemetry
 
-## Check
+2. Apply the schema to the remote database:
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' -X POST https://t.gatefit.io/v1/site \
-  -H 'Origin: https://gatefit.io' --data '{"event":"buy_click"}'     # 204
-curl -s 'https://t.gatefit.io/v1/stats?days=7'
-```
+       npx wrangler@4 d1 migrations apply gatefit-telemetry --remote
 
-Ad blockers drop both the Cloudflare beacon and `t.gatefit.io`, so treat every
-number as a lower bound. Keep Cloudflare Web Analytics "automatic setup" off for the
-Pages project; the site already carries the manual beacon, so automatic setup would
-count each page view twice.
+3. Deploy. `wrangler.toml` declares `t.gatefit.io` as a custom domain, so the deploy
+   creates the DNS record and certificate on the `gatefit.io` zone:
+
+       npx wrangler@4 deploy
+
+4. Smoke test:
+
+       curl -i https://t.gatefit.io/v1/stats?days=1
+
+## Notes
+
+- Keep Cloudflare Web Analytics "automatic setup" off for the Pages project; the site
+  uses the manual beacon snippet, and both on would count every page view twice.
+- Anyone can POST events and `/v1/stats` is public. Values are allowlisted and bodies
+  are capped (1 KB, 64 B for the site beacon); add a Cloudflare rate-limit rule on
+  `t.gatefit.io/v1/*` if counts look inflated. Treat all numbers as lower bounds: ad
+  blockers drop both beacons.
