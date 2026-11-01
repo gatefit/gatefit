@@ -340,7 +340,8 @@ test("polar refuses sk_live and accepts polar_cl_ checkout links", async () => {
 
 test("every Polar golden cites POLAR_SCHEMA and repeated runs are byte-identical", async () => {
   const schema = polarSchema();
-  assert.match(schema, /^v1@\d{4}-\d{2}-\d{2}$/);
+  assert.match(schema, /^v1\+fixtures\.\d+$/);
+  assert.doesNotMatch(schema, /\d{4}-\d{2}-\d{2}/);
   for (const file of goldenFiles(POLAR_DIR)) {
     const text = fs.readFileSync(file, "utf8");
     assert.match(text, new RegExp(`^# POLAR_SCHEMA ${schema.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} `, "m"), file);

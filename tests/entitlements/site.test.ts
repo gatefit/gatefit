@@ -81,7 +81,12 @@ test("Polar pack page is honest about price, release, and HTTP 200", () => {
     /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S9 and Phase 2 stay free\./,
   );
   assert.match(page, /HTTP 200 is not access/);
-  assert.match(page, /v1@\d{4}-\d{2}-\d{2}/);
+  const schema = read("src/polar-pack.ts").match(/export const POLAR_SCHEMA = "([^"]+)";/)?.[1];
+  assert.equal(schema, "v1+fixtures.1");
+  assert.ok(page.includes(`POLAR_SCHEMA = ${schema}`), "docs cite POLAR_SCHEMA");
+  assert.doesNotMatch(page, /v1@\d{4}-\d{2}-\d{2}/);
+  assert.match(page, /`subscription\.created`[^|]*`active`[^|]*\|\s*unlocked/);
+  assert.match(page, /`provider: polar`/);
   assert.match(page, /order\.\*.*subscription\.\*.*benefit_grant\.\*.*refund\.\*.*checkout\.\*/s);
   assert.match(page, /partially_refunded/);
   assert.match(page, /polar_oat_/);

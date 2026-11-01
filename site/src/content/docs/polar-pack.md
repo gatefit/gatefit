@@ -16,13 +16,13 @@ export GATEFIT_LICENSE_KEY=GATEFIT-...
 npx gatefit run --suite polar --adapter ./gatefit/adapter.ts
 ```
 
-The pack uses the same license gate as chaos mode. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing. Pointing `--suite` at the pack's golden directory goes through the same gate. Free suites never read the key and never call Polar.
+The pack uses the same license gate as chaos mode. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing. Pointing `--suite` at the pack's golden directory, or a file in it, goes through the same gate and, once licensed, runs exactly like `--suite polar`. A `--suite` path that mixes Polar and free goldens is refused. Free suites never read the key and never call Polar.
 
 The adapter needs `reset()`. The pack refuses `GATEFIT_LIVE_CLOCK`. `--seed` is accepted and ignored.
 
 ## Schema
 
-The pack pins `POLAR_SCHEMA = v1@2026-11-01`. Events follow Polar's public v1 webhook event names: `order.*`, `subscription.*`, `benefit_grant.*`, `refund.*`, `checkout.*`. Polar has no dated API versions, so the pin is `v1` plus the date the events were written against. Events stay minimal: `type`, `status`, `plan`, `seats`, `cancel_at_period_end`, `period_end`, `now`, `created`, and `benefit`. The event `id` is the Standard Webhooks `webhook-id`. Polar events carry no Stripe shortcut flags, so your adapter has to read the Polar type itself.
+The pack pins `POLAR_SCHEMA = v1+fixtures.1`. Events follow Polar's public v1 webhook event names: `order.*`, `subscription.*`, `benefit_grant.*`, `refund.*`, `checkout.*`. Polar has no dated API versions, so the pin is `v1` plus a fixture revision. `fixtures.N` goes up whenever a Polar golden changes meaning. Events stay minimal: `type`, `status`, `plan`, `seats`, `cancel_at_period_end`, `period_end`, `now`, `created`, and `benefit`. The event `id` is the Standard Webhooks `webhook-id`. Polar events carry no Stripe shortcut flags, so your adapter has to read the Polar type itself. Stripe sends `refund.created` and `refund.updated` too, so the pack's `refund.*` steps carry `provider: polar`. Your adapter must tell Polar events apart by their source (the endpoint or signature that received them), not by type name; an untagged `refund.*` folds with the Stripe rules.
 
 ## What each event must do
 
@@ -33,9 +33,9 @@ The pack pins `POLAR_SCHEMA = v1@2026-11-01`. Events follow Polar's public v1 we
 | `order.paid`, or `order.updated` with status `paid` | unlocked; plan and seats applied |
 | `order.refunded`, or `order.updated` with status `refunded` | locked |
 | `order.updated` with status `partially_refunded` | unchanged |
-| `refund.created` / `refund.updated` with status `succeeded` | locked; `pending` leaves it unchanged |
+| `refund.created` / `refund.updated` with `provider: polar` and status `succeeded` | locked; `pending` leaves it unchanged |
 | `subscription.created` with status `incomplete` or `trialing` | locked |
-| `subscription.active`, or `subscription.updated` with status `active` | unlocked; plan and seats applied |
+| `subscription.created`, `subscription.active`, or `subscription.updated` with status `active` | unlocked; plan and seats applied |
 | `subscription.updated` with status `past_due` or `unpaid` | locked |
 | `subscription.canceled` with `cancel_at_period_end` | unlocked until `now >= period_end`, then locked |
 | `subscription.uncanceled` | unchanged |
