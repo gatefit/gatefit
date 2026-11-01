@@ -7,13 +7,22 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 ### Added
 
 - `gatefit init` (free): writes a self-contained Postgres access adapter (raw `pg`, local `access-rules.ts`, no imports from Gatefit), migration, README, and `gatefit.config.json` for `drizzle`, `prisma`, `supabase`, or `generic`. Uses the one ORM in `package.json`, otherwise asks or exits 2. `--print-workflow` / `--write-workflow` render a `gatefit/gatefit@v<version>` job. Never overwrites without `--force`, writes all-or-nothing, refuses live Stripe keys (arguments, environment, `.env*`) before anything else, and pins Stripe API `2025-10-29.clover` from the existing constant. Exit codes 2/3/4 apply to `init` only. Not part of 0.5.2; it ships in the next release.
-- Polar provider pack (paid, $49 Gatefit Indie License): `gatefit run --suite polar --adapter <path>` replays nine Polar v1 webhook transitions (`POLAR_SCHEMA v1@2026-11-01`) against your access table. Same license gate as chaos mode; running the pack's golden directory as a `--suite` path is gated too. The pack refuses `polar_oat_`/`polar_pat_` tokens and `sk_live` in the adapter source or environment and never prints them. HTTP 200 is not access. Free suites do not change and never call Polar. Not part of 0.5.2; it ships in the next release.
-
+- Polar provider pack (paid, $49 Gatefit Indie License): `gatefit run --suite polar --adapter <path>` replays nine Polar v1 webhook transitions (`POLAR_SCHEMA v1+fixtures.1`) against your access table. Same license gate as chaos mode; running the pack's golden directory as a `--suite` path is gated too. The pack refuses `polar_oat_`/`polar_pat_` tokens and `sk_live` in the adapter source or environment and never prints them. HTTP 200 is not access. Free suites do not change and never call Polar. Not part of 0.5.2; it ships in the next release.
 - Usage tracking. The site uses cookieless Cloudflare Web Analytics on the landing page and docs, plus a fire-and-forget Buy-click beacon that never blocks the Checkout Link. CLI telemetry is opt-in and off by default: `gatefit telemetry on|off|status`, `GATEFIT_TELEMETRY=1|0`. `DO_NOT_TRACK` always wins, and CI needs the env var. One bounded, silent ping after `init`/`run`/`adapter-check`/`live`, with an allowlisted payload (`v`, `install_id`, `version`, `node`, `platform`, `arch`, `command`, `outcome`, `template`, `pack`, `suite`). Exit codes and output do not change. The collector Worker (`worker/telemetry/`) is deployed by hand and is not in the npm package. CLI telemetry is not part of 0.5.2; it ships in the next release.
 
 ### Changed
 
 - The SQLite reference adapter ignores an event whose `created` is older than one already applied for that customer. Goldens without `created` behave as before.
+- Polar `refund.created` / `refund.updated` reach the Polar rules only with `provider: polar` on the event, because Stripe sends the same names. An untagged `refund.*` folds with the Stripe rules. The Polar refund golden carries the tag. Other names both providers use (`order.*`) are not scoped yet.
+- `POLAR_SCHEMA` is `v1+fixtures.1`, not a date. Polar has no dated API versions; `fixtures.N` goes up whenever a Polar golden changes meaning.
+- A licensed `run --suite <path>` into the Polar golden directory (or one file in it) runs exactly like `--suite polar`: schema line, `PASS polar <id>` lines and summary, Polar token and `GATEFIT_LIVE_CLOCK` refusals. Unlicensed, it stays locked as before. A `--suite` path that mixes pack and free goldens exits 1.
+
+### Fixed
+
+- `init --help` and every `init` usage error (exit 2) no longer send opt-in telemetry, matching the docs.
+- The collector Worker returns 413 for an oversize `content-length` before reading the body.
+- The Polar pack docs list `subscription.created` with status `active` as unlocking.
+- The CLI tests force telemetry off in their child processes, so `npm test` never pings a collector.
 
 ## [0.5.2] - 2026-10-29
 
