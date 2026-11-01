@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -8,8 +9,15 @@ import { test } from "node:test";
 const root = path.join(import.meta.dirname, "../..");
 const bin = path.join(root, "bin/gatefit.js");
 
+/** Child env with telemetry forced off, so `npm test` never pings a collector. */
+function cleanEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  for (const key of ["GATEFIT_TELEMETRY", "GATEFIT_TELEMETRY_URL", "DO_NOT_TRACK"]) delete env[key];
+  return { ...env, GATEFIT_TELEMETRY: "0", ...extra };
+}
+
 function run(args: string[], env: NodeJS.ProcessEnv = {}) {
-  const childEnv = { ...process.env, ...env };
+  const childEnv = cleanEnv(env);
   if (!("GATEFIT_LIVE_CLOCK" in env)) delete childEnv.GATEFIT_LIVE_CLOCK;
   return spawnSync(process.execPath, [bin, ...args], {
     cwd: root,
@@ -115,7 +123,7 @@ test("gatefit run from another cwd uses bundled suite id and caller adapter", ()
     {
       cwd: tmp,
       encoding: "utf8",
-      env: { ...process.env, INIT_CWD: tmp },
+      env: cleanEnv({ INIT_CWD: tmp }),
     },
   );
   assert.equal(result.status, 0, result.stderr + result.stdout);
@@ -126,7 +134,7 @@ test("gatefit adapter-check from another cwd still uses bundled adapters", () =>
   const result = spawnSync(process.execPath, [bin, "adapter-check"], {
     cwd: tmp,
     encoding: "utf8",
-    env: { ...process.env, INIT_CWD: tmp },
+    env: cleanEnv({ INIT_CWD: tmp }),
   });
   assert.equal(result.status, 0, result.stderr + result.stdout);
 });
@@ -140,7 +148,7 @@ test("empty caller goldens directory does not false-pass; bundled S1–S6 still 
     {
       cwd: tmp,
       encoding: "utf8",
-      env: { ...process.env, INIT_CWD: tmp },
+      env: cleanEnv({ INIT_CWD: tmp }),
     },
   );
   const out = result.stderr + result.stdout;
@@ -199,8 +207,38 @@ test("gatefit bin finds hoisted tsx outside the package directory", () => {
   const result = spawnSync(process.execPath, [path.join(pkgDir, "bin/gatefit.js"), "--version"], {
     cwd: tmp,
     encoding: "utf8",
-    env: { ...process.env, INIT_CWD: tmp },
+    env: cleanEnv({ INIT_CWD: tmp }),
   });
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(result.stdout, /gatefit 0\.5\.2/);
+});
+
+test("cli test children never send telemetry even when the parent env opts in", async () => {
+  let connections = 0;
+  const server = createServer((req, res) => {
+    req.resume();
+    req.on("end", () => res.end());
+  });
+  server.on("connection", () => {
+    connections += 1;
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("no port");
+  const saved = { GATEFIT_TELEMETRY: process.env.GATEFIT_TELEMETRY, GATEFIT_TELEMETRY_URL: process.env.GATEFIT_TELEMETRY_URL };
+  process.env.GATEFIT_TELEMETRY = "1";
+  process.env.GATEFIT_TELEMETRY_URL = `http://127.0.0.1:${address.port}/v1/event`;
+  try {
+    const result = run(["run", "--suite", "paid_grants_access", "--adapter", "src/adapters/hardened.ts"]);
+    assert.equal(result.status, 0, result.stderr);
+    // spawnSync blocked this loop; let any queued connection surface before counting.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    assert.equal(connections, 0);
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
