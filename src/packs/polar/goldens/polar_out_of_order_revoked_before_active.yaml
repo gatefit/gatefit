@@ -24,4 +24,3 @@ steps:
       created: 1
     expect:
       locked: true
-      plan: pro

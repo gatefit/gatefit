@@ -61,6 +61,10 @@ export function createAdapter(): AccessAdapter {
     CREATE TABLE IF NOT EXISTS seen_events (
       event_id TEXT PRIMARY KEY
     );
+    CREATE TABLE IF NOT EXISTS event_order (
+      customer_id TEXT PRIMARY KEY,
+      created INTEGER NOT NULL
+    );
   `);
   const seenAdd = db.prepare("INSERT OR IGNORE INTO seen_events (event_id) VALUES (?)");
   const accessGet = db.prepare(
@@ -75,11 +79,24 @@ export function createAdapter(): AccessAdapter {
       seats = excluded.seats,
       features = excluded.features
   `);
+  const orderGet = db.prepare("SELECT created FROM event_order WHERE customer_id = ?");
+  const orderSet = db.prepare(`
+    INSERT INTO event_order (customer_id, created) VALUES (?, ?)
+    ON CONFLICT(customer_id) DO UPDATE SET created = MAX(created, excluded.created)
+  `);
+  const clearOrder = db.prepare("DELETE FROM event_order");
   const clearAccess = db.prepare("DELETE FROM access");
   const clearSeen = db.prepare("DELETE FROM seen_events");
   const applyEvent = db.transaction((event: BillingEvent) => {
     const inserted = seenAdd.run(event.id);
     if (inserted.changes === 0) return;
+    // An event created before the last applied one is stale. It is recorded as
+    // seen and does not touch the access row, so late delivery is not access.
+    if (typeof event.created === "number") {
+      const last = orderGet.get(event.customerId) as { created: number } | undefined;
+      if (last && event.created < last.created) return;
+      orderSet.run(event.customerId, event.created);
+    }
     const current = rowToSnapshot(accessGet.get(event.customerId) as AccessRow | undefined);
     const next = nextSnapshot(current, event);
     accessUpsert.run({
@@ -101,6 +118,7 @@ export function createAdapter(): AccessAdapter {
     reset() {
       clearAccess.run();
       clearSeen.run();
+      clearOrder.run();
     },
   };
 }
