@@ -231,7 +231,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35cqw;
-	color: var(--red);
+	color: var(--red-high);
 	font-family: var(--mono);
 	border: 1px solid var(--red);
 	border-radius: 999px;
@@ -283,7 +283,7 @@
 .dial-mini { width: 16px; height: 16px; display: inline-flex; }
 .dial-mini.is-open { color: var(--mint); }
 .dial-mini.is-locked { color: var(--red); }
-.dial-card .dial-leak { font-size: 0.8rem; color: var(--red-high); }
+.dial-card .dial-leak { font-size: 0.8rem; }
 .dial-card .dial-leak .dial-ico { width: 14px; height: 14px; }
 
 @keyframes dial-rotor {

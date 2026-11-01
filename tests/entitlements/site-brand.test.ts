@@ -104,10 +104,14 @@ function over(fg: string, alpha: number, bg: string): string {
   }).join("");
 }
 
+// Every top-level block for selector, joined (a selector can be declared more than once).
 function rule(css: string, selector: string): string {
-  const i = css.indexOf(`\n${selector} {`);
-  assert.ok(i >= 0, `missing rule ${selector}`);
-  return css.slice(i, css.indexOf("}", i));
+  const blocks: string[] = [];
+  for (let i = css.indexOf(`\n${selector} {`); i >= 0; i = css.indexOf(`\n${selector} {`, i + 1)) {
+    blocks.push(css.slice(i, css.indexOf("}", i)));
+  }
+  assert.ok(blocks.length > 0, `missing rule ${selector}`);
+  return blocks.join("\n");
 }
 
 test("H27: text tokens pass WCAG AA on navy and surface; CTA navy-on-mint passes", async () => {
@@ -145,10 +149,46 @@ test("H27: text on the raised surface-2 (.sim, .dial-card) and the leak pill pas
   // faint and base red fail on surface-2, so the labels there must not use them.
   assert.match(rule(landing, ".sim-top"), /color: var\(--muted\)/, ".sim-top colour");
   assert.match(rule(dial, ".dial-card-kicker"), /color: var\(--muted\)/, ".dial-card-kicker colour");
-  assert.match(rule(dial, ".dial-card .dial-leak"), /color: var\(--red-high\)/, ".dial-card .dial-leak colour");
+  assert.match(rule(dial, ".dial-leak"), /color: var\(--red-high\)/, ".dial-leak colour");
   for (const [sel, css] of [[".dial-card", dial], [".sim", landing]] as const) {
     assert.doesNotMatch(rule(css, sel), /color: var\(--(faint|red)\)/, `${sel} text colour`);
   }
+});
+
+test("H27: red leak text passes WCAG AA over its red tints and glow (hero .db-leak, dial pills, mobile node)", async () => {
+  const { BRAND } = await import("../../site/src/lib/brand.ts");
+  const dial = read("site/src/styles/dial.css");
+  const landing = read("site/src/styles/landing.css");
+  const red = (css: string, selector: string) => {
+    const m = /rgba\(242, 85, 90, ([\d.]+)\)/.exec(rule(css, selector));
+    assert.ok(m, `${selector} red tint not found`);
+    return Number(m[1]);
+  };
+  // Hero: 8% tint over the surface, then the ::after glow at its centre (gradient alpha x opacity).
+  const glowRule = rule(landing, ".db-leak::after");
+  const glowOpacity = Number(/opacity: ([\d.]+)/.exec(glowRule)?.[1]);
+  assert.ok(glowOpacity > 0, ".db-leak::after opacity not found");
+  const tinted = over(BRAND.red, red(landing, ".db-leak"), BRAND.surface);
+  const glow = over(BRAND.red, red(landing, ".db-leak::after") * glowOpacity, tinted);
+  // Dial pills on the dial face (navy) carry the .dial-leak tint.
+  const navyPill = over(BRAND.red, red(dial, ".dial-leak"), BRAND.navy);
+  const pairs: Array<[string, string, string]> = [
+    ["leak-callout on .db-leak tint", BRAND.redHigh, tinted],
+    ["leak-callout under .db-leak glow", BRAND.redHigh, glow],
+    [".db-leak .k under glow", BRAND.muted, glow],
+    [".db-leak value under glow", BRAND.body, glow],
+    ["dial pill on navy", BRAND.redHigh, navyPill],
+    [".m-node .red on surface", BRAND.red, BRAND.surface],
+  ];
+  for (const [what, fg, bg] of pairs) {
+    const ratio = contrast(fg, bg);
+    assert.ok(ratio >= 4.5, `${what}: ${fg} on ${bg} is ${ratio.toFixed(2)}:1`);
+  }
+  assert.match(rule(landing, ".leak-callout"), /color: var\(--red-high\)/, ".leak-callout colour");
+  assert.match(rule(landing, ".db-leak .k"), /color: var\(--muted\)/, ".db-leak .k colour");
+  assert.match(rule(landing, ".m-node .red"), /color: var\(--red\)/, ".m-node .red colour (checked on surface)");
+  // No .dial-leak variant falls back to base red text.
+  assert.doesNotMatch(dial, /\.dial-leak[^{]*\{[^}]*[^-]color: var\(--red\)/, "a .dial-leak rule uses base red text");
 });
 
 test("H27: brand images come from committed outlined SVG sources", () => {

@@ -157,7 +157,7 @@ html { scroll-padding-top: 64px; }
 	position: absolute;
 	inset: 0;
 	border-radius: inherit;
-	border: 1px solid #fff;
+	border: 1px solid rgb(var(--line-rgb));
 	opacity: 0.1;
 	pointer-events: none;
 	transition: opacity 120ms var(--ease);
@@ -319,10 +319,11 @@ h1 {
 	pointer-events: none;
 }
 .db-leak > * { position: relative; }
+.db-leak .k { color: var(--muted); }
 .k { color: var(--faint); margin-right: 6px; }
 .plan-trial { opacity: 1; }
 .plan-pro { opacity: 0; }
-.leak-callout { color: var(--red); opacity: 0; }
+.leak-callout { color: var(--red-high); opacity: 0; }
 .verdicts { margin-top: 10px; display: grid; gap: 6px; }
 .verdict { display: block; color: var(--muted); opacity: 0; line-height: 1.4; }
 .verdict .icon { display: inline-block; vertical-align: -2px; margin-right: 6px; }
@@ -726,7 +727,7 @@ details[open] .faq-body > div { opacity: 1; }
 		gap: 0;
 		margin: 0 -16px -10px;
 		padding: 8px 12px 12px;
-		background: #0B1B3A;
+		background: var(--navy);
 		border-top: 1px solid rgba(var(--line-rgb), 0.14);
 		border-bottom: 1px solid rgba(var(--line-rgb), 0.14);
 	}
