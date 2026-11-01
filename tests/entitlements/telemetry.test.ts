@@ -432,3 +432,30 @@ test("env_opt_in_creates_install_id_without_enabling", async () => {
   await runBin(["run", "--suite", S1, "--adapter", HARDENED], h, { GATEFIT_TELEMETRY_URL: c.url });
   assert.equal(c.bodies.length, 1, "without the env var the saved id alone does not opt in");
 });
+
+test("init_help_and_usage_errors_never_send", async () => {
+  const c = await collector();
+  const h = freshHome();
+  const env = { GATEFIT_TELEMETRY_URL: c.url, GATEFIT_TELEMETRY: "1" };
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-tele-init-"));
+  fs.writeFileSync(
+    path.join(project, "package.json"),
+    JSON.stringify({ name: "two-orms", dependencies: { "drizzle-orm": "1.0.0", "@prisma/client": "5.0.0" } }),
+  );
+  const cases: [string[], number][] = [
+    [["init", "--help"], 0],
+    [["init", "-h"], 0],
+    [["init", "--bogus"], 2],
+    [["init", "--print-workflow", "--write-workflow"], 2],
+    [["init", "--template", "nope"], 2],
+    [["init", "--no-prompt"], 2],
+  ];
+  for (const [args, code] of cases) {
+    const r = await runBin(args, h, env, project);
+    assert.equal(r.status, code, `${args.join(" ")}: ${r.stderr}`);
+  }
+  assert.equal(c.bodies.length, 0);
+  const control = await runBin(["init", "--dry-run", "--template", "generic"], h, env, project);
+  assert.equal(control.status, 0, control.stderr);
+  assert.equal(c.bodies.length, 1);
+});

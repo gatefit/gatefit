@@ -1,8 +1,9 @@
 # P5. A Polar refund after a grant revokes access.
-# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# POLAR_SCHEMA v1+fixtures.1 (src/polar-pack.ts). Polar public v1 webhook event names.
 # Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
 # Policy: order.updated with status partially_refunded keeps access. A pending refund keeps access.
-# A succeeded refund.* event locks, even with HTTP 200.
+# A succeeded refund.* event locks, even with HTTP 200. Stripe sends refund.* too, so
+# these steps carry provider: polar; untagged refund.* folds with the Stripe rules.
 # HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.
 id: polar_refund_after_grant_revokes
 subject: cus_polar_p5
@@ -29,6 +30,7 @@ steps:
       type: refund.created
       customerId: cus_polar_p5
       status: pending
+      provider: polar
     expect:
       locked: false
       plan: pro
@@ -37,6 +39,7 @@ steps:
       type: refund.updated
       customerId: cus_polar_p5
       status: succeeded
+      provider: polar
       httpStatus: 200
     expect:
       locked: true

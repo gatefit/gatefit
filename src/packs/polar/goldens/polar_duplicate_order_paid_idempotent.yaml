@@ -1,5 +1,5 @@
 # P2. Replayed Polar order.paid is idempotent.
-# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# POLAR_SCHEMA v1+fixtures.1 (src/polar-pack.ts). Polar public v1 webhook event names.
 # Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
 # The same webhook-id twice does not double grant. A later order.refunded still locks.
 # HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.

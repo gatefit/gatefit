@@ -7,16 +7,19 @@ import { packageRoot, resolveUserOrPackage } from "./paths.ts";
 
 /**
  * Polar public v1 webhook event names (order.*, subscription.*, benefit_grant.*,
- * refund.*, checkout.*). Polar has no dated API versions; the pin is v1 plus the
- * date the fixtures were written against.
+ * refund.*, checkout.*). Polar has no dated API versions, so the pin is v1 plus a
+ * fixture revision: fixtures.N goes up whenever a Polar golden changes meaning.
  */
-export const POLAR_SCHEMA = "v1@2026-11-01";
+export const POLAR_SCHEMA = "v1+fixtures.1";
 
 export function polarGoldenDir(): string {
   return path.join(packageRoot(), "src/packs/polar/goldens");
 }
 
-export async function runPolar(adapterPath: string): Promise<number> {
+export async function runPolar(
+  adapterPath: string,
+  files: string[] = listGoldens(polarGoldenDir()),
+): Promise<number> {
   console.error(`gatefit polar: schema ${POLAR_SCHEMA}`);
   if (process.env.GATEFIT_LIVE_CLOCK) {
     console.error("gatefit polar: refuses GATEFIT_LIVE_CLOCK; fixture order only");
@@ -36,7 +39,7 @@ export async function runPolar(adapterPath: string): Promise<number> {
     return 1;
   }
   let failed = 0;
-  for (const file of listGoldens(polarGoldenDir())) {
+  for (const file of files) {
     const golden = loadGolden(file);
     const result = await runGolden(adapter, golden);
     if (result.ok) {
@@ -56,7 +59,7 @@ export async function runPolar(adapterPath: string): Promise<number> {
 registerProPack({
   id: "polar",
   goldenDir: polarGoldenDir(),
-  run({ adapterPath }) {
-    return runPolar(adapterPath);
+  run({ adapterPath, files }) {
+    return runPolar(adapterPath, files);
   },
 });

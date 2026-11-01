@@ -1,5 +1,5 @@
 # P1. Polar order.paid grants access.
-# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# POLAR_SCHEMA v1+fixtures.1 (src/polar-pack.ts). Polar public v1 webhook event names.
 # Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
 # A checkout and a pending order with HTTP 200 stay locked. Only order.paid opens the row.
 # HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.

@@ -218,3 +218,50 @@ test("worker ships deploy files and stays out of the npm tarball", () => {
   assert.ok(!pkg.files.some((f) => f.startsWith("worker")));
   assert.match(fs.readFileSync(path.join(root, ".npmignore"), "utf8"), /^worker\/$/m);
 });
+
+function throwingBody(pathname: string, length: string): Request {
+  const body = new ReadableStream<Uint8Array>({
+    pull() {
+      throw new Error("body must not be read when content-length is over the cap");
+    },
+  });
+  return new Request(`https://t.gatefit.io${pathname}`, {
+    method: "POST",
+    body,
+    headers: { "content-length": length, origin: SITE_ORIGIN },
+    duplex: "half",
+  } as RequestInit);
+}
+
+test("oversize content-length is refused with 413 before the body is read", async () => {
+  for (const pathname of ["/v1/event", "/v1/site"]) {
+    const store = new MemoryStore();
+    const req = throwingBody(pathname, "999999");
+    assert.equal(req.headers.get("content-length"), "999999", "test request keeps the header");
+    const res = await handleRequest(req, store, NOW);
+    assert.equal(res.status, 413, pathname);
+    assert.equal(req.bodyUsed, false, pathname);
+    assert.equal(store.counts.size, 0, pathname);
+  }
+});
+
+test("a lying small content-length with a large body still returns 413", async () => {
+  for (const pathname of ["/v1/event", "/v1/site"]) {
+    const store = new MemoryStore();
+    const big = new TextEncoder().encode(JSON.stringify(event({ suite: "x".repeat(100_000) })));
+    const req = new Request(`https://t.gatefit.io${pathname}`, {
+      method: "POST",
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(big);
+          controller.close();
+        },
+      }),
+      headers: { "content-length": "10", origin: SITE_ORIGIN },
+      duplex: "half",
+    } as RequestInit);
+    const res = await handleRequest(req, store, NOW);
+    assert.equal(res.status, 413, pathname);
+    assert.equal(store.counts.size, 0, pathname);
+  }
+});

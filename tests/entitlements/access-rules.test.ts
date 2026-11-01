@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { test } from "node:test";
+import type { AccessAdapter, AccessSnapshot, BillingEvent } from "../../src/access-adapter.ts";
 import { applyBillingEvent, emptyStore, nextSnapshot } from "../../src/access-rules.ts";
 
 const paid = {
@@ -195,8 +197,10 @@ test("HTTP 200 still does not grant seats or unlock", () => {
 });
 
 test("nextSnapshot is a pure function of current + event (no Date.now)", () => {
-  const src = fs.readFileSync(path.join(import.meta.dirname, "../../src/access-rules.ts"), "utf8");
-  assert.doesNotMatch(src, /Date\.now/);
+  for (const file of ["access-rules.ts", "polar-rules.ts"]) {
+    const src = fs.readFileSync(path.join(import.meta.dirname, "../../src", file), "utf8");
+    assert.doesNotMatch(src, /Date\.now/, file);
+  }
   const before = nextSnapshot(
     { locked: false, plan: "pro", seats: 1 },
     {
@@ -329,4 +333,78 @@ test("invoice.marked_uncollectible locks", () => {
     customerId: "cus",
   });
   assert.equal(store.rows.get("cus")?.locked, true);
+});
+
+// Polar refund scoping. Stripe also sends refund.created and refund.updated, so
+// those shared names reach the Polar rules only with provider: "polar".
+const REFUND_PAID: BillingEvent = { id: "evt_r_paid", type: "invoice.paid", customerId: "cus_r", plan: "pro" };
+
+const REFUND_CASES: { name: string; events: BillingEvent[]; expect: AccessSnapshot }[] = [
+  {
+    name: "stripe_refund_updated_succeeded_is_not_polar_refund",
+    events: [REFUND_PAID, { id: "evt_r_upd", type: "refund.updated", customerId: "cus_r", status: "succeeded" }],
+    expect: { locked: false, plan: "pro" },
+  },
+  {
+    name: "stripe_refund_created_with_refunded_flag_locks",
+    events: [
+      REFUND_PAID,
+      { id: "evt_r_new", type: "refund.created", customerId: "cus_r", status: "pending", refunded: true },
+    ],
+    expect: { locked: true, plan: "pro" },
+  },
+  {
+    name: "polar_refund_requires_provider_polar",
+    events: [
+      { id: "wh_r_paid", type: "order.paid", customerId: "cus_r", status: "paid", plan: "pro" },
+      { id: "wh_r_pending", type: "refund.created", customerId: "cus_r", status: "pending", provider: "polar" },
+      { id: "wh_r_done", type: "refund.updated", customerId: "cus_r", status: "succeeded", provider: "polar", httpStatus: 200 },
+    ],
+    expect: { locked: true, plan: "pro" },
+  },
+];
+
+function stripeOnly(events: BillingEvent[]): AccessSnapshot {
+  // Same fold with the Stripe rules alone: strip the type so Polar dispatch cannot fire.
+  return events.reduce<AccessSnapshot>(
+    (row, event) => nextSnapshot(row, { ...event, type: event.type.replace(/^refund\./, "stripe_refund.") }),
+    { locked: true },
+  );
+}
+
+for (const { name, events, expect } of REFUND_CASES) {
+  test(name, () => {
+    const store = emptyStore();
+    for (const event of events) applyBillingEvent(store, event);
+    assert.deepEqual(store.rows.get("cus_r"), expect);
+    if (!events.some((event) => event.provider === "polar")) {
+      assert.deepEqual(store.rows.get("cus_r"), stripeOnly(events));
+    }
+  });
+
+  test(`${name} (sqlite adapter)`, async (t) => {
+    const require = createRequire(import.meta.url);
+    try {
+      const Database = require("better-sqlite3") as new (file: string) => { close(): void };
+      new Database(":memory:").close();
+    } catch {
+      t.skip("better-sqlite3 native module is not installed");
+      return;
+    }
+    const { createAdapter } = (await import("../../src/adapters/sqlite.ts")) as {
+      createAdapter: () => AccessAdapter;
+    };
+    const adapter = createAdapter();
+    for (const event of events) await adapter.apply(event);
+    assert.deepEqual(await adapter.snapshot("cus_r"), expect);
+  });
+}
+
+test("stripe_order_updated_still_dispatches_to_polar_rules (H27 follow-up, documents current behavior)", () => {
+  // Stripe's legacy order.created/order.updated share Polar names and are not scoped yet.
+  const row = nextSnapshot(
+    { locked: true },
+    { id: "evt_o", type: "order.updated", customerId: "cus_o", status: "paid", plan: "pro" },
+  );
+  assert.deepEqual(row, { locked: false, plan: "pro" });
 });

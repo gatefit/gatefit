@@ -94,6 +94,10 @@ function dayOf(date: Date): string {
 }
 
 async function readBounded(req: Request, max: number): Promise<string | null> {
+  // An honest oversize content-length is refused without buffering the body.
+  // The header can lie, so the byte check after the read still applies.
+  const declared = Number(req.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > max) return null;
   const bytes = new Uint8Array(await req.arrayBuffer());
   if (bytes.byteLength > max) return null;
   return new TextDecoder().decode(bytes);
