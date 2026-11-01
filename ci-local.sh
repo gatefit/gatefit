@@ -138,7 +138,7 @@ tag_matches_package "$expected_tag" || dist_fail "package version tag ${expected
 # Listing checker: bin required; site/, env files, and secret-shaped lines rejected.
 pack_listing_ok() {
   local listing="$1"
-  if echo "$listing" | grep -E '(^|/)site/|(^|/)\.env($|\.)|(^|/)[^/]*\.pem$|(^|/)id_rsa($|\.)|(^|/)credentials\.json$' >/dev/null; then
+  if echo "$listing" | grep -E '(^|/)site/|(^|/)worker/|(^|/)\.env($|\.)|(^|/)[^/]*\.pem$|(^|/)id_rsa($|\.)|(^|/)credentials\.json$' >/dev/null; then
     return 1
   fi
   if echo "$listing" | grep -E 'sk_live_[A-Za-z0-9]{16,}|polar_(oat|pat)_[A-Za-z0-9]{16,}|npm_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY' >/dev/null; then
@@ -149,6 +149,9 @@ pack_listing_ok() {
 }
 if pack_listing_ok $'bin/gatefit.js\nsite/dist/index.html'; then
   dist_fail "tarball checker accepted a site/ leak"
+fi
+if pack_listing_ok $'bin/gatefit.js\nworker/telemetry/src/index.ts'; then
+  dist_fail "tarball checker accepted a worker/ leak"
 fi
 if pack_listing_ok $'bin/gatefit.js\n.env'; then
   dist_fail "tarball checker accepted a secret file"
@@ -257,6 +260,7 @@ if [[ -f scripts/deploy-site.sh ]]; then
 fi
 if [[ -f .npmignore ]]; then
   grep -q '^site/' .npmignore || dist_fail ".npmignore must exclude site/"
+  grep -q '^worker/' .npmignore || dist_fail ".npmignore must exclude worker/"
 fi
 
 while IFS= read -r honesty_file; do
@@ -278,6 +282,12 @@ ok "distribution readiness (version, Action paths, honesty, pack rules)"
 npm install --ignore-scripts >&2
 # Named gate is fixture-first even if a caller exported the live flag.
 unset GATEFIT_LIVE_CLOCK
+# H25: CLI telemetry stays off for every bin run in this gate. The telemetry tests
+# clear these per case and point at a loopback mock collector.
+unset GATEFIT_TELEMETRY GATEFIT_TELEMETRY_URL
+export DO_NOT_TRACK=1
+XDG_CONFIG_HOME="$(mktemp -d)"
+export XDG_CONFIG_HOME
 npx tsc --noEmit || fail "typecheck"
 # Files share process.env (GATEFIT_LIVE_CLOCK probe); keep the test runner serial.
 unit_log="$(mktemp)"
@@ -344,6 +354,7 @@ tgz="$(ls "$pack_dir"/gatefit-*.tgz)"
 tar -xzf "$tgz" -C "$extract_dir"
 [[ -f "$extract_dir/package/bin/gatefit.js" ]] || fail "unpacked tarball missing bin/gatefit.js"
 [[ ! -d "$extract_dir/package/site" ]] || fail "unpacked tarball leaks site/"
+[[ ! -d "$extract_dir/package/worker" ]] || fail "unpacked tarball leaks worker/"
 if find "$extract_dir/package" -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name 'id_rsa' | grep -q .; then
   fail "unpacked tarball leaks env or key files"
 fi
@@ -403,8 +414,8 @@ fi
 grep -q '(dry-run)' "$publish_log" || fail "npm publish --dry-run marker missing"
 grep -q "gatefit@${pkg_ver}" "$publish_log" || fail "npm publish --dry-run package version mismatch"
 grep -q 'bin/gatefit.js' "$publish_log" || fail "npm publish --dry-run missing bin/gatefit.js"
-if grep -E '(^| )site/|(^|/)\.env' "$publish_log" >/dev/null; then
-  fail "npm publish --dry-run tarball leaks site/ or .env"
+if grep -E '(^| )site/|(^| )worker/|(^|/)\.env' "$publish_log" >/dev/null; then
+  fail "npm publish --dry-run tarball leaks site/, worker/ or .env"
 fi
 rm -f "$publish_log"
 ok "npm publish --dry-run"
@@ -464,6 +475,15 @@ assert_h13_dist() {
     fail "built site still has internal status copy"
   fi
   [[ -f site/dist/polar/index.html ]] || fail "built /polar/ is missing"
+  # H25: cookieless Cloudflare Web Analytics in both heads, Buy-click beacon, telemetry page.
+  grep -q 'static.cloudflareinsights.com/beacon.min.js' site/dist/index.html || fail "landing missing analytics beacon"
+  grep -q '82ff14a5563c492d869b6db741aac128' site/dist/index.html || fail "landing missing analytics token"
+  grep -q 'static.cloudflareinsights.com/beacon.min.js' site/dist/quickstart/index.html || fail "docs page missing analytics beacon"
+  if grep -q 'cloudflareinsights' site/dist/polar/index.html; then
+    fail "/polar/ redirect counts a page view twice"
+  fi
+  grep -R -q 't.gatefit.io/v1/site' site/dist || fail "built site missing Buy-click beacon"
+  [[ -f site/dist/telemetry/index.html ]] || fail "built /telemetry/ is missing"
   if grep -q 'import PolarRedirect\|<PolarRedirect' site/dist/polar/index.html; then
     fail "built /polar/ shows the PolarRedirect component source"
   fi
@@ -483,6 +503,9 @@ assert_no_polar_embed() {
 assert_live_cta() {
   local html="$1" expected="$2"
   grep -q "href=\"${expected}\"" "$html" || fail "CTA href != ${expected} in ${html}"
+  local buy_count
+  buy_count="$(grep -o "href=\"${expected}\"" "$html" | wc -l | tr -d ' ')"
+  [[ "$buy_count" == 4 ]] || fail "expected exactly 4 Buy links in ${html}, found ${buy_count}"
   grep -q 'target="_blank"' "$html" || fail "CTA missing target=_blank in ${html}"
   grep -q 'rel="noopener"' "$html" || fail "CTA missing rel=noopener in ${html}"
   assert_no_polar_embed "$html"

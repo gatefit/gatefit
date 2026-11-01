@@ -26,6 +26,8 @@ test("package is publishable as gatefit 0.5.2", () => {
   for (const rel of ["bin", "src", "tests/entitlements/goldens", "action.yml", "LICENSE"]) {
     assert.ok(pkg.files?.includes(rel), `files missing ${rel}`);
   }
+  assert.ok(!pkg.files?.some((f) => f === "worker" || f.startsWith("worker/")), "worker/ stays out of files");
+  assert.match(fs.readFileSync(path.join(root, ".npmignore"), "utf8"), /^worker\/$/m);
 });
 
 test("README documents npx, Action, and indie pricing", () => {
