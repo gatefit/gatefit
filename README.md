@@ -70,6 +70,14 @@ Do not set `GATEFIT_LIVE_CLOCK` for the named gate. Do not use `sk_live`. Never 
 
 Opt-in live Test Clocks (not default CI): [docs/live-clock.md](docs/live-clock.md).
 
+## Telemetry
+
+**Site analytics:** gatefit.io uses cookieless Cloudflare Web Analytics, with no cookies and no browser storage. A Buy click sends one `{"event":"buy_click"}` beacon to `https://t.gatefit.io/v1/site` and never blocks the Checkout Link.
+
+**CLI telemetry:** not shipped in 0.5.2. It arrives in the next release, and it is opt-in and off by default. Without `GATEFIT_TELEMETRY=1` or `gatefit telemetry on`, the CLI makes no telemetry request and writes no telemetry file. `DO_NOT_TRACK=1`, `GATEFIT_TELEMETRY=0`, and `gatefit telemetry off` always win. On CI, only `GATEFIT_TELEMETRY=1` opts in. When on, it sends one POST to `https://t.gatefit.io/v1/event` after `init`, `run`, `adapter-check`, or `live`. The request is bounded to about 1.5 s, fails silently, and never changes exit codes or output. `gatefit telemetry status` prints the exact JSON.
+
+Payload keys, each value from a fixed list: `v`, `install_id` (random UUID), `version`, `node` (major), `platform`, `arch`, `command`, `outcome`, `template`, `pack`, `suite` (bundled golden id, `pack`, or `custom`). Paths, repo names, emails, keys, env values, adapter names, and Stripe or Polar data are never sent. Details: [site/src/content/docs/telemetry.md](site/src/content/docs/telemetry.md).
+
 ## Releasing
 
 Bump `version` in `package.json` and the lockfile `version` field, and add the matching `CHANGELOG.md` heading, in a pull request. Merge to `main`. Then push an annotated tag whose name is `v` plus that version:

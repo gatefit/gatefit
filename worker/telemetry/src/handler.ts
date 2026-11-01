@@ -120,7 +120,7 @@ function validEvent(body: Record<string, unknown>): boolean {
   if (!EVENT_KEYS.every((key) => Object.hasOwn(body, key))) return false;
   if (body.v !== 1) return false;
   if (typeof body.install_id !== "string" || !UUID_V4.test(body.install_id)) return false;
-  if (typeof body.version !== "string" || !SEMVER.test(body.version)) return false;
+  if (typeof body.version !== "string" || body.version.length > 32 || !SEMVER.test(body.version)) return false;
   if (typeof body.node !== "string" || !NODE_MAJOR.test(body.node)) return false;
   return (Object.keys(ALLOWED) as (keyof typeof ALLOWED)[]).every((key) => oneOf(ALLOWED[key], body[key]));
 }
