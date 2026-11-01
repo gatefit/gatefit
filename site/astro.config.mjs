@@ -27,6 +27,7 @@ export default defineConfig({
 				{ label: 'gatefit init', slug: 'init' },
 				{ label: 'Goldens', slug: 'goldens' },
 				{ label: 'GitHub Action', slug: 'action' },
+				{ label: 'Polar pack', slug: 'polar-pack' },
 				{ label: 'Polar checkout', link: '/polar/' },
 				{ label: 'Pricing', link: '/#pricing' },
 			],

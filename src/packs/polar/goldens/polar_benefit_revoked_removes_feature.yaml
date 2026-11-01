@@ -1,0 +1,59 @@
+# P6. Polar benefit_grant.revoked removes the feature.
+# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
+# benefit is the benefit key. A grant adds it once; a revoke removes it. Neither changes the lock.
+# HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.
+id: polar_benefit_revoked_removes_feature
+subject: cus_polar_p6
+steps:
+  - event:
+      id: wh_p6_grant
+      type: benefit_grant.created
+      customerId: cus_polar_p6
+      benefit: priority
+      httpStatus: 200
+    expect:
+      locked: true
+      features:
+        - priority
+  - event:
+      id: wh_p6_order_paid
+      type: order.paid
+      customerId: cus_polar_p6
+      status: paid
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+      features:
+        - priority
+  - event:
+      id: wh_p6_grant_again
+      type: benefit_grant.updated
+      customerId: cus_polar_p6
+      benefit: priority
+    expect:
+      locked: false
+      plan: pro
+      features:
+        - priority
+  - event:
+      id: wh_p6_grant
+      type: benefit_grant.created
+      customerId: cus_polar_p6
+      benefit: priority
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+      features:
+        - priority
+  - event:
+      id: wh_p6_revoked
+      type: benefit_grant.revoked
+      customerId: cus_polar_p6
+      benefit: priority
+    expect:
+      locked: false
+      plan: pro
+      features: []

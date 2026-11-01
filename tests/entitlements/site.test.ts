@@ -70,6 +70,30 @@ test("init docs page exists, says init is free, and quickstart points to it", ()
   assert.match(read("site/astro.config.mjs"), /slug: 'init'/);
 });
 
+test("Polar pack page is honest about price, release, and HTTP 200", () => {
+  const page = read("site/src/content/docs/polar-pack.md");
+  const readme = read("README.md");
+  const changelog = read("CHANGELOG.md");
+  assert.match(page, /gatefit run --suite polar --adapter/);
+  assert.match(page, /The Polar provider pack arrives in the next release\./);
+  assert.match(
+    page,
+    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S9 and Phase 2 stay free\./,
+  );
+  assert.match(page, /HTTP 200 is not access/);
+  assert.match(page, /v1@\d{4}-\d{2}-\d{2}/);
+  assert.match(page, /order\.\*.*subscription\.\*.*benefit_grant\.\*.*refund\.\*.*checkout\.\*/s);
+  assert.match(page, /partially_refunded/);
+  assert.match(page, /polar_oat_/);
+  for (const text of [page, readme]) {
+    assert.doesNotMatch(text, /\$19|monthly|coming soon|optional updates/i);
+    assert.doesNotMatch(text, /fixture goldens|names match the goldens|docs live at|checkout is live/i);
+  }
+  assert.match(readme, /Polar provider pack arrives in the next release/);
+  assert.match(changelog, /gatefit run --suite polar/);
+  assert.match(read("site/astro.config.mjs"), /slug: 'polar-pack'/);
+});
+
 const GATEFIT_CHECKOUT_URL =
   "https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0";
 

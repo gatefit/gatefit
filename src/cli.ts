@@ -5,9 +5,10 @@ import { loadAdapter } from "./access-adapter.ts";
 import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
 import { LIVE_SCENARIO_IDS, runLiveLane, type LiveScenarioId } from "./live-scenarios.ts";
 import { resolveChaosSeed } from "./chaos.ts";
+import "./polar-pack.ts";
 import { runInit } from "./init.ts";
 import { ensureProLicense } from "./license.ts";
-import { getProPack, isProPack } from "./packs.ts";
+import { getProPack, isProPack, proPackOwning } from "./packs.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
 import {
   createStripeClockClient,
@@ -26,6 +27,7 @@ function usage(): string {
     "               [--no-prompt] [--print-workflow | --write-workflow]",
     "  gatefit run --suite <dir|file|id> --adapter <path>",
     "  gatefit run --suite chaos --adapter <path> [--seed <value>]",
+    "  gatefit run --suite polar --adapter <path>",
     "  gatefit adapter-check",
     "  gatefit live --adapter <path> [--scenario <id>]",
     "  gatefit --help",
@@ -60,11 +62,20 @@ async function cmdRun(suite: string, adapterPath: string, seed: string): Promise
     console.error(`gatefit: PASS ${suite}`);
     return 0;
   }
-  const adapter = await loadAdapter(resolveUserOrPackage(adapterPath));
   const files = resolveSuiteFiles(suite);
   if (files.length === 0) {
     throw new Error(`suite not found: ${suite}`);
   }
+  // A path into a Pro pack's golden directory is that pack, not a free suite.
+  if (proPackOwning(files)) {
+    const gate = await ensureProLicense();
+    if (!gate.ok) {
+      console.error(gate.message);
+      return 1;
+    }
+    if (gate.warning) console.error(gate.warning);
+  }
+  const adapter = await loadAdapter(resolveUserOrPackage(adapterPath));
   requireReset(adapter, files.length);
   let failed = 0;
   for (const file of files) {

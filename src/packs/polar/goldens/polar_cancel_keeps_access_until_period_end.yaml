@@ -1,0 +1,75 @@
+# P8. Polar subscription.canceled keeps access until the period ends.
+# POLAR_SCHEMA v1@2026-11-01 (src/polar-pack.ts). Polar public v1 webhook event names.
+# Event id is the Standard Webhooks webhook-id. Polar types carry no Stripe shortcut flags.
+# canceled with cancel_at_period_end before period_end stays open; uncanceled keeps access.
+# At now >= period_end the row locks. subscription.revoked locks.
+# HTTP 200 is not access. Paid Polar provider pack; runs only with a Gatefit Indie License.
+id: polar_cancel_keeps_access_until_period_end
+subject: cus_polar_p8
+steps:
+  - event:
+      id: wh_p8_active
+      type: subscription.active
+      customerId: cus_polar_p8
+      status: active
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: wh_p8_canceled
+      type: subscription.canceled
+      customerId: cus_polar_p8
+      status: active
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577836800
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: wh_p8_uncanceled
+      type: subscription.uncanceled
+      customerId: cus_polar_p8
+      status: active
+      cancel_at_period_end: false
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: wh_p8_canceled_again
+      type: subscription.canceled
+      customerId: cus_polar_p8
+      status: active
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577880000
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: wh_p8_period_end
+      type: subscription.updated
+      customerId: cus_polar_p8
+      status: active
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577923200
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: wh_p8_revoked
+      type: subscription.revoked
+      customerId: cus_polar_p8
+      status: canceled
+    expect:
+      locked: true
+      plan: pro
