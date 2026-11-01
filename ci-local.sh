@@ -483,6 +483,19 @@ assert_h13_dist() {
     fail "/polar/ redirect counts a page view twice"
   fi
   grep -R -q 't.gatefit.io/v1/site' site/dist || fail "built site missing Buy-click beacon"
+  # H27: brand icons and the 1200x630 share card ship in dist and both heads point at them.
+  for brand_file in favicon.svg favicon.ico apple-touch-icon.png og.png; do
+    [[ -f "site/dist/${brand_file}" ]] || fail "built site missing ${brand_file}"
+  done
+  for brand_page in site/dist/index.html site/dist/quickstart/index.html; do
+    grep -q 'property="og:image" content="https://gatefit.io/og.png"' "$brand_page" || fail "${brand_page} missing og:image"
+    grep -q 'name="twitter:image" content="https://gatefit.io/og.png"' "$brand_page" || fail "${brand_page} missing twitter:image"
+    [[ "$(grep -o 'name="twitter:card"' "$brand_page" | wc -l)" -eq 1 ]] || fail "${brand_page} twitter:card count is not 1"
+    grep -q 'href="/apple-touch-icon.png"' "$brand_page" || fail "${brand_page} missing apple-touch-icon"
+  done
+  if grep -q -E 'og:image|favicon' site/dist/polar/index.html; then
+    fail "/polar/ redirect grew a head (favicon or og:image)"
+  fi
   [[ -f site/dist/telemetry/index.html ]] || fail "built /telemetry/ is missing"
   if grep -q 'import PolarRedirect\|<PolarRedirect' site/dist/polar/index.html; then
     fail "built /polar/ shows the PolarRedirect component source"

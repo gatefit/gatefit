@@ -12,6 +12,8 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ### Changed
 
+- gatefit.io uses the brand palette: navy `#0B1B3A` background, mint `#5EE0A8` accent, links, focus rings, and Buy buttons (navy text on mint). The old amber is gone and the "open/pass" green is the same mint; red stays for locked/fail, and attention highlights are a mint tint with a white outline. Landing and docs text tokens pass WCAG AA on navy and the card surface (`site-brand.test.ts`). The site copy does not change.
+- New favicon (mint "G" on navy) as SVG, 16/32 ICO, and 180px apple-touch icon, plus a 1200x630 `og.png` share card with `og:image`/`twitter:image` on the landing page and every docs page. `/polar/` stays a bare redirect. The images render from committed outlined SVG in `site/brand/` with `npm run brand` (sharp); `--check` fails on drift.
 - The SQLite reference adapter ignores an event whose `created` is older than one already applied for that customer. Goldens without `created` behave as before.
 - Polar `refund.created` / `refund.updated` reach the Polar rules only with `provider: polar` on the event, because Stripe sends the same names. An untagged `refund.*` folds with the Stripe rules. The Polar refund golden carries the tag. Other names both providers use (`order.*`) are not scoped yet.
 - `POLAR_SCHEMA` is `v1+fixtures.1`, not a date. Polar has no dated API versions; `fixtures.N` goes up whenever a Polar golden changes meaning.
