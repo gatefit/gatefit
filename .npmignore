@@ -1,7 +1,9 @@
 # GATEFIT-H11: the docs site and secret material stay out of the npm tarball.
+# GATEFIT-H25: so does the telemetry collector Worker.
 site/
 .env
 .env.*
 *.pem
 id_rsa
 id_rsa.*
+worker/

@@ -1,0 +1,16 @@
+# GATEFIT-H25 telemetry collector. Deployed by hand (see README.md); not part of CI.
+# No secrets live here. database_id is an identifier, filled in after `wrangler d1 create`.
+name = "gatefit-telemetry"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+routes = [
+  { pattern = "t.gatefit.io", custom_domain = true },
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gatefit-telemetry"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
