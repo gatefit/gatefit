@@ -16,7 +16,10 @@ export function polarGoldenDir(): string {
   return path.join(packageRoot(), "src/packs/polar/goldens");
 }
 
-export async function runPolar(adapterPath: string): Promise<number> {
+export async function runPolar(
+  adapterPath: string,
+  files: string[] = listGoldens(polarGoldenDir()),
+): Promise<number> {
   console.error(`gatefit polar: schema ${POLAR_SCHEMA}`);
   if (process.env.GATEFIT_LIVE_CLOCK) {
     console.error("gatefit polar: refuses GATEFIT_LIVE_CLOCK; fixture order only");
@@ -36,7 +39,7 @@ export async function runPolar(adapterPath: string): Promise<number> {
     return 1;
   }
   let failed = 0;
-  for (const file of listGoldens(polarGoldenDir())) {
+  for (const file of files) {
     const golden = loadGolden(file);
     const result = await runGolden(adapter, golden);
     if (result.ok) {
@@ -56,7 +59,7 @@ export async function runPolar(adapterPath: string): Promise<number> {
 registerProPack({
   id: "polar",
   goldenDir: polarGoldenDir(),
-  run({ adapterPath }) {
-    return runPolar(adapterPath);
+  run({ adapterPath, files }) {
+    return runPolar(adapterPath, files);
   },
 });

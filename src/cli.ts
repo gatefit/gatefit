@@ -9,7 +9,7 @@ import "./polar-pack.ts";
 import { runInit } from "./init.ts";
 import { ensureProLicense } from "./license.ts";
 import { cmdTelemetry, maybeSendTelemetry, type Outcome } from "./telemetry.ts";
-import { getProPack, isProPack, proPackOwning } from "./packs.ts";
+import { getProPack, isProPack, mixesPackAndFree, proPackOwning } from "./packs.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
 import {
   createStripeClockClient,
@@ -68,14 +68,20 @@ async function cmdRun(suite: string, adapterPath: string, seed: string): Promise
   if (files.length === 0) {
     throw new Error(`suite not found: ${suite}`);
   }
+  if (mixesPackAndFree(files)) {
+    console.error(`gatefit: refuse ${suite}: mixed pack and free goldens; run them as separate suites`);
+    return 1;
+  }
   // A path into a Pro pack's golden directory is that pack, not a free suite.
-  if (proPackOwning(files)) {
+  const owner = proPackOwning(files);
+  if (owner) {
     const gate = await ensureProLicense();
     if (!gate.ok) {
       console.error(gate.message);
       return 1;
     }
     if (gate.warning) console.error(gate.warning);
+    if (owner.run) return owner.run({ adapterPath, seed, files });
   }
   const adapter = await loadAdapter(resolveUserOrPackage(adapterPath));
   requireReset(adapter, files.length);

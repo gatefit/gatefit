@@ -7,7 +7,8 @@ import path from "node:path";
  */
 export type ProPack = {
   id: string;
-  run?: (ctx: { adapterPath: string; seed: string }) => Promise<number>;
+  /** `files` is set when a licensed `--suite <path>` points into the pack's golden directory. */
+  run?: (ctx: { adapterPath: string; seed: string; files?: string[] }) => Promise<number>;
   /** Golden directory owned by the pack. Free `run --suite <path>` into it is gated too. */
   goldenDir?: string;
 };
@@ -37,17 +38,28 @@ function realpath(file: string): string {
   }
 }
 
-/** The registered pack whose golden directory contains any of these files. */
-export function proPackOwning(files: string[]): ProPack | undefined {
+function packOf(file: string): ProPack | undefined {
   for (const pack of proPacks.values()) {
     if (!pack.goldenDir) continue;
-    const dir = realpath(pack.goldenDir);
-    for (const file of files) {
-      const rel = path.relative(dir, realpath(file));
-      if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))) return pack;
-    }
+    const rel = path.relative(realpath(pack.goldenDir), realpath(file));
+    if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))) return pack;
   }
   return undefined;
+}
+
+/** The registered pack whose golden directory contains any of these files. */
+export function proPackOwning(files: string[]): ProPack | undefined {
+  for (const file of files) {
+    const pack = packOf(file);
+    if (pack) return pack;
+  }
+  return undefined;
+}
+
+/** True when the files are not all owned by one pack, nor all free. */
+export function mixesPackAndFree(files: string[]): boolean {
+  const owners = new Set(files.map(packOf));
+  return owners.size > 1;
 }
 
 registerProPack({ id: "pro-stub" });

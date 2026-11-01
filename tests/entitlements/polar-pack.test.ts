@@ -377,3 +377,82 @@ test("polar refuses GATEFIT_LIVE_CLOCK", async () => {
     await mock.close();
   }
 });
+
+const ESCAPE = /[.*+?^${}()|[\]\\]/g;
+
+function polarPaths(): string[] {
+  return [POLAR_DIR, path.join(root, POLAR_DIR), `${POLAR_DIR}/polar_order_paid_grants.yaml`];
+}
+
+test("licensed Polar golden directory path runs like --suite polar", async () => {
+  const mock = await granted();
+  const schema = polarSchema().replace(ESCAPE, "\\$&");
+  try {
+    for (const suite of polarPaths()) {
+      const result = await run(["run", "--suite", suite, "--adapter", HARDENED], licensed(VALID_KEY, mock.url), cacheFile());
+      const text = output(result);
+      assert.equal(result.status, 0, `${suite}: ${text}`);
+      assert.match(result.stderr, new RegExp(`^gatefit polar: schema ${schema}$`, "m"), suite);
+      assert.match(result.stderr, /^gatefit: PASS polar$/m, suite);
+      const passed = result.stderr.match(/^gatefit: PASS polar \S+$/gm) ?? [];
+      if (suite.endsWith(".yaml")) {
+        assert.deepEqual(passed, ["gatefit: PASS polar polar_order_paid_grants"], suite);
+      } else {
+        assert.equal(passed.length, goldenFiles(POLAR_DIR).length, suite);
+      }
+      assert.doesNotMatch(result.stderr, /^gatefit: PASS polar_/m, suite);
+    }
+  } finally {
+    await mock.close();
+  }
+});
+
+test("licensed Polar golden directory path refuses Polar tokens and GATEFIT_LIVE_CLOCK", async () => {
+  const mock = await granted();
+  const leaky = writeAdapter(
+    `export { createAdapter, default } from ${JSON.stringify(path.join(root, HARDENED))};\nexport const token = ${JSON.stringify(PAT)};\n`,
+  );
+  try {
+    for (const suite of polarPaths()) {
+      const cases: { adapter: string; env: NodeJS.ProcessEnv; secret?: string; pattern: RegExp }[] = [
+        { adapter: HARDENED, env: { POLAR_ACCESS_TOKEN: OAT }, secret: OAT, pattern: /refuse/i },
+        { adapter: leaky, env: {}, secret: PAT, pattern: /refuse/i },
+        { adapter: HARDENED, env: { GATEFIT_LIVE_CLOCK: "1" }, pattern: /GATEFIT_LIVE_CLOCK/ },
+      ];
+      for (const c of cases) {
+        const result = await run(
+          ["run", "--suite", suite, "--adapter", c.adapter],
+          { ...licensed(VALID_KEY, mock.url), ...c.env },
+          cacheFile(),
+        );
+        const text = output(result);
+        assert.notEqual(result.status, 0, `${suite}: ${text}`);
+        assert.match(text, c.pattern, suite);
+        assert.doesNotMatch(text, /PASS/, suite);
+        if (c.secret) assert.equal(text.includes(c.secret), false, "token echoed");
+      }
+    }
+  } finally {
+    await mock.close();
+  }
+});
+
+test("a --suite path mixing Polar and free goldens is refused", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gatefit-mixed-"));
+  fs.symlinkSync(path.join(root, POLAR_DIR, "polar_order_paid_grants.yaml"), path.join(dir, "a.yaml"));
+  fs.symlinkSync(path.join(root, S_DIR, "paid_grants_access.yaml"), path.join(dir, "b.yaml"));
+  for (const make of [refusing, granted]) {
+    const mock = await make();
+    try {
+      const env = make === granted ? licensed(VALID_KEY, mock.url) : { GATEFIT_LICENSE_VALIDATE_URL: mock.url };
+      const result = await run(["run", "--suite", dir, "--adapter", HARDENED], env, cacheFile());
+      const text = output(result);
+      assert.equal(result.status, 1, text);
+      assert.match(text, /mixed pack and free goldens/);
+      assert.doesNotMatch(text, /PASS/);
+      if (make === refusing) assert.equal(mock.hits.length, 0);
+    } finally {
+      await mock.close();
+    }
+  }
+});
