@@ -7,6 +7,11 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 ### Added
 
 - `gatefit init` (free): writes a self-contained Postgres access adapter (raw `pg`, local `access-rules.ts`, no imports from Gatefit), migration, README, and `gatefit.config.json` for `drizzle`, `prisma`, `supabase`, or `generic`. Uses the one ORM in `package.json`, otherwise asks or exits 2. `--print-workflow` / `--write-workflow` render a `gatefit/gatefit@v<version>` job. Never overwrites without `--force`, writes all-or-nothing, refuses live Stripe keys (arguments, environment, `.env*`) before anything else, and pins Stripe API `2025-10-29.clover` from the existing constant. Exit codes 2/3/4 apply to `init` only. Not part of 0.5.2; it ships in the next release.
+- Polar provider pack (paid, $49 Gatefit Indie License): `gatefit run --suite polar --adapter <path>` replays nine Polar v1 webhook transitions (`POLAR_SCHEMA v1@2026-11-01`) against your access table. Same license gate as chaos mode; running the pack's golden directory as a `--suite` path is gated too. The pack refuses `polar_oat_`/`polar_pat_` tokens and `sk_live` in the adapter source or environment and never prints them. HTTP 200 is not access. Free suites do not change and never call Polar. Not part of 0.5.2; it ships in the next release.
+
+### Changed
+
+- The SQLite reference adapter ignores an event whose `created` is older than one already applied for that customer. Goldens without `created` behave as before.
 
 ## [0.5.2] - 2026-10-29
 
