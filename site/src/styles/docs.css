@@ -7,28 +7,30 @@
 	color-scheme: dark;
 	--sl-font: 'Geist Variable', sans-serif;
 	--sl-font-mono: 'Geist Mono Variable', ui-monospace, monospace;
-	--sl-color-white: #f4f4f1;
-	--sl-color-gray-1: #f4f4f1;
-	--sl-color-gray-2: #d6d6d1;
-	--sl-color-gray-3: #a3a39d;
-	--sl-color-gray-4: #8a8a84;
-	--sl-color-gray-5: #2a2a2e;
-	--sl-color-gray-6: #111113;
-	--sl-color-gray-7: #0e0e10;
-	--sl-color-black: #0a0a0b;
-	--sl-color-bg: #0a0a0b;
-	--sl-color-bg-nav: #0e0e10;
-	--sl-color-bg-sidebar: #0e0e10;
-	--sl-color-bg-inline-code: #111113;
-	--sl-color-bg-accent: #f5b83d;
-	--sl-color-accent-low: #3a2d12;
-	--sl-color-accent: #f5b83d;
-	--sl-color-accent-high: #f8d48a;
-	--sl-color-text: #d6d6d1;
-	--sl-color-text-accent: #f5b83d;
-	--sl-color-hairline-light: rgba(255, 255, 255, 0.08);
-	--sl-color-hairline: rgba(255, 255, 255, 0.12);
-	--sl-color-hairline-shade: rgba(255, 255, 255, 0.14);
+	--sl-color-white: #F4F7FB;
+	--sl-color-gray-1: #F4F7FB;
+	--sl-color-gray-2: #D3DCEB;
+	--sl-color-gray-3: #9AA8C2;
+	--sl-color-gray-4: #8794AE;
+	--sl-color-gray-5: #1E3A6E;
+	--sl-color-gray-6: #10234A;
+	--sl-color-gray-7: #071330;
+	--sl-color-black: #0B1B3A;
+	--sl-color-bg: #0B1B3A;
+	--sl-color-bg-nav: #071330;
+	--sl-color-bg-sidebar: #071330;
+	--sl-color-bg-inline-code: #10234A;
+	--sl-color-bg-accent: #5EE0A8;
+	--sl-color-accent-low: #123F3A;
+	--sl-color-accent: #5EE0A8;
+	--sl-color-accent-high: #A8F0CF;
+	--sl-color-text: #D3DCEB;
+	--sl-color-text-accent: #5EE0A8;
+	/* H27: CTA/accent buttons carry navy text on mint. */
+	--sl-color-text-invert: #0B1B3A;
+	--sl-color-hairline-light: rgba(158, 184, 230, 0.08);
+	--sl-color-hairline: rgba(158, 184, 230, 0.12);
+	--sl-color-hairline-shade: rgba(158, 184, 230, 0.14);
 }
 
 :root {
@@ -51,8 +53,8 @@
 }
 
 starlight-toc a[aria-current='true'] {
-	color: #f4f4f1;
-	box-shadow: inset 2px 0 0 #f5b83d;
+	color: #F4F7FB;
+	box-shadow: inset 2px 0 0 #5EE0A8;
 }
 
 .expressive-code .copy button,
@@ -67,6 +69,6 @@ starlight-copy-button {
 }
 
 :focus-visible {
-	outline: 2px solid #f5b83d;
+	outline: 2px solid #5EE0A8;
 	outline-offset: 3px;
 }
