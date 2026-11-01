@@ -3,6 +3,7 @@ import type { AccessSnapshot, BillingEvent } from "./access-adapter.ts";
 /**
  * Polar public v1 webhook event names (POLAR_SCHEMA in src/polar-pack.ts).
  * Dispatch is on these exact names only, so Stripe goldens never reach these rules.
+ * Names Stripe also sends live in POLAR_SHARED_TYPES instead.
  */
 export const POLAR_EVENT_TYPES = new Set([
   "checkout.created",
@@ -11,8 +12,6 @@ export const POLAR_EVENT_TYPES = new Set([
   "order.paid",
   "order.updated",
   "order.refunded",
-  "refund.created",
-  "refund.updated",
   "subscription.created",
   "subscription.active",
   "subscription.updated",
@@ -24,8 +23,12 @@ export const POLAR_EVENT_TYPES = new Set([
   "benefit_grant.revoked",
 ]);
 
+/** Polar names Stripe sends too. These reach the Polar rules only with provider: "polar". */
+export const POLAR_SHARED_TYPES = new Set(["refund.created", "refund.updated"]);
+
 export function isPolarEvent(event: BillingEvent): boolean {
-  return POLAR_EVENT_TYPES.has(event.type);
+  if (POLAR_EVENT_TYPES.has(event.type)) return true;
+  return POLAR_SHARED_TYPES.has(event.type) && event.provider === "polar";
 }
 
 function withPlan(base: AccessSnapshot, event: BillingEvent): AccessSnapshot {

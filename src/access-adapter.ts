@@ -31,6 +31,11 @@ export type BillingEvent = {
   now?: number;
   /** Polar benefit key for benefit_grant.* events. Set-added or removed from features. */
   benefit?: string;
+  /**
+   * Event source for type names both providers send (refund.*). Polar rules handle
+   * those only when this is "polar"; untagged ones fold with the Stripe rules.
+   */
+  provider?: "polar";
   /** Original timeline position. Chaos folds on this so arrival order is not access. */
   created?: number;
 };
