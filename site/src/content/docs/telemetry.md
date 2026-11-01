@@ -57,7 +57,7 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | `pack` | `chaos`, `polar`, or empty |
 | `suite` | a bundled golden id, `pack`, `custom` (any path or other value), or empty |
 
-Never sent: file paths, repo or package names, emails, adapter names or contents, license keys, Stripe or Polar data, environment values, IP-derived data you can read back, or command output.
+Never sent: file paths, repo or package names, emails, adapter names or contents, license keys, Stripe or Polar data, environment values, IP addresses, or command output.
 
 ### What the collector keeps
 

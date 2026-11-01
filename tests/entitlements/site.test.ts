@@ -172,7 +172,7 @@ test("H25: Buy click beacon never blocks navigation and stores nothing", () => {
   assert.match(anchor, /target="_blank"/);
   assert.match(anchor, /rel="noopener"/);
   assert.doesNotMatch(cta, /data-polar-checkout/);
-  const closed = cta.slice(cta.indexOf("data-checkout-closed") - 200, cta.indexOf("data-checkout-closed"));
+  const closed = cta.slice(cta.indexOf(") : ("), cta.indexOf("data-checkout-closed"));
   assert.doesNotMatch(closed, /data-gf-buy/, "closed CTA is never counted");
   const index = read("site/src/pages/index.astro");
   assert.equal((index.match(/<PolarBuyCta/g) ?? []).length, 4, "exactly 4 Buy CTAs");
