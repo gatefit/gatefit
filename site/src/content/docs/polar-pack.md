@@ -3,7 +3,7 @@ title: Polar pack
 description: A paid provider pack that checks your access table against ugly Polar webhook sequences.
 ---
 
-The Polar provider pack arrives in the next release. It is not in 0.5.2. Until then, run it from a checkout of this repo (`node bin/gatefit.js run --suite polar ...`).
+The Polar provider pack ships in 0.6.0. It is not in 0.5.2. Until 0.6.0 is published, run it from a checkout of this repo (`node bin/gatefit.js run --suite polar ...`).
 
 The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the provider packs. S1–S9 and Phase 2 stay free.
 

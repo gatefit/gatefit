@@ -3,7 +3,7 @@ title: Telemetry
 description: What gatefit.io and the gatefit CLI count, what they never send, and how to turn it off.
 ---
 
-**Site analytics:** live and cookieless. **CLI telemetry:** not shipped in 0.5.2. It arrives in the next release, and it is opt-in and off by default.
+**Site analytics:** live and cookieless. **CLI telemetry:** not shipped in 0.5.2. It ships in 0.6.0, and it is opt-in and off by default. The collector at `t.gatefit.io` is live.
 
 ## gatefit.io
 
@@ -23,7 +23,7 @@ npx gatefit telemetry on       # saves a random install id and opts in
 npx gatefit telemetry off      # opts out and deletes the install id
 ```
 
-Until the next release, run these from a checkout of this repo (`node bin/gatefit.js telemetry status`).
+Until 0.6.0 is published, run these from a checkout of this repo (`node bin/gatefit.js telemetry status`).
 
 The first rule that matches decides:
 
@@ -47,7 +47,7 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | --- | --- |
 | `v` | `1` (number) |
 | `install_id` | random UUID v4 created on opt-in |
-| `version` | gatefit version, e.g. `0.5.2` |
+| `version` | gatefit version, e.g. `0.6.0` |
 | `node` | Node major version, e.g. `22` |
 | `platform` | `linux`, `darwin`, `win32`, or `other` |
 | `arch` | `x64`, `arm64`, or `other` |

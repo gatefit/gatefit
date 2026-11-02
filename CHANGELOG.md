@@ -1,14 +1,18 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.5.2` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.6.0` is not cut in this change.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-02
+
+0.6.0 adds `gatefit init` (free), the paid Polar provider pack, and opt-in CLI telemetry, refreshes gatefit.io to the brand palette, and fixes Polar refund scoping and stale-event handling in the SQLite reference adapter. This change does not publish the package and does not create the tag.
+
 ### Added
 
-- `gatefit init` (free): writes a self-contained Postgres access adapter (raw `pg`, local `access-rules.ts`, no imports from Gatefit), migration, README, and `gatefit.config.json` for `drizzle`, `prisma`, `supabase`, or `generic`. Uses the one ORM in `package.json`, otherwise asks or exits 2. `--print-workflow` / `--write-workflow` render a `gatefit/gatefit@v<version>` job. Never overwrites without `--force`, writes all-or-nothing, refuses live Stripe keys (arguments, environment, `.env*`) before anything else, and pins Stripe API `2025-10-29.clover` from the existing constant. Exit codes 2/3/4 apply to `init` only. Not part of 0.5.2; it ships in the next release.
-- Polar provider pack (paid, $49 Gatefit Indie License): `gatefit run --suite polar --adapter <path>` replays nine Polar v1 webhook transitions (`POLAR_SCHEMA v1+fixtures.1`) against your access table. Same license gate as chaos mode; running the pack's golden directory as a `--suite` path is gated too. The pack refuses `polar_oat_`/`polar_pat_` tokens and `sk_live` in the adapter source or environment and never prints them. HTTP 200 is not access. Free suites do not change and never call Polar. Not part of 0.5.2; it ships in the next release.
-- Usage tracking. The site uses cookieless Cloudflare Web Analytics on the landing page and docs, plus a fire-and-forget Buy-click beacon that never blocks the Checkout Link. CLI telemetry is opt-in and off by default: `gatefit telemetry on|off|status`, `GATEFIT_TELEMETRY=1|0`. `DO_NOT_TRACK` always wins, and CI needs the env var. One bounded, silent ping after `init`/`run`/`adapter-check`/`live`, with an allowlisted payload (`v`, `install_id`, `version`, `node`, `platform`, `arch`, `command`, `outcome`, `template`, `pack`, `suite`). Exit codes and output do not change. The collector Worker (`worker/telemetry/`) is deployed by hand and is not in the npm package. CLI telemetry is not part of 0.5.2; it ships in the next release.
+- `gatefit init` (free): writes a self-contained Postgres access adapter (raw `pg`, local `access-rules.ts`, no imports from Gatefit), migration, README, and `gatefit.config.json` for `drizzle`, `prisma`, `supabase`, or `generic`. Uses the one ORM in `package.json`, otherwise asks or exits 2. `--print-workflow` / `--write-workflow` render a `gatefit/gatefit@v<version>` job. Never overwrites without `--force`, writes all-or-nothing, refuses live Stripe keys (arguments, environment, `.env*`) before anything else, and pins Stripe API `2025-10-29.clover` from the existing constant. Exit codes 2/3/4 apply to `init` only. New in 0.6.0.
+- Polar provider pack (paid, $49 Gatefit Indie License): `gatefit run --suite polar --adapter <path>` replays nine Polar v1 webhook transitions (`POLAR_SCHEMA v1+fixtures.1`) against your access table. Same license gate as chaos mode; running the pack's golden directory as a `--suite` path is gated too. The pack refuses `polar_oat_`/`polar_pat_` tokens and `sk_live` in the adapter source or environment and never prints them. HTTP 200 is not access. Free suites do not change and never call Polar. New in 0.6.0.
+- Usage tracking. The site uses cookieless Cloudflare Web Analytics on the landing page and docs, plus a fire-and-forget Buy-click beacon that never blocks the Checkout Link. CLI telemetry is opt-in and off by default: `gatefit telemetry on|off|status`, `GATEFIT_TELEMETRY=1|0`. `DO_NOT_TRACK` always wins, and CI needs the env var. One bounded, silent ping after `init`/`run`/`adapter-check`/`live`, with an allowlisted payload (`v`, `install_id`, `version`, `node`, `platform`, `arch`, `command`, `outcome`, `template`, `pack`, `suite`). Exit codes and output do not change. The collector Worker (`worker/telemetry/`) is live at `t.gatefit.io`, is deployed by hand, and is not in the npm package. CLI telemetry is new in 0.6.0.
 
 ### Changed
 

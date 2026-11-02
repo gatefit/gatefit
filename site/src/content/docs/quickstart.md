@@ -7,7 +7,7 @@ Gatefit checks **your access DB**, not Stripe HTTP 200. Node 22+.
 
 ## 1. Adapter
 
-No adapter yet? `npx gatefit init` generates one for drizzle, Prisma, Supabase, or plain `pg`. It is free and arrives in the next release; see [gatefit init](/init/).
+No adapter yet? `npx gatefit init` generates one for drizzle, Prisma, Supabase, or plain `pg`. It is free and new in 0.6.0; see [gatefit init](/init/).
 
 Export `createAdapter()` (or `default`) with:
 
@@ -37,7 +37,7 @@ node bin/gatefit.js adapter-check
 node bin/gatefit.js run --suite tests/entitlements/goldens --adapter ./src/your-access-adapter.ts
 ```
 
-Exit 0 means the checks passed against that adapter. [Goldens](/goldens/) lists the checks in this repository, including free S7–S9. 0.5.2 is the first release that ships them. This change does not publish `0.5.2`.
+Exit 0 means the checks passed against that adapter. [Goldens](/goldens/) lists the checks in this repository, including free S7–S9. 0.5.2 is the first release that ships them. This change does not publish `0.6.0`.
 
 ## 3. Named gate
 
