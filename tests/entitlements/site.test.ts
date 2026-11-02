@@ -22,7 +22,7 @@ test("Starlight lives in site/ at the gatefit.io root", () => {
     version: string;
     files?: string[];
   };
-  assert.equal(pkg.version, "0.5.2");
+  assert.equal(pkg.version, "0.6.0");
   assert.ok(!pkg.files?.includes("site"));
 });
 
@@ -50,7 +50,7 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(quickstart, /adapter/i);
   assert.match(quickstart, /\/action\//);
   assert.doesNotMatch(quickstart, /\/gatefit\/action\//);
-  assert.match(action, /uses: gatefit\/gatefit@v0\.5\.2/);
+  assert.match(action, /uses: gatefit\/gatefit@v0\.6\.0/);
   assert.match(polar, /location\.replace\('\/#pricing'\)/);
   assert.doesNotMatch(polar, /import PolarRedirect/);
   assert.doesNotMatch(polar, /<PolarRedirect/);
@@ -61,7 +61,7 @@ test("init docs page exists, says init is free, and quickstart points to it", ()
   const quickstart = read("site/src/content/docs/quickstart.md");
   assert.match(init, /init.*is free/i);
   assert.match(init, /not shipped in 0\.5\.2/i);
-  assert.match(init, /next release/i);
+  assert.match(init, /ships in 0\.6\.0/);
   assert.match(init, /\$49 one-time/);
   assert.doesNotMatch(init, /\$19/);
   assert.doesNotMatch(init, /monthly|coming soon|optional updates/i);
@@ -75,7 +75,7 @@ test("Polar pack page is honest about price, release, and HTTP 200", () => {
   const readme = read("README.md");
   const changelog = read("CHANGELOG.md");
   assert.match(page, /gatefit run --suite polar --adapter/);
-  assert.match(page, /The Polar provider pack arrives in the next release\./);
+  assert.match(page, /The Polar provider pack ships in 0\.6\.0\./);
   assert.match(
     page,
     /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S9 and Phase 2 stay free\./,
@@ -94,7 +94,7 @@ test("Polar pack page is honest about price, release, and HTTP 200", () => {
     assert.doesNotMatch(text, /\$19|monthly|coming soon|optional updates/i);
     assert.doesNotMatch(text, /fixture goldens|names match the goldens|docs live at|checkout is live/i);
   }
-  assert.match(readme, /Polar provider pack arrives in the next release/);
+  assert.match(readme, /Polar provider pack ships in 0\.6\.0/);
   assert.match(changelog, /gatefit run --suite polar/);
   assert.match(read("site/astro.config.mjs"), /slug: 'polar-pack'/);
 });
@@ -200,6 +200,8 @@ test("H25: telemetry docs list every payload key and stay honest", async () => {
     assert.match(doc, /DO_NOT_TRACK/);
     assert.match(doc, /no cookies/i);
     assert.match(doc, /not shipped in 0\.5\.2/);
+    assert.match(doc, /ships in 0\.6\.0/);
+    assert.match(doc, /collector at `t\.gatefit\.io` is live/);
     assert.match(doc, /gatefit telemetry off/);
     assert.match(doc, /t\.gatefit\.io/);
     for (const banned of [/coming soon/i, /\$19/, /monthly/i, /optional updates/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i]) {

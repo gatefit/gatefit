@@ -2,7 +2,8 @@
 
 Receives the opt-in CLI ping (`POST /v1/event`) and the site Buy-click beacon
 (`POST /v1/site`), and serves aggregates at `GET /v1/stats?days=N` (1–90, default 30).
-Not part of `./ci-local.sh`, not in the npm tarball. The pure handler
+Live at `https://t.gatefit.io`. Not part of `./ci-local.sh`, not in the npm tarball.
+The CLI side of the ping ships in 0.6.0 and stays opt-in. The pure handler
 (`src/handler.ts`) is covered by `tests/entitlements/telemetry-worker.test.ts`.
 
 What it stores: daily counters per allowlisted value (`counts`) and a 16-hex SHA-256
@@ -12,8 +13,8 @@ request bodies. No retention job in v1.
 
 ## Deploy (by hand, from this directory)
 
-1. Create the database and paste the printed `database_id` into `wrangler.toml`
-   (replace the all-zero placeholder), then commit that change:
+1. The D1 database `gatefit-telemetry` exists and its `database_id` is committed in
+   `wrangler.toml`. For a fresh account only, create it and replace that id:
 
        npx wrangler@4 d1 create gatefit-telemetry
 
