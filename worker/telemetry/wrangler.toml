@@ -12,6 +12,6 @@ routes = [
 [[d1_databases]]
 binding = "DB"
 database_name = "gatefit-telemetry"
-# Placeholder: replace with the id printed by `npx wrangler@4 d1 create gatefit-telemetry`.
-database_id = "00000000-0000-0000-0000-000000000000"
+# D1 database id (created 2026-11-02 with `npx wrangler@4 d1 create gatefit-telemetry`). Public identifier only.
+database_id = "3d2616af-80d5-4e6d-adfa-db735d730262"
 migrations_dir = "migrations"
