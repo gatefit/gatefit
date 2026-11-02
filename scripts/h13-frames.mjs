@@ -16,9 +16,9 @@
 // Under 900px the Indie glow must not paint across the title, price, or
 // bullets, including halfway through the orbit spin.
 // On desktop the Indie orbit is a border ring. At 1280 and 1440 the
-// title, $49, and one-time stay free of gold at early, mid, and settled
+// title, $49, and one-time stay free of mint (gold before H27) at early, mid, and settled
 // points of the 4s spin, and the orbit opacity is 0 once the spin ends.
-// During the spin, gold more than 4px inside the card border fails.
+// During the spin, mint more than 4px inside the card border fails.
 // The Buy button is excluded. Mobile stays a static edge with no cone.
 // With prefers-reduced-motion at 1280 and 1440 the dial centre shows one
 // label, the end-state readout (9 pass / 1 leak), never the 0 / 10 counter.
@@ -31,6 +31,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inflateSync } from 'node:zlib';
+import { mintInside, mintPastBorder } from './h13-mint.mjs';
 
 const dist = process.argv[2];
 if (!dist || !existsSync(join(dist, 'index.html'))) {
@@ -569,53 +570,6 @@ function decodePng(buf) {
   return { width, height, rgb };
 }
 
-function isAmber(r, g, b) {
-  return r > 140 && g > 80 && b < 170 && r > b + 40 && g > b + 25;
-}
-
-function amberInside(img, box, scaleX, scaleY) {
-  const x0 = Math.max(0, Math.floor((box.x + 3) * scaleX));
-  const y0 = Math.max(0, Math.floor((box.y + 3) * scaleY));
-  const x1 = Math.min(img.width, Math.ceil((box.x + box.w - 3) * scaleX));
-  const y1 = Math.min(img.height, Math.ceil((box.y + box.h - 3) * scaleY));
-  let count = 0;
-  for (let y = y0; y < y1; y += 1) {
-    for (let x = x0; x < x1; x += 1) {
-      const i = (y * img.width + x) * 3;
-      if (isAmber(img.rgb[i], img.rgb[i + 1], img.rgb[i + 2])) count += 1;
-    }
-  }
-  return count;
-}
-
-function insideRoundedRect(x, y, w, h, radius) {
-  const r = Math.max(0, Math.min(radius, w / 2, h / 2));
-  const qx = Math.abs(x - w / 2) - (w / 2 - r);
-  const qy = Math.abs(y - h / 2) - (h / 2 - r);
-  return r - (Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)));
-}
-
-function isOrbitGold(r, g, b) {
-  return r > 70 && g > 45 && b < 100 && r > b + 35 && g > b + 20;
-}
-
-function amberPastBorder(img, scaleX, scaleY, radiusCss, holes) {
-  const w = img.width / scaleX;
-  const h = img.height / scaleY;
-  let count = 0;
-  for (let y = 0; y < img.height; y += 1) {
-    const cy = (y + 0.5) / scaleY;
-    for (let x = 0; x < img.width; x += 1) {
-      const cx = (x + 0.5) / scaleX;
-      if (insideRoundedRect(cx, cy, w, h, radiusCss) <= 4) continue;
-      if (holes.some((hole) => cx >= hole.x && cy >= hole.y && cx <= hole.x + hole.w && cy <= hole.y + hole.h)) continue;
-      const i = (y * img.width + x) * 3;
-      if (isOrbitGold(img.rgb[i], img.rgb[i + 1], img.rgb[i + 2])) count += 1;
-    }
-  }
-  return count;
-}
-
 async function seekIndieGlow(page, fraction) {
   await page.evaluate((fraction) => {
     document.querySelector('#pricing')?.classList.add('lit');
@@ -678,8 +632,8 @@ async function checkOrbitCone(width, height) {
         found.push(`missing "${region.text}"`);
         continue;
       }
-      const amber = amberInside(img, region, scaleX, scaleY);
-      if (amber > 24) found.push(`cone over "${region.text}" at ${fraction} (${amber}px)`);
+      const mint = mintInside(img, region, scaleX, scaleY);
+      if (mint > 24) found.push(`cone over "${region.text}" at ${fraction} (${mint}px)`);
     }
     note(`cone ${width} ${fraction}`, found);
   }
@@ -785,8 +739,8 @@ async function checkDesktopOrbit(width, height) {
       found.push(`orbit hidden during spin (opacity ${primed.opacity.toFixed(3)})`);
     }
     if (phase.name !== 'settled') {
-      const interior = amberPastBorder(img, scaleX, scaleY, geometry.radius, geometry.hole ? [geometry.hole] : []);
-      if (interior > 0) found.push(`gold inside border at ${phase.name} (${interior}px)`);
+      const interior = mintPastBorder(img, scaleX, scaleY, geometry.radius, geometry.hole ? [geometry.hole] : []);
+      if (interior > 0) found.push(`mint inside border at ${phase.name} (${interior}px)`);
     }
     const expect = ['Indie License', '$49', 'one-time'];
     if (regions.length < expect.length) found.push(`text area missing (${regions.map((region) => region.text).join(', ')})`);
@@ -795,8 +749,8 @@ async function checkDesktopOrbit(width, height) {
         found.push(`missing "${region.text}"`);
         continue;
       }
-      const amber = amberInside(img, region, scaleX, scaleY);
-      if (amber > 24) found.push(`gold wedge over "${region.text}" at ${phase.name} (${amber}px)`);
+      const mint = mintInside(img, region, scaleX, scaleY);
+      if (mint > 24) found.push(`mint wedge over "${region.text}" at ${phase.name} (${mint}px)`);
     }
     note(label, found);
   }

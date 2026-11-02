@@ -483,6 +483,19 @@ assert_h13_dist() {
     fail "/polar/ redirect counts a page view twice"
   fi
   grep -R -q 't.gatefit.io/v1/site' site/dist || fail "built site missing Buy-click beacon"
+  # H27: brand icons and the 1200x630 share card ship in dist and both heads point at them.
+  for brand_file in favicon.svg favicon.ico apple-touch-icon.png og.png; do
+    [[ -f "site/dist/${brand_file}" ]] || fail "built site missing ${brand_file}"
+  done
+  for brand_page in site/dist/index.html site/dist/quickstart/index.html; do
+    grep -q 'property="og:image" content="https://gatefit.io/og.png"' "$brand_page" || fail "${brand_page} missing og:image"
+    grep -q 'name="twitter:image" content="https://gatefit.io/og.png"' "$brand_page" || fail "${brand_page} missing twitter:image"
+    [[ "$(grep -o 'name="twitter:card"' "$brand_page" | wc -l)" -eq 1 ]] || fail "${brand_page} twitter:card count is not 1"
+    grep -q 'href="/apple-touch-icon.png"' "$brand_page" || fail "${brand_page} missing apple-touch-icon"
+  done
+  if grep -q -E 'og:image|favicon' site/dist/polar/index.html; then
+    fail "/polar/ redirect grew a head (favicon or og:image)"
+  fi
   [[ -f site/dist/telemetry/index.html ]] || fail "built /telemetry/ is missing"
   if grep -q 'import PolarRedirect\|<PolarRedirect' site/dist/polar/index.html; then
     fail "built /polar/ shows the PolarRedirect component source"
@@ -537,6 +550,10 @@ assert_pending_cta() {
   PUBLIC_POLAR_CHECKOUT_URL= npm run build
 ) || fail "starlight site build"
 ok "starlight site build"
+# H27: needs sharp from site/node_modules, so it runs after the site/ install, not in unit tests.
+(cd site && node scripts/brand-assets.mjs --check) \
+  || fail "brand assets drifted from site/brand/*.svg (re-run 'npm run brand' in site/; a sharp/libvips version change can also shift PNG bytes)"
+ok "brand assets re-render byte-identically"
 assert_live_cta site/dist/index.html "$POLAR_CHECKOUT_URL"
 if grep -R -n 'buy.polar.sh/products/' site/dist >/dev/null; then
   fail "built site advertises a buy.polar.sh/products/ URL"

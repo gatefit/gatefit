@@ -1,4 +1,6 @@
 ---
+import { BRAND, OPEN, LOCKED } from '../lib/brand';
+
 interface Props {
 	uid: string;
 	labels?: boolean;
@@ -58,20 +60,20 @@ function arc(r: number, a0: number, a1: number) {
 const segments = stations.flatMap((station, i) => {
 	const a0 = i * 36 + 6;
 	const a1 = (i + 1) * 36 - 6;
-	const expected = station.open ? '#3fcf8e' : '#f2555a';
-	const app = station.app ? '#3fcf8e' : '#f2555a';
+	const expected = station.open ? OPEN : LOCKED;
+	const app = station.app ? OPEN : LOCKED;
 	const parts: { d: string; stroke: string; width: number; opacity: number }[] = [];
 	if (station.recover) {
-		parts.push({ d: arc(RO, a0, a0 + 16), stroke: '#f2555a', width: 16, opacity: 1 });
-		parts.push({ d: arc(RI, a0, a0 + 16), stroke: '#f2555a', width: 4, opacity: 0.8 });
-		parts.push({ d: arc(RO, a0 + 16, a1), stroke: '#3fcf8e', width: 16, opacity: 1 });
-		parts.push({ d: arc(RI, a0 + 16, a1), stroke: '#3fcf8e', width: 4, opacity: 0.8 });
+		parts.push({ d: arc(RO, a0, a0 + 16), stroke: LOCKED, width: 16, opacity: 1 });
+		parts.push({ d: arc(RI, a0, a0 + 16), stroke: LOCKED, width: 4, opacity: 0.8 });
+		parts.push({ d: arc(RO, a0 + 16, a1), stroke: OPEN, width: 16, opacity: 1 });
+		parts.push({ d: arc(RI, a0 + 16, a1), stroke: OPEN, width: 4, opacity: 0.8 });
 		return parts;
 	}
 	parts.push({ d: arc(RO, a0, a1), stroke: expected, width: 16, opacity: 1 });
 	if (station.leak) {
-		parts.push({ d: arc(RI, a0, a1), stroke: '#f2555a', width: 12, opacity: 0.35 });
-		parts.push({ d: arc(RI, a0, a1), stroke: '#3fcf8e', width: 4, opacity: 1 });
+		parts.push({ d: arc(RI, a0, a1), stroke: LOCKED, width: 12, opacity: 0.35 });
+		parts.push({ d: arc(RI, a0, a1), stroke: OPEN, width: 4, opacity: 1 });
 	} else {
 		parts.push({ d: arc(RI, a0, a1), stroke: app, width: 4, opacity: 0.8 });
 	}
@@ -94,8 +96,8 @@ function nameParts(name: string) {
 <div class:list={['dial-block', card && 'is-mobile']} id={card ? 'access-dial-mobile' : undefined}>
 	<div class:list={['access-dial', labels ? 'is-stage' : 'is-mobile']} id={labels ? 'access-dial' : undefined}>
 		<svg class="dial-svg" viewBox="0 0 840 760" aria-hidden="true">
-			<circle cx="420" cy="380" r="230" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="16" />
-			<circle cx="420" cy="380" r="202" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="4" />
+			<circle cx="420" cy="380" r="230" fill="none" stroke="#9EB8E6" stroke-opacity="0.1" stroke-width="16" />
+			<circle cx="420" cy="380" r="202" fill="none" stroke="#9EB8E6" stroke-opacity="0.1" stroke-width="4" />
 			<mask id={`${uid}-outer`} maskUnits="userSpaceOnUse" x="0" y="0" width="840" height="760">
 				<rect width="840" height="760" fill="#000" />
 				<g class="dial-mask-spin dial-spin">
@@ -123,7 +125,8 @@ function nameParts(name: string) {
 				))}
 			</g>
 			<g class="dial-scrubber">
-				<path d={scrubber} fill="none" stroke="#f5b83d" stroke-width="16" stroke-linecap="round" />
+				<path d={scrubber} fill="none" stroke={BRAND.text} stroke-width="18" stroke-linecap="round" />
+				<path d={scrubber} fill="none" stroke={BRAND.mint} stroke-width="12" stroke-linecap="round" />
 			</g>
 		</svg>
 
@@ -134,7 +137,7 @@ function nameParts(name: string) {
 				class="dial-station"
 				data-id={station.id}
 				data-i={i}
-				style={`left:${station.sx}%;top:${station.sy}%;--dial-color:${station.open ? '#3fcf8e' : '#f2555a'}`}
+				style={`left:${station.sx}%;top:${station.sy}%;--dial-color:${station.open ? OPEN : LOCKED}`}
 				aria-hidden="true"
 			>
 				<span class="dial-ico" set:html={glyph(station.icon)} />
@@ -229,7 +232,7 @@ function nameParts(name: string) {
 			{stations.map((station, i) => (
 				<div class="dial-card-face" data-id={station.id} data-i={i}>
 					<div class="dial-card-head">
-						<span class="dial-card-mark" style={`--dial-color:${station.open ? '#3fcf8e' : '#f2555a'}`} set:html={glyph(station.icon)} />
+						<span class="dial-card-mark" style={`--dial-color:${station.open ? OPEN : LOCKED}`} set:html={glyph(station.icon)} />
 						<span class="dial-card-copy">
 							<span class="dial-card-chip">{station.chip}</span>
 							<span class="dial-card-name">
