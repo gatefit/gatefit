@@ -91,9 +91,9 @@
 .bars.dense { gap: 1px; }
 .bar { position: relative; flex: 1; display: flex; flex-direction: column-reverse; min-width: 2px; height: 100%; }
 .bar b { display: block; width: 100%; border-radius: 2px 2px 0 0; }
-.bar b.run { background: var(--mint); }
-.bar b.init { background: var(--body); }
-.bar b.buy { background: var(--amber); }
+.bar b.seg-run { background: var(--mint); }
+.bar b.seg-init { background: var(--body); }
+.bar b.seg-buy { background: var(--amber); }
 .bar .lbl { position: absolute; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 11px; color: var(--text); white-space: nowrap; }
 .bars.dense .lbl { display: none; }
 .bar .base { height: 2px; background: var(--tick-empty); border-radius: 1px; }

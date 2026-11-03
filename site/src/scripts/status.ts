@@ -211,7 +211,7 @@ function renderStatus(view: StatusView): void {
 	const checked = document.getElementById('checked');
 	if (checked) {
 		checked.textContent = view.checkedAt
-			? `Last checked ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZoneName: 'short' }).format(new Date(view.checkedAt))}`
+			? `Last checked ${new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }).format(new Date(view.checkedAt))}`
 			: 'Last checked: unknown';
 	}
 	const list = document.getElementById('svc');
@@ -261,7 +261,7 @@ function renderUsage(view: UsageView, days: number): void {
 					return bar;
 				}
 				for (const [k, n] of [['run', b.run], ['init', b.init], ['buy', b.buy]] as const) {
-					const seg = el('b', k);
+					const seg = el('b', `seg-${k}`);
 					seg.style.height = `${(n / max) * 100}%`;
 					bar.append(seg);
 				}
