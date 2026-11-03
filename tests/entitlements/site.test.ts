@@ -117,7 +117,9 @@ test("Paddle pack page is honest about price, release, and HTTP 200", () => {
   assert.match(page, /`provider: paddle`/);
   assert.match(page, /pdl_live_/);
   assert.match(page, /transaction\.completed/);
-  for (const text of [page, doc, readme, changelog]) {
+  const unreleased = changelog.slice(changelog.indexOf("## [Unreleased]"), changelog.indexOf("\n## [", changelog.indexOf("## [Unreleased]") + 1));
+  assert.match(unreleased, /--suite paddle/);
+  for (const text of [page, doc, readme, unreleased]) {
     assert.doesNotMatch(text, /\$19|monthly|coming soon|optional updates/i);
     assert.doesNotMatch(text, /fixture goldens|names match the goldens|docs live at|checkout is live/i);
     assert.doesNotMatch(text, /paddle[^\n]*(ships in|is live|shipped)/i);

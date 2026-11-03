@@ -74,6 +74,19 @@ for polar_id in polar_order_paid_grants polar_duplicate_order_paid_idempotent \
   need_file "src/packs/polar/goldens/${polar_id}.yaml"
 done
 need_file tests/entitlements/polar-pack.test.ts
+need_file src/paddle-pack.ts
+need_file src/paddle-rules.ts
+need_file src/packs/paddle/README.md
+for paddle_id in paddle_transaction_completed_grants paddle_duplicate_transaction_completed_idempotent \
+  paddle_out_of_order_canceled_before_activated paddle_late_stale_update_after_cancel \
+  paddle_refund_adjustment_after_grant_revokes paddle_paused_denies_until_resumed \
+  paddle_checkout_return_before_webhook paddle_cancel_keeps_access_until_period_end \
+  paddle_past_due_denies_until_recovery; do
+  need_file "src/packs/paddle/goldens/${paddle_id}.yaml"
+done
+need_file tests/entitlements/paddle-pack.test.ts
+need_file docs/paddle.md
+need_file site/src/content/docs/paddle-pack.md
 need_file .github/actions/gatefit/action.yml
 need_file docs/bring-your-adapter.md
 need_file action.yml
@@ -141,7 +154,7 @@ pack_listing_ok() {
   if echo "$listing" | grep -E '(^|/)site/|(^|/)worker/|(^|/)\.env($|\.)|(^|/)[^/]*\.pem$|(^|/)id_rsa($|\.)|(^|/)credentials\.json$' >/dev/null; then
     return 1
   fi
-  if echo "$listing" | grep -E 'sk_live_[A-Za-z0-9]{16,}|polar_(oat|pat)_[A-Za-z0-9]{16,}|npm_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY' >/dev/null; then
+  if echo "$listing" | grep -E 'sk_live_[A-Za-z0-9]{16,}|polar_(oat|pat)_[A-Za-z0-9]{16,}|pdl_(live|sdbx|ntfset)_[A-Za-z0-9_]{16,}|npm_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY' >/dev/null; then
     return 1
   fi
   echo "$listing" | grep -q 'bin/gatefit.js' || return 1
@@ -163,6 +176,11 @@ fi
 polar_probe="polar_""oat_$(printf 'x%.0s' {1..24})"
 if pack_listing_ok "$(printf 'bin/gatefit.js\n%s' "$polar_probe")"; then
   dist_fail "tarball checker accepted a Polar access token"
+fi
+# Paddle key literal is built at runtime so no secret-shaped string lands in git.
+paddle_probe="pdl_""live_apikey_$(printf 'x%.0s' {1..24})"
+if pack_listing_ok "$(printf 'bin/gatefit.js\n%s' "$paddle_probe")"; then
+  dist_fail "tarball checker accepted a Paddle API key"
 fi
 if ! pack_listing_ok $'bin/gatefit.js\nsrc/cli.ts\nLICENSE'; then
   dist_fail "tarball checker rejected a clean listing"
@@ -229,7 +247,7 @@ grep -q 'npx gatefit' README.md || dist_fail "README missing npx gatefit"
 if grep -q 'H12 is on HOLD\|npm is not on the registry\|registry package is not published' README.md; then
   dist_fail "README still marks npm unpublished or H12 on HOLD"
 fi
-if grep -q 'coming soon' README.md docs/publish.md docs/polar.md docs/release-v0.4.0.md "docs/release-${expected_tag}.md" CHANGELOG.md; then
+if grep -q 'coming soon' README.md docs/publish.md docs/polar.md docs/paddle.md site/src/content/docs/paddle-pack.md docs/release-v0.4.0.md "docs/release-${expected_tag}.md" CHANGELOG.md; then
   dist_fail "docs still mark npm coming soon"
 fi
 grep -q 'https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0' README.md \
@@ -358,7 +376,7 @@ tar -xzf "$tgz" -C "$extract_dir"
 if find "$extract_dir/package" -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name 'id_rsa' | grep -q .; then
   fail "unpacked tarball leaks env or key files"
 fi
-if grep -R -E -n 'sk_live_[A-Za-z0-9]{16,}|polar_(oat|pat)_[A-Za-z0-9]{16,}|npm_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY' "$extract_dir/package" >/dev/null; then
+if grep -R -E -n 'sk_live_[A-Za-z0-9]{16,}|polar_(oat|pat)_[A-Za-z0-9]{16,}|pdl_(live|sdbx|ntfset)_[A-Za-z0-9_]{16,}|npm_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY' "$extract_dir/package" >/dev/null; then
   fail "unpacked tarball contains secret material"
 fi
 ok "unpacked tarball (bin present, site/ and secrets absent)"

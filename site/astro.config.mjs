@@ -54,6 +54,7 @@ export default defineConfig({
 				{ label: 'Goldens', slug: 'goldens' },
 				{ label: 'GitHub Action', slug: 'action' },
 				{ label: 'Polar pack', slug: 'polar-pack' },
+				{ label: 'Paddle pack', slug: 'paddle-pack' },
 				{ label: 'Telemetry', slug: 'telemetry' },
 				{ label: 'Polar checkout', link: '/polar/' },
 				{ label: 'Pricing', link: '/#pricing' },
