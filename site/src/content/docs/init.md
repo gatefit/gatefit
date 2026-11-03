@@ -3,7 +3,7 @@ title: gatefit init
 description: Generate a Postgres access adapter for drizzle, Prisma, Supabase, or plain pg, then run every free golden against it.
 ---
 
-`gatefit init` is **not shipped in 0.5.2**. It ships in 0.6.0. Until 0.6.0 is published, run it from a checkout of this repo (`node bin/gatefit.js init`).
+`gatefit init` is **not shipped in 0.5.2**. It ships in 0.6.0.
 
 `gatefit init` is free. It does not read a license key, does not call Polar, and makes no network request.
 
@@ -51,7 +51,7 @@ The generated adapter asserts the row in `gatefit_access`. HTTP 200 from Stripe 
 
 ## CI workflow
 
-`--print-workflow` and `--write-workflow` render a GitHub Actions job. It starts a throwaway Postgres service (trust auth, no password), runs `npm ci`, applies the migration with `psql`, and calls `uses: gatefit/gatefit@v0.6.0` with your adapter path. The job needs no stored secrets. Database setup is yours to adapt.
+`--print-workflow` and `--write-workflow` render a GitHub Actions job. It starts a throwaway Postgres service (trust auth, no password), runs `npm ci`, applies the migration with `psql`, and calls `uses: gatefit/gatefit@v0.7.0` with your adapter path. The job needs no stored secrets. Database setup is yours to adapt.
 
 ## Safety
 

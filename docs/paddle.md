@@ -1,9 +1,9 @@
 # Paddle provider pack (GATEFIT-H28)
 
-The Paddle provider pack arrives in the next release. Until then, run it from a checkout of this repo:
+The Paddle provider pack ships in 0.7.0 as `gatefit run --suite paddle` (`npx gatefit@0.7.0` or the installed package), under the same $49 one-time Gatefit Indie License:
 
 ```bash
-node bin/gatefit.js run --suite paddle --adapter src/adapters/hardened.ts
+npx gatefit@0.7.0 run --suite paddle --adapter ./gatefit/adapter.ts
 ```
 
 The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the provider packs. S1–S9 and Phase 2 stay free. Paddle is a provider your app bills through; it is not how you buy Gatefit.

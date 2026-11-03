@@ -22,7 +22,7 @@ test("Starlight lives in site/ at the gatefit.io root", () => {
     version: string;
     files?: string[];
   };
-  assert.equal(pkg.version, "0.6.0");
+  assert.equal(pkg.version, "0.7.0");
   assert.ok(!pkg.files?.includes("site"));
 });
 
@@ -50,7 +50,7 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(quickstart, /adapter/i);
   assert.match(quickstart, /\/action\//);
   assert.doesNotMatch(quickstart, /\/gatefit\/action\//);
-  assert.match(action, /uses: gatefit\/gatefit@v0\.6\.0/);
+  assert.match(action, /uses: gatefit\/gatefit@v0\.7\.0/);
   assert.match(polar, /location\.replace\('\/#pricing'\)/);
   assert.doesNotMatch(polar, /import PolarRedirect/);
   assert.doesNotMatch(polar, /<PolarRedirect/);
@@ -105,7 +105,7 @@ test("Paddle pack page is honest about price, release, and HTTP 200", () => {
   const readme = read("README.md");
   const changelog = read("CHANGELOG.md");
   assert.match(page, /gatefit run --suite paddle --adapter/);
-  assert.match(page, /The Paddle provider pack arrives in the next release\./);
+  assert.match(page, /The Paddle provider pack ships in 0\.7\.0 as `gatefit run --suite paddle`/);
   assert.match(
     page,
     /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S9 and Phase 2 stay free\./,
@@ -117,14 +117,15 @@ test("Paddle pack page is honest about price, release, and HTTP 200", () => {
   assert.match(page, /`provider: paddle`/);
   assert.match(page, /pdl_live_/);
   assert.match(page, /transaction\.completed/);
-  const unreleased = changelog.slice(changelog.indexOf("## [Unreleased]"), changelog.indexOf("\n## [", changelog.indexOf("## [Unreleased]") + 1));
-  assert.match(unreleased, /--suite paddle/);
-  for (const text of [page, doc, readme, unreleased]) {
+  const released = changelog.slice(changelog.indexOf("## [0.7.0]"), changelog.indexOf("\n## [", changelog.indexOf("## [0.7.0]") + 1));
+  assert.match(released, /--suite paddle/);
+  for (const text of [page, doc, readme, released]) {
     assert.doesNotMatch(text, /\$19|monthly|coming soon|optional updates/i);
     assert.doesNotMatch(text, /fixture goldens|names match the goldens|docs live at|checkout is live/i);
-    assert.doesNotMatch(text, /paddle[^\n]*(ships in|is live|shipped)/i);
+    assert.doesNotMatch(text, /paddle[^\n]*(is live|next release)/i);
   }
-  assert.match(readme, /Paddle provider pack arrives in the next release/);
+  assert.match(readme, /Paddle provider pack ships in 0\.7\.0 as `gatefit run --suite paddle`/);
+  assert.match(doc, /ships in 0\.7\.0/);
   assert.match(changelog, /gatefit run --suite paddle/);
   assert.match(read("site/astro.config.mjs"), /slug: 'paddle-pack'/);
 });

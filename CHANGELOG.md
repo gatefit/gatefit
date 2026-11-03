@@ -1,12 +1,16 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.6.0` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.7.0` is not cut in this change.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-03
+
+0.7.0 adds the paid Paddle provider pack and the public status page at gatefit.io/status/, backed by the collector Worker's checks and `GET /v1/status`, reports the pack name in opt-in telemetry for a `--suite` path into the Polar or Paddle golden directory, keeps untagged `order.created` and `order.updated` (Stripe sends the same names) away from the Polar rules, and fixes text contrast at the peak of the site's red glows (WCAG AA). This change does not publish the package and does not create the tag.
+
 ### Added
 
-- Paddle provider pack (paid, Gatefit Indie License): `gatefit run --suite paddle --adapter <path>` replays D1–D9 Paddle Billing goldens (`src/packs/paddle/goldens`, ids `paddle_*`) against your access table. It arrives in the next release; until then run it from a checkout with `node bin/gatefit.js run --suite paddle`.
+- Paddle provider pack (paid, Gatefit Indie License): `gatefit run --suite paddle --adapter <path>` replays D1–D9 Paddle Billing goldens (`src/packs/paddle/goldens`, ids `paddle_*`) against your access table. New in 0.7.0.
 - `PADDLE_SCHEMA = v1+fixtures.1` pins Paddle Billing v1 event names plus a fixture revision.
 - Provider packs refuse Paddle API keys and notification secrets (`pdl_live_`, `pdl_sdbx_`, `pdl_ntfset_`) in the adapter source or environment, without printing the value.
 - Provider scoping: `subscription.created`, `.updated` and `.canceled` reach the Paddle rules only with `provider: paddle`; untagged ones keep folding with the Polar rules.
@@ -53,7 +57,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ### Added
 
-- Free fixture goldens S7–S9: `trial_no_card` (no-card trial, `customer.subscription.trial_will_end`, failed first charge, pause, and cancel), `portal_downgrade_period_end_vs_immediate` (Customer Portal downgrade at period end versus immediate), and `entitlements_active_summary` (Stripe active entitlement summary). They do not read a license key and do not call Polar. Stripe API version stays `2025-10-29.clover`.
+- Free S7–S9 goldens: `trial_no_card` (no-card trial, `customer.subscription.trial_will_end`, failed first charge, pause, and cancel), `portal_downgrade_period_end_vs_immediate` (Customer Portal downgrade at period end versus immediate), and `entitlements_active_summary` (Stripe active entitlement summary). They do not read a license key and do not call Polar. Stripe API version stays `2025-10-29.clover`.
 
 ### Fixed
 
@@ -77,7 +81,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 ### Not in this version
 
 - Provider packs.
-- A monthly plan.
+- A per-month plan.
 
 ## [0.4.0] - 2026-10-16
 
@@ -87,7 +91,7 @@ Tag-ready pack. npm `gatefit@0.4.0` is live (`npx gatefit`, https://www.npmjs.co
 
 - Publishable `gatefit@0.4.0` CLI (`bin/gatefit.js`) and composite GitHub Action.
 - Callers, once a human tags the release commit: `uses: gatefit/gatefit@v0.4.0` and `uses: gatefit/gatefit/.github/actions/gatefit@v0.4.0`.
-- Fixture goldens for paid, cancel, refund, trial, past_due, duplicate delivery, seats, cancel-at-period-end, upgrade race, dispute, and unpaid retries.
+- Goldens for paid, cancel, refund, trial, past_due, duplicate delivery, seats, cancel-at-period-end, upgrade race, dispute, and unpaid retries.
 - Starlight docs app under `site/` and GHA-free `scripts/deploy-site.sh`.
 - `npm publish --dry-run` inside `./ci-local.sh`, with tarball checks that the bin is present and `site/` and secrets are absent.
 - Pro pack license gate. `GATEFIT_LICENSE_KEY` is checked with Polar's public validate endpoint. Free packs do not call it. Chaos mode is not in this release.
