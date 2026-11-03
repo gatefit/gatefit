@@ -199,12 +199,16 @@ async function handleSite(req: Request, store: TelemetryStore, now: Date): Promi
 
 // Read-only CORS for the public status page. Static origin, so a cached response is the
 // same for every caller.
-const READ_HEADERS = {
-  "content-type": "application/json",
-  "cache-control": "public, max-age=60",
+const READ_CORS = {
   "access-control-allow-origin": SITE_ORIGIN,
   "access-control-allow-methods": "GET",
   vary: "Origin",
+};
+
+const READ_HEADERS = {
+  ...READ_CORS,
+  "content-type": "application/json",
+  "cache-control": "public, max-age=60",
 };
 
 function json(body: unknown): Response {
@@ -212,10 +216,7 @@ function json(body: unknown): Response {
 }
 
 async function handleStatus(req: Request, status: StatusReader, now: Date): Promise<Response> {
-  if (req.method === "OPTIONS") {
-    const { "content-type": _c, "cache-control": _cc, ...cors } = READ_HEADERS;
-    return empty(204, cors);
-  }
+  if (req.method === "OPTIONS") return empty(204, READ_CORS);
   return json(await buildStatus(status, now));
 }
 
