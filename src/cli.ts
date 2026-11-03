@@ -6,6 +6,7 @@ import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driv
 import { LIVE_SCENARIO_IDS, runLiveLane, type LiveScenarioId } from "./live-scenarios.ts";
 import { resolveChaosSeed } from "./chaos.ts";
 import "./polar-pack.ts";
+import "./paddle-pack.ts";
 import { runInit } from "./init.ts";
 import { ensureProLicense } from "./license.ts";
 import { cmdTelemetry, maybeSendTelemetry, type Outcome } from "./telemetry.ts";
@@ -29,6 +30,7 @@ function usage(): string {
     "  gatefit run --suite <dir|file|id> --adapter <path>",
     "  gatefit run --suite chaos --adapter <path> [--seed <value>]",
     "  gatefit run --suite polar --adapter <path>",
+    "  gatefit run --suite paddle --adapter <path>",
     "  gatefit adapter-check",
     "  gatefit live --adapter <path> [--scenario <id>]",
     "  gatefit telemetry on|off|status",

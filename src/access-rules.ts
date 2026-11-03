@@ -1,4 +1,5 @@
 import type { AccessSnapshot, BillingEvent } from "./access-adapter.ts";
+import { isPaddleEvent, nextPaddleSnapshot } from "./paddle-rules.ts";
 import { isPolarEvent, nextPolarSnapshot } from "./polar-rules.ts";
 
 export type AccessStore = {
@@ -95,6 +96,9 @@ function withEntitlements(base: AccessSnapshot, event: BillingEvent): AccessSnap
 }
 
 export function nextSnapshot(current: AccessSnapshot, event: BillingEvent): AccessSnapshot {
+  // Paddle runs first: shared subscription.* names tagged provider: paddle must not
+  // fall into the Polar rules. Untagged ones keep folding with Polar.
+  if (isPaddleEvent(event)) return nextPaddleSnapshot(current, event);
   // Polar provider pack events dispatch on exact Polar type names only.
   if (isPolarEvent(event)) return nextPolarSnapshot(current, event);
   if (isDispute(event)) {

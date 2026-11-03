@@ -32,10 +32,16 @@ export type BillingEvent = {
   /** Polar benefit key for benefit_grant.* events. Set-added or removed from features. */
   benefit?: string;
   /**
-   * Event source for type names both providers send (refund.*). Polar rules handle
-   * those only when this is "polar"; untagged ones fold with the Stripe rules.
+   * Event source for type names two providers send. Polar rules handle refund.* only
+   * when this is "polar"; untagged ones fold with the Stripe rules. Paddle rules handle
+   * subscription.created/.updated/.canceled only when this is "paddle"; untagged ones
+   * fold with the Polar rules.
    */
-  provider?: "polar";
+  provider?: "polar" | "paddle";
+  /** Paddle adjustment action (refund, chargeback, chargeback_reverse, credit, ...). */
+  action?: string;
+  /** Paddle adjustment type. Only an approved full refund locks. */
+  adjustment_type?: "full" | "partial";
   /** Original timeline position. Chaos folds on this so arrival order is not access. */
   created?: number;
 };
@@ -60,16 +66,21 @@ export function assertNoLiveStripeSecret(haystack: string): void {
 }
 
 const POLAR_TOKEN = /\bpolar_(?:oat|pat)_[A-Za-z0-9]{16,}/;
+const PADDLE_KEY = /\bpdl_(?:live|sdbx|ntfset)_[A-Za-z0-9_]{16,}/;
 
 /**
- * Provider packs refuse live Stripe secrets and Polar organization or personal
- * access tokens. The message never echoes the matched value. polar_cl_ checkout
- * links are public and are not refused.
+ * Provider packs refuse live Stripe secrets, Polar organization or personal access
+ * tokens, and Paddle API keys or notification secrets. The message never echoes the
+ * matched value. polar_cl_ checkout links and Paddle client-side tokens are public
+ * and are not refused.
  */
 export function assertNoLiveSecret(haystack: string): void {
   assertNoLiveStripeSecret(haystack);
   if (POLAR_TOKEN.test(haystack)) {
     throw new Error("refuse Polar access token: Gatefit will not load a polar_oat_ or polar_pat_ token");
+  }
+  if (PADDLE_KEY.test(haystack)) {
+    throw new Error("refuse Paddle secret: Gatefit will not load a pdl_live_, pdl_sdbx_ or pdl_ntfset_ key");
   }
 }
 

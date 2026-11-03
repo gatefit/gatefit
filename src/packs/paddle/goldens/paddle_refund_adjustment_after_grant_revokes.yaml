@@ -1,0 +1,59 @@
+# D5. A Paddle refund adjustment after a grant revokes access.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# Policy: an approved partial refund keeps access. A pending_approval or rejected full refund keeps access.
+# An approved full refund adjustment locks, even with HTTP 200.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_refund_adjustment_after_grant_revokes
+subject: cus_paddle_d5
+steps:
+  - event:
+      id: evt_pd5_txn_completed
+      type: transaction.completed
+      customerId: cus_paddle_d5
+      status: completed
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd5_adj_partial
+      type: adjustment.created
+      customerId: cus_paddle_d5
+      status: approved
+      action: refund
+      adjustment_type: partial
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd5_adj_full_pending
+      type: adjustment.created
+      customerId: cus_paddle_d5
+      status: pending_approval
+      action: refund
+      adjustment_type: full
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd5_adj_full_rejected
+      type: adjustment.updated
+      customerId: cus_paddle_d5
+      status: rejected
+      action: refund
+      adjustment_type: full
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd5_adj_full_approved
+      type: adjustment.created
+      customerId: cus_paddle_d5
+      status: approved
+      action: refund
+      adjustment_type: full
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro

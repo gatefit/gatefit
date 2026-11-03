@@ -1,0 +1,81 @@
+# D8. A scheduled Paddle cancel keeps access until the period ends.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# scheduled_change.action=cancel maps to cancel_at_period_end. Before period_end the row stays open; removing
+# the schedule keeps access. At now >= period_end the row locks. subscription.canceled locks.
+# Polar sends subscription.updated and .canceled too, so those steps carry provider: paddle.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_cancel_keeps_access_until_period_end
+subject: cus_paddle_d8
+steps:
+  - event:
+      id: evt_pd8_sub_activated
+      type: subscription.activated
+      customerId: cus_paddle_d8
+      status: active
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_pd8_sub_cancel_scheduled
+      type: subscription.updated
+      customerId: cus_paddle_d8
+      status: active
+      provider: paddle
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577836800
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_pd8_sub_schedule_removed
+      type: subscription.updated
+      customerId: cus_paddle_d8
+      status: active
+      provider: paddle
+      cancel_at_period_end: false
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_pd8_sub_cancel_rescheduled
+      type: subscription.updated
+      customerId: cus_paddle_d8
+      status: active
+      provider: paddle
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577880000
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_pd8_sub_period_end
+      type: subscription.updated
+      customerId: cus_paddle_d8
+      status: active
+      provider: paddle
+      cancel_at_period_end: true
+      period_end: 1577923200
+      now: 1577923200
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd8_sub_canceled
+      type: subscription.canceled
+      customerId: cus_paddle_d8
+      status: canceled
+      provider: paddle
+    expect:
+      locked: true
+      plan: pro

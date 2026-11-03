@@ -1,0 +1,28 @@
+# D3. Paddle subscription.canceled delivered before subscription.activated.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# canceled (created 3) arrives first; activated (created 1) arrives late. Access folds on created, so it ends locked.
+# Polar sends subscription.canceled too, so that step carries provider: paddle.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_out_of_order_canceled_before_activated
+subject: cus_paddle_d3
+steps:
+  - event:
+      id: evt_pd3_sub_canceled
+      type: subscription.canceled
+      customerId: cus_paddle_d3
+      status: canceled
+      provider: paddle
+      created: 3
+    expect:
+      locked: true
+  - event:
+      id: evt_pd3_sub_activated
+      type: subscription.activated
+      customerId: cus_paddle_d3
+      status: active
+      plan: pro
+      httpStatus: 200
+      created: 1
+    expect:
+      locked: true

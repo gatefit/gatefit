@@ -1,0 +1,35 @@
+# D7. The Paddle checkout success return arrives before the webhook.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# The success return is modelled as transaction.paid with HTTP 200. It stays locked until transaction.completed.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_checkout_return_before_webhook
+subject: cus_paddle_d7
+steps:
+  - event:
+      id: evt_pd7_checkout_return
+      type: transaction.paid
+      customerId: cus_paddle_d7
+      status: paid
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+  - event:
+      id: evt_pd7_txn_updated_billed
+      type: transaction.updated
+      customerId: cus_paddle_d7
+      status: billed
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+  - event:
+      id: evt_pd7_txn_completed
+      type: transaction.completed
+      customerId: cus_paddle_d7
+      status: completed
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
