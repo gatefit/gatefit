@@ -12,6 +12,13 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 - Provider scoping: `subscription.created`, `.updated` and `.canceled` reach the Paddle rules only with `provider: paddle`; untagged ones keep folding with the Polar rules.
 - Opt-in telemetry accepts `pack: paddle`, in the CLI and in the collector Worker allowlist (the Worker needs a redeploy before it accepts it).
 
+### Fixed
+
+- Opt-in telemetry: a `--suite` path into the Polar or Paddle golden directory (or one file in it) reports `pack: polar|paddle` with `suite: pack`, licensed or not, instead of `suite: custom`. The path is still never sent; a mixed pack-and-free path that is refused stays `custom`.
+- Provider scoping: `order.created` and `order.updated` reach the Polar rules only with `provider: polar`, like `refund.*`, because Stripe's legacy Orders API sends the same names. In the reference adapters an untagged `order.updated` with status `paid` or `refunded` no longer changes access; it folds with the Stripe rules. `order.paid` and `order.refunded` are Polar-only and unchanged. Pack goldens are unchanged and still pass.
+- Site contrast: text now passes WCAG AA (4.5:1) at the peak of the red glows, not only at their resting opacity. The hero leak box glow is softer (gradient alpha 0.28 to 0.22, peak at the no-JS `breathe` loop) and its text paints above the glow. The flow diagram's node titles use the muted token instead of faint, sit above the red overlay, and the node red glow is softer (0.5 to 0.3). No new colours. The contrast test now reads the animated peak and also checks that the dial's dispute halo glow stays clear of its label text.
+- The h13 frame check's orbit-mint detector (`scripts/h13-mint.mjs`) no longer counts the mint-low chip fill as orbit mint; faint orbit mint (about 25% over the surface) still counts.
+
 ## [0.6.0] - 2026-11-02
 
 0.6.0 adds `gatefit init` (free), the paid Polar provider pack, and opt-in CLI telemetry, refreshes gatefit.io to the brand palette, and fixes Polar refund scoping and stale-event handling in the SQLite reference adapter. This change does not publish the package and does not create the tag.

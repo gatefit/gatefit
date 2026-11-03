@@ -77,6 +77,7 @@ async function cmdRun(suite: string, adapterPath: string, seed: string): Promise
   // A path into a Pro pack's golden directory is that pack, not a free suite.
   const owner = proPackOwning(files);
   if (owner) {
+    runPack = owner.id;
     const gate = await ensureProLicense();
     if (!gate.ok) {
       console.error(gate.message);
@@ -127,6 +128,8 @@ function isHelpFlag(arg: string | undefined): boolean {
 
 /** Set on a usage error so telemetry skips it (help, version, and usage never ping). */
 let usageError = false;
+// Pack that owns a path suite; set before the license gate so a locked run still reports it.
+let runPack: string | undefined;
 
 function isUsageError(err: unknown): boolean {
   const code = (err as { code?: unknown } | null)?.code;
@@ -222,5 +225,5 @@ try {
   if (isUsageError(err)) usageError = true;
 }
 // Opt-in only, bounded, silent. The exit code above is already fixed.
-if (!usageError) await maybeSendTelemetry(argv, outcome);
+if (!usageError) await maybeSendTelemetry(argv, outcome, process.env, { pack: runPack });
 process.exit(code);

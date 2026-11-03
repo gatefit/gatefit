@@ -22,17 +22,17 @@ The adapter needs `reset()`. The pack refuses `GATEFIT_LIVE_CLOCK`. `--seed` is 
 
 ## Schema
 
-The pack pins `POLAR_SCHEMA = v1+fixtures.1`. Events follow Polar's public v1 webhook event names: `order.*`, `subscription.*`, `benefit_grant.*`, `refund.*`, `checkout.*`. Polar has no dated API versions, so the pin is `v1` plus a fixture revision. `fixtures.N` goes up whenever a Polar golden changes meaning. Events stay minimal: `type`, `status`, `plan`, `seats`, `cancel_at_period_end`, `period_end`, `now`, `created`, and `benefit`. The event `id` is the Standard Webhooks `webhook-id`. Polar events carry no Stripe shortcut flags, so your adapter has to read the Polar type itself. Stripe sends `refund.created` and `refund.updated` too, so the pack's `refund.*` steps carry `provider: polar`. Your adapter must tell Polar events apart by their source (the endpoint or signature that received them), not by type name; an untagged `refund.*` folds with the Stripe rules.
+The pack pins `POLAR_SCHEMA = v1+fixtures.1`. Events follow Polar's public v1 webhook event names: `order.*`, `subscription.*`, `benefit_grant.*`, `refund.*`, `checkout.*`. Polar has no dated API versions, so the pin is `v1` plus a fixture revision. `fixtures.N` goes up whenever a Polar golden changes meaning. Events stay minimal: `type`, `status`, `plan`, `seats`, `cancel_at_period_end`, `period_end`, `now`, `created`, and `benefit`. The event `id` is the Standard Webhooks `webhook-id`. Polar events carry no Stripe shortcut flags, so your adapter has to read the Polar type itself. Stripe sends `refund.created` and `refund.updated` too, and its legacy Orders API sends `order.created` and `order.updated`. These four names reach the Polar rules only with `provider: polar`; untagged, they fold with the Stripe rules. The pack's `refund.*` steps carry the tag. Its two untagged `order.*` steps (a pending `order.created`, a partially refunded `order.updated`) expect an unchanged row under either rule set. `order.paid` and `order.refunded` are Polar-only names and need no tag. Your adapter must tell Polar events apart by their source (the endpoint or signature that received them), not by type name.
 
 ## What each event must do
 
 | Polar event | Expected access row |
 |---|---|
 | `checkout.created`, `checkout.updated` (any status, even HTTP 200) | unchanged |
-| `order.created` (pending) | unchanged |
-| `order.paid`, or `order.updated` with status `paid` | unlocked; plan and seats applied |
-| `order.refunded`, or `order.updated` with status `refunded` | locked |
-| `order.updated` with status `partially_refunded` | unchanged |
+| `order.created` with `provider: polar` (pending) | unchanged |
+| `order.paid`, or `order.updated` with `provider: polar` and status `paid` | unlocked; plan and seats applied |
+| `order.refunded`, or `order.updated` with `provider: polar` and status `refunded` | locked |
+| `order.updated` with status `partially_refunded` (tagged or not) | unchanged |
 | `refund.created` / `refund.updated` with `provider: polar` and status `succeeded` | locked; `pending` leaves it unchanged |
 | `subscription.created` with status `incomplete` or `trialing` | locked |
 | `subscription.created`, `subscription.active`, or `subscription.updated` with status `active` | unlocked; plan and seats applied |

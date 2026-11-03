@@ -292,6 +292,8 @@ h1 {
 }
 .db { display: flex; flex-direction: column; gap: 8px; }
 .db h3, .node h3 { font-size: 0.72rem; letter-spacing: 0.04em; color: var(--faint); font-weight: 560; }
+/* Above the .red overlay and its glow, and muted: faint fails AA on the red tint. */
+.node h3 { position: relative; color: var(--muted); }
 .db-line { justify-content: flex-start; align-items: baseline; gap: 8px; min-width: 0; }
 .db-line .k { flex: none; width: 8ch; }
 .db-line > span:last-child { min-width: 0; overflow-wrap: normal; }
@@ -314,11 +316,11 @@ h1 {
 	content: '';
 	position: absolute;
 	inset: -12% -8%;
-	background: radial-gradient(circle, rgba(242, 85, 90, 0.28), transparent 62%);
+	background: radial-gradient(circle, rgba(242, 85, 90, 0.22), transparent 62%);
 	opacity: 0.45;
 	pointer-events: none;
 }
-.db-leak > * { position: relative; }
+.db-leak > * { position: relative; z-index: 1; }
 .db-leak .k { color: var(--muted); }
 .k { color: var(--faint); margin-right: 6px; }
 .plan-trial { opacity: 1; }
@@ -426,7 +428,7 @@ h1 {
 	content: '';
 	position: absolute;
 	inset: -25%;
-	background: radial-gradient(circle, rgba(242, 85, 90, 0.5), transparent 62%);
+	background: radial-gradient(circle, rgba(242, 85, 90, 0.3), transparent 62%);
 	opacity: 0.45;
 }
 .node p { margin-top: 8px; font-family: var(--mono); font-size: 0.75rem; color: var(--body); position: relative; }
