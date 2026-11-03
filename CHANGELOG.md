@@ -12,6 +12,10 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 - Provider scoping: `subscription.created`, `.updated` and `.canceled` reach the Paddle rules only with `provider: paddle`; untagged ones keep folding with the Polar rules.
 - Opt-in telemetry accepts `pack: paddle`, in the CLI and in the collector Worker allowlist (the Worker needs a redeploy before it accepts it).
 
+### Fixed
+
+- Opt-in telemetry: a `--suite` path into the Polar or Paddle golden directory (or one file in it) reports `pack: polar|paddle` with `suite: pack`, licensed or not, instead of `suite: custom`. The path is still never sent; a mixed pack-and-free path that is refused stays `custom`.
+
 ## [0.6.0] - 2026-11-02
 
 0.6.0 adds `gatefit init` (free), the paid Polar provider pack, and opt-in CLI telemetry, refreshes gatefit.io to the brand palette, and fixes Polar refund scoping and stale-event handling in the SQLite reference adapter. This change does not publish the package and does not create the tag.

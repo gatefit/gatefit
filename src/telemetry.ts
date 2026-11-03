@@ -139,7 +139,14 @@ function pick<T extends string>(allowed: readonly T[], value: string, fallback: 
   return (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 }
 
-export function buildPayload(ctx: { installId: string; command: Command; outcome: Outcome; args: string[] }): Payload {
+export function buildPayload(ctx: {
+  installId: string;
+  command: Command;
+  outcome: Outcome;
+  args: string[];
+  /** Pack that owns a path suite, as resolved by the CLI. Allowlisted like the flag; never a path. */
+  pack?: string;
+}): Payload {
   const version = readPackageVersion();
   let template = "";
   let pack = "";
@@ -151,7 +158,7 @@ export function buildPayload(ctx: { installId: string; command: Command; outcome
   if (ctx.command === "run") {
     const value = flagValue(ctx.args, "suite");
     if (value !== undefined) {
-      pack = pick(PACKS, value, "");
+      pack = pick(PACKS, value, "") || pick(PACKS, ctx.pack ?? "", "");
       suite = pack ? "pack" : pick(SUITES, value, "custom");
     }
   }
@@ -196,7 +203,12 @@ export async function sendBounded(url: string, payload: Payload): Promise<void> 
 }
 
 /** Called once after a command finished. Silent; the exit code is decided before this runs. */
-export async function maybeSendTelemetry(argv: string[], outcome: Outcome, env: Env = process.env): Promise<void> {
+export async function maybeSendTelemetry(
+  argv: string[],
+  outcome: Outcome,
+  env: Env = process.env,
+  run: { pack?: string } = {},
+): Promise<void> {
   try {
     const command = argv[0];
     if (!(COMMANDS as readonly string[]).includes(command ?? "")) return;
@@ -210,7 +222,7 @@ export async function maybeSendTelemetry(argv: string[], outcome: Outcome, env: 
       installId = randomUUID();
       saveConfig(env, { ...cfg, v: 1, install_id: installId });
     }
-    await sendBounded(url, buildPayload({ installId, command: command as Command, outcome, args: argv.slice(1) }));
+    await sendBounded(url, buildPayload({ installId, command: command as Command, outcome, args: argv.slice(1), pack: run.pack }));
   } catch {
     // Telemetry must never change a run.
   }

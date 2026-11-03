@@ -271,6 +271,63 @@ test("paddle_reports_pack_paddle", async () => {
   assert.deepEqual([p2!.command, p2!.suite, p2!.pack, p2!.outcome], ["run", "pack", "polar", "fail"]);
 });
 
+// GATEFIT-H29: a path into a pack's golden directory reports that pack, licensed or not.
+test("polar_golden_dir_path_reports_pack_polar", async () => {
+  const c = await collector();
+  const h = freshHome();
+  writeConfig(h, ON_CONFIG);
+  const r = await runBin(["run", "--suite", "src/packs/polar/goldens", "--adapter", HARDENED], h, {
+    GATEFIT_TELEMETRY_URL: c.url,
+  });
+  assert.equal(r.status, 1, "unlicensed Polar path is locked");
+  assert.equal(c.bodies.length, 1);
+  const p = JSON.parse(c.bodies[0]!) as Record<string, unknown>;
+  assertAllowed(p);
+  assert.deepEqual([p.command, p.suite, p.pack, p.outcome], ["run", "pack", "polar", "fail"]);
+  assert.ok(!c.bodies[0]!.includes("goldens"), "no path sent");
+});
+
+test("paddle_golden_file_path_reports_pack_paddle", async () => {
+  const c = await collector();
+  const h = freshHome();
+  writeConfig(h, ON_CONFIG);
+  const file = "src/packs/paddle/goldens/paddle_transaction_completed_grants.yaml";
+  const r = await runBin(["run", "--suite", file, "--adapter", HARDENED], h, { GATEFIT_TELEMETRY_URL: c.url });
+  assert.equal(r.status, 1, "unlicensed Paddle path is locked");
+  assert.equal(c.bodies.length, 1);
+  const p = JSON.parse(c.bodies[0]!) as Record<string, unknown>;
+  assertAllowed(p);
+  assert.deepEqual([p.command, p.suite, p.pack, p.outcome], ["run", "pack", "paddle", "fail"]);
+  assert.ok(!c.bodies[0]!.includes("paddle_transaction"), "no path sent");
+});
+
+test("licensed_polar_golden_dir_path_reports_pack_polar_pass", async () => {
+  const license = http.createServer((req, res) => {
+    req.resume();
+    req.on("end", () => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ status: "granted" }));
+    });
+  });
+  servers.push(license);
+  await new Promise<void>((resolve) => license.listen(0, "127.0.0.1", () => resolve()));
+  const { port } = license.address() as AddressInfo;
+  const c = await collector();
+  const h = freshHome();
+  writeConfig(h, ON_CONFIG);
+  const r = await runBin(["run", "--suite", "src/packs/polar/goldens", "--adapter", HARDENED], h, {
+    GATEFIT_TELEMETRY_URL: c.url,
+    GATEFIT_LICENSE_KEY: "GATEFIT-H29-VALID-KEY",
+    GATEFIT_LICENSE_VALIDATE_URL: `http://127.0.0.1:${port}/v1/customer-portal/license-keys/validate`,
+    GATEFIT_LICENSE_CACHE: path.join(h.home, "license-cache.json"),
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(c.bodies.length, 1);
+  const p = JSON.parse(c.bodies[0]!) as Record<string, unknown>;
+  assertAllowed(p);
+  assert.deepEqual([p.command, p.suite, p.pack, p.outcome], ["run", "pack", "polar", "pass"]);
+});
+
 test("planted_secrets_never_leave", async () => {
   const c = await collector();
   const h = freshHome();
