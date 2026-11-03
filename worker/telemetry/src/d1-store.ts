@@ -4,7 +4,7 @@
  * node:sqlite through a small shim.
  */
 import type { CountRow, Stats, TelemetryStore } from "./handler.ts";
-import { rollupWindow, type Check, type DayAgg, type StatusStore } from "./status.ts";
+import { SERVICES, rollupWindow, type Check, type DayAgg, type StatusStore } from "./status.ts";
 
 export interface D1Result<T> {
   results: T[];
@@ -82,12 +82,12 @@ export function d1StatusStore(db: D1Database): StatusStore {
       );
     },
     async latest() {
+      // One primary-key lookup per service (service, ts DESC), so reads stay at five rows.
+      const one = `SELECT * FROM (SELECT ts, service, ok, latency_ms, detail FROM checks
+        WHERE service = ? ORDER BY ts DESC LIMIT 1)`;
       const res = await db
-        .prepare(
-          `SELECT c.ts, c.service, c.ok, c.latency_ms, c.detail FROM checks c
-           JOIN (SELECT service, MAX(ts) AS ts FROM checks GROUP BY service) m
-           ON c.service = m.service AND c.ts = m.ts`,
-        )
+        .prepare(SERVICES.map(() => one).join(" UNION ALL "))
+        .bind(...SERVICES)
         .all<Check>();
       return res.results;
     },

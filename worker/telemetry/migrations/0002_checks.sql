@@ -10,6 +10,9 @@ CREATE TABLE checks (
   PRIMARY KEY (service, ts)
 );
 
+-- Rollup and prune filter on ts alone; without this they scan the table.
+CREATE INDEX checks_ts ON checks (ts);
+
 -- Nightly rollup of finished UTC days, kept for 90 days.
 CREATE TABLE check_days (
   day TEXT NOT NULL,

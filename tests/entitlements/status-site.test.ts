@@ -262,6 +262,17 @@ test("status text passes WCAG AA on navy, the surface, and the banner tints; fil
       assert.ok(ratio >= 4.5, `${k} on ${sel} ${bg} is ${ratio.toFixed(2)}:1`);
     }
   }
+  // The skip link keeps landing's navy-on-mint; no status rule may recolour it.
+  const landing = read("site/src/styles/landing.css");
+  assert.match(rule(landing, ".skip"), /background: var\(--mint\);\s*color: var\(--bg\)/);
+  assert.ok(contrast(BRAND.navy, BRAND.mint) >= 4.5, "skip link navy on mint");
+  assert.doesNotMatch(css, /\n\.status-page a \{/, "bare .status-page a rule outranks .skip");
+  for (const m of css.matchAll(/\n([^{}\n]*\ba\b[^{}\n]*)\{[^}]*\bcolor:/g)) {
+    const sel = m[1]!;
+    if (/\.site-nav|\.skip|:not\(\.skip\)|\.st |\.st-foot/.test(sel)) continue;
+    assert.fail(`status.css link colour rule may hit the skip link: ${sel.trim()}`);
+  }
+  assert.match(read("site/src/pages/status.astro"), /<a class="skip" href="#status-main">/);
   assert.match(rule(css, ".state.down"), /color: var\(--red-high\)/);
   assert.match(rule(css, ".state.deg"), /color: var\(--amber\)/);
   assert.match(rule(css, ".state.unknown"), /color: var\(--muted\)/);

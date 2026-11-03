@@ -358,6 +358,50 @@ test("status_cache_control_public_max_age_60", async () => {
   }
 });
 
+test("status_head_has_get_headers_and_no_body", async () => {
+  const res = await handleRequest(new Request("https://t.gatefit.io/v1/status", { method: "HEAD" }), noStore, NOW, new MemoryReader());
+  assert.equal(res.status, 200);
+  assert.equal(res.body, null);
+  assert.equal(res.headers.get("content-type"), "application/json");
+  assert.equal(res.headers.get("cache-control"), "public, max-age=60");
+  assert.equal(res.headers.get("access-control-allow-origin"), "https://gatefit.io");
+  assert.match(res.headers.get("vary") ?? "", /Origin/);
+});
+
+test("probes cancel unread bodies on non-200 and on the Polar HEAD", async () => {
+  const cancelled: string[] = [];
+  const tracked = (name: string, status: number) =>
+    new Response(
+      new ReadableStream<Uint8Array>({
+        pull(c) {
+          c.enqueue(new TextEncoder().encode("x"));
+        },
+        cancel() {
+          cancelled.push(name);
+        },
+      }),
+      { status },
+    );
+  const routes = healthyRoutes();
+  routes[SITE] = () => tracked("site", 503);
+  routes[NPM] = () => Response.json({ version: "0.7.0" });
+  routes[ACTION("0.7.0")] = () => tracked("action", 404);
+  routes[`HEAD ${POLAR_CHECKOUT_URL}`] = () => tracked("polar-head", 200);
+  await runChecks(deps(routes), { polar: true });
+  const npmDown = healthyRoutes();
+  npmDown[NPM] = () => tracked("npm", 500);
+  npmDown[`HEAD ${POLAR_CHECKOUT_URL}`] = () => tracked("polar-head-405", 405);
+  npmDown[`GET ${POLAR_CHECKOUT_URL}`] = () => tracked("polar-get", 200);
+  await runChecks(deps(npmDown), { polar: true });
+  assert.deepEqual(cancelled.sort(), ["action", "npm", "polar-get", "polar-head", "polar-head-405", "site"]);
+});
+
+test("d1 latest() reads one indexed row per service, not a table scan", () => {
+  const src = read("worker/telemetry/src/d1-store.ts");
+  assert.doesNotMatch(src, /MAX\(ts\)/);
+  assert.match(src, /ORDER BY ts DESC LIMIT 1/);
+});
+
 test("status_rejects_post_405", async () => {
   for (const method of ["POST", "PUT", "DELETE"]) {
     const res = await handleRequest(new Request("https://t.gatefit.io/v1/status", { method }), noStore, NOW, new MemoryReader());
@@ -416,7 +460,7 @@ test("rollup_is_idempotent", { skip: noSqlite }, async () => {
   ]);
 });
 
-test("rollup_prunes_raw_over_48h_and_days_over_90", { skip: noSqlite }, async () => {
+test("rollup_keeps_raw_from_start_of_utc_day_two_back_48_to_72h_and_90_days", { skip: noSqlite }, async () => {
   const { sql, d1 } = freshDb();
   const store = d1StatusStore(d1);
   // A full day 3 days back was rolled up on an earlier night; its raw rows are past retention.
@@ -473,6 +517,7 @@ test("migration 0002 shape: CHECK constraints, both primary keys, no ids, IPs, o
   assert.match(sql, /CHECK \(length\(detail\) <= 64\)/);
   assert.match(sql, /PRIMARY KEY \(service, ts\)/);
   assert.match(sql, /PRIMARY KEY \(day, service\)/);
+  assert.match(sql, /CREATE INDEX checks_ts ON checks \(ts\);/);
   const columns = sql.replace(/--[^\n]*/g, "");
   assert.doesNotMatch(columns, /install_id|\bip\b|body|user_agent|header/i);
   assert.ok(!fs.existsSync(path.join(root, "worker/telemetry/migrations/0003_checks.sql")));

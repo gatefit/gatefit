@@ -65,7 +65,7 @@ The collector stores daily counts per allowed value. It keeps a 16-character SHA
 
 ## Status page
 
-[`/status/`](/status/) shows service health and the public usage counts from `GET https://t.gatefit.io/v1/stats`. A Cron Trigger on the collector Worker runs the checks and stores one row per service per run. The page reads them from `GET https://t.gatefit.io/v1/status`.
+[`/status/`](/status/) shows service health and the public usage counts from `GET https://t.gatefit.io/v1/stats`. A Cron Trigger on the collector Worker runs the checks and stores one row per check: every 5 minutes for four services, every 30 minutes for Polar. The page reads them from `GET https://t.gatefit.io/v1/status`.
 
 | Tile | What the check does |
 | --- | --- |

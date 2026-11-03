@@ -217,6 +217,7 @@ function json(body: unknown): Response {
 
 async function handleStatus(req: Request, status: StatusReader, now: Date): Promise<Response> {
   if (req.method === "OPTIONS") return empty(204, READ_CORS);
+  if (req.method === "HEAD") return new Response(null, { status: 200, headers: READ_HEADERS });
   return json(await buildStatus(status, now));
 }
 
@@ -248,7 +249,7 @@ export async function handleRequest(
       return req.method === "GET" ? handleStats(url, store, now) : empty(405);
     case "/v1/status":
       if (!status) return empty(404);
-      return req.method === "GET" || req.method === "OPTIONS" ? handleStatus(req, status, now) : empty(405);
+      return ["GET", "HEAD", "OPTIONS"].includes(req.method) ? handleStatus(req, status, now) : empty(405);
     default:
       return empty(404);
   }

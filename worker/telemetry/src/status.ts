@@ -108,7 +108,9 @@ async function measure(service: ServiceId, deps: ProbeDeps, probe: (signal: Abor
   return { ts: start, service, ok: out.ok ? 1 : 0, latency_ms: Math.max(0, Math.round(end - start)), detail: out.detail.slice(0, 64) };
 }
 
-function httpFail(res: Response): Outcome {
+/** Non-200: the body is never read, so release it. */
+async function httpFail(res: Response): Promise<Outcome> {
+  await res.body?.cancel();
   return { ok: false, detail: `http ${res.status}` };
 }
 
@@ -151,11 +153,12 @@ function polarOk(res: Response): boolean {
 
 async function probePolar(deps: ProbeDeps, signal: AbortSignal): Promise<Outcome> {
   let res = await deps.fetch(POLAR_CHECKOUT_URL, { method: "HEAD", redirect: "manual", signal });
+  await res.body?.cancel();
   if (res.status === 405 || res.status === 501) {
     res = await deps.fetch(POLAR_CHECKOUT_URL, { method: "GET", redirect: "manual", signal });
     await res.body?.cancel();
   }
-  return polarOk(res) ? { ok: true, detail: "" } : httpFail(res);
+  return polarOk(res) ? { ok: true, detail: "" } : { ok: false, detail: `http ${res.status}` };
 }
 
 async function probeTelemetry(deps: ProbeDeps): Promise<Outcome> {

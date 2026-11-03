@@ -8,8 +8,9 @@
 	--card-line: rgba(var(--line-rgb), 0.14);
 	color: var(--text);
 }
-.status-page a { color: var(--mint); text-decoration: none; }
-.status-page a:hover { text-decoration: underline; }
+/* :not(.skip) keeps landing's navy-on-mint skip link (mint on mint is 1:1). */
+.status-page a:not(.skip) { color: var(--mint); text-decoration: none; }
+.status-page a:not(.skip):hover { text-decoration: underline; }
 .status-page .site-nav a.nav-link { color: var(--muted); }
 .status-page .site-nav a.word { color: var(--text); }
 .status-page .site-nav a:hover { text-decoration: none; }
