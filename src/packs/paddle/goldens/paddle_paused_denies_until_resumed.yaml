@@ -1,0 +1,46 @@
+# D6. A paused Paddle subscription denies access until resumed.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# subscription.paused locks, even with HTTP 200. A paused subscription.updated stays locked. subscription.resumed reopens.
+# Polar sends subscription.updated too, so that step carries provider: paddle.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_paused_denies_until_resumed
+subject: cus_paddle_d6
+steps:
+  - event:
+      id: evt_pd6_sub_activated
+      type: subscription.activated
+      customerId: cus_paddle_d6
+      status: active
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd6_sub_paused
+      type: subscription.paused
+      customerId: cus_paddle_d6
+      status: paused
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd6_sub_updated_paused
+      type: subscription.updated
+      customerId: cus_paddle_d6
+      status: paused
+      provider: paddle
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd6_sub_resumed
+      type: subscription.resumed
+      customerId: cus_paddle_d6
+      status: active
+      plan: pro
+    expect:
+      locked: false
+      plan: pro

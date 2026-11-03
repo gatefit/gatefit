@@ -101,6 +101,8 @@ The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is live. The Polar p
 
 The Polar provider pack ships in 0.6.0 as `gatefit run --suite polar`. It uses the same license and checks your access table against Polar webhooks: [docs](site/src/content/docs/polar-pack.md).
 
+The Paddle provider pack arrives in the next release as `gatefit run --suite paddle`, under the same license: [docs](site/src/content/docs/paddle-pack.md).
+
 ```bash
 gatefit run --suite chaos --adapter src/adapters/hardened.ts --seed 1
 ```

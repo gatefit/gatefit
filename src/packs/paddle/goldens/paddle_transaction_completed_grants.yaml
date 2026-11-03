@@ -1,0 +1,37 @@
+# D1. Paddle transaction.completed grants access.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# A created and a paid transaction with HTTP 200 stay locked. Only transaction.completed opens the row.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_transaction_completed_grants
+subject: cus_paddle_d1
+steps:
+  - event:
+      id: evt_pd1_txn_created
+      type: transaction.created
+      customerId: cus_paddle_d1
+      status: draft
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+  - event:
+      id: evt_pd1_txn_paid
+      type: transaction.paid
+      customerId: cus_paddle_d1
+      status: paid
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+  - event:
+      id: evt_pd1_txn_completed
+      type: transaction.completed
+      customerId: cus_paddle_d1
+      status: completed
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1

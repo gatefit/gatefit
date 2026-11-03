@@ -99,6 +99,36 @@ test("Polar pack page is honest about price, release, and HTTP 200", () => {
   assert.match(read("site/astro.config.mjs"), /slug: 'polar-pack'/);
 });
 
+test("Paddle pack page is honest about price, release, and HTTP 200", () => {
+  const page = read("site/src/content/docs/paddle-pack.md");
+  const doc = read("docs/paddle.md");
+  const readme = read("README.md");
+  const changelog = read("CHANGELOG.md");
+  assert.match(page, /gatefit run --suite paddle --adapter/);
+  assert.match(page, /The Paddle provider pack arrives in the next release\./);
+  assert.match(
+    page,
+    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S9 and Phase 2 stay free\./,
+  );
+  assert.match(page, /HTTP 200 is not access/);
+  const schema = read("src/paddle-pack.ts").match(/export const PADDLE_SCHEMA = "([^"]+)";/)?.[1];
+  assert.equal(schema, "v1+fixtures.1");
+  assert.ok(page.includes(`PADDLE_SCHEMA = ${schema}`), "docs cite PADDLE_SCHEMA");
+  assert.match(page, /`provider: paddle`/);
+  assert.match(page, /pdl_live_/);
+  assert.match(page, /transaction\.completed/);
+  const unreleased = changelog.slice(changelog.indexOf("## [Unreleased]"), changelog.indexOf("\n## [", changelog.indexOf("## [Unreleased]") + 1));
+  assert.match(unreleased, /--suite paddle/);
+  for (const text of [page, doc, readme, unreleased]) {
+    assert.doesNotMatch(text, /\$19|monthly|coming soon|optional updates/i);
+    assert.doesNotMatch(text, /fixture goldens|names match the goldens|docs live at|checkout is live/i);
+    assert.doesNotMatch(text, /paddle[^\n]*(ships in|is live|shipped)/i);
+  }
+  assert.match(readme, /Paddle provider pack arrives in the next release/);
+  assert.match(changelog, /gatefit run --suite paddle/);
+  assert.match(read("site/astro.config.mjs"), /slug: 'paddle-pack'/);
+});
+
 const GATEFIT_CHECKOUT_URL =
   "https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0";
 

@@ -29,7 +29,7 @@ export const ALLOWED = {
   platform: ["linux", "darwin", "win32", "other"],
   arch: ["x64", "arm64", "other"],
   template: ["", "drizzle", "prisma", "supabase", "generic", "auto"],
-  pack: ["", "chaos", "polar"],
+  pack: ["", "chaos", "polar", "paddle"],
   suite: [
     "",
     "pack",

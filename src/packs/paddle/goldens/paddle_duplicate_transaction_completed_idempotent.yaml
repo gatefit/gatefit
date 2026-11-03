@@ -1,0 +1,47 @@
+# D2. A replayed Paddle transaction.completed does not re-grant.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# The same event_id twice is one grant. An approved full refund locks; replaying the completed event_id stays locked.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_duplicate_transaction_completed_idempotent
+subject: cus_paddle_d2
+steps:
+  - event:
+      id: evt_pd2_txn_completed
+      type: transaction.completed
+      customerId: cus_paddle_d2
+      status: completed
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd2_txn_completed
+      type: transaction.completed
+      customerId: cus_paddle_d2
+      status: completed
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd2_refund_full
+      type: adjustment.updated
+      customerId: cus_paddle_d2
+      status: approved
+      action: refund
+      adjustment_type: full
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd2_txn_completed
+      type: transaction.completed
+      customerId: cus_paddle_d2
+      status: completed
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro

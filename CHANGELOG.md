@@ -4,6 +4,14 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ## [Unreleased]
 
+### Added
+
+- Paddle provider pack (paid, Gatefit Indie License): `gatefit run --suite paddle --adapter <path>` replays D1–D9 Paddle Billing goldens (`src/packs/paddle/goldens`, ids `paddle_*`) against your access table. It arrives in the next release; until then run it from a checkout with `node bin/gatefit.js run --suite paddle`.
+- `PADDLE_SCHEMA = v1+fixtures.1` pins Paddle Billing v1 event names plus a fixture revision.
+- Provider packs refuse Paddle API keys and notification secrets (`pdl_live_`, `pdl_sdbx_`, `pdl_ntfset_`) in the adapter source or environment, without printing the value.
+- Provider scoping: `subscription.created`, `.updated` and `.canceled` reach the Paddle rules only with `provider: paddle`; untagged ones keep folding with the Polar rules.
+- Opt-in telemetry accepts `pack: paddle`, in the CLI and in the collector Worker allowlist (the Worker needs a redeploy before it accepts it).
+
 ## [0.6.0] - 2026-11-02
 
 0.6.0 adds `gatefit init` (free), the paid Polar provider pack, and opt-in CLI telemetry, refreshes gatefit.io to the brand palette, and fixes Polar refund scoping and stale-event handling in the SQLite reference adapter. This change does not publish the package and does not create the tag.

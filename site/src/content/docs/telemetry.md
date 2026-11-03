@@ -54,7 +54,7 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | `command` | `init`, `run`, `adapter-check`, or `live` |
 | `outcome` | `pass` (exit 0), `fail` (non-zero exit), or `error` (crash) |
 | `template` | `init` only: `drizzle`, `prisma`, `supabase`, `generic`, or `auto` (no `--template`); empty otherwise |
-| `pack` | `chaos`, `polar`, or empty |
+| `pack` | `chaos`, `polar`, `paddle`, or empty |
 | `suite` | a bundled golden id, `pack`, `custom` (any path or other value), or empty |
 
 Never sent: file paths, repo or package names, emails, adapter names or contents, license keys, Stripe or Polar data, environment values, IP addresses, or command output.

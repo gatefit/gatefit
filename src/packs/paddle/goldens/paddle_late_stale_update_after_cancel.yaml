@@ -1,0 +1,41 @@
+# D4. A stale Paddle subscription.updated after cancel does not reopen.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# activated (created 1), canceled (created 3), then a late active update (created 2). It ends locked.
+# Polar sends subscription.updated and .canceled too, so those steps carry provider: paddle.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_late_stale_update_after_cancel
+subject: cus_paddle_d4
+steps:
+  - event:
+      id: evt_pd4_sub_activated
+      type: subscription.activated
+      customerId: cus_paddle_d4
+      status: active
+      plan: pro
+      created: 1
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd4_sub_canceled
+      type: subscription.canceled
+      customerId: cus_paddle_d4
+      status: canceled
+      provider: paddle
+      created: 3
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd4_sub_updated_stale
+      type: subscription.updated
+      customerId: cus_paddle_d4
+      status: active
+      provider: paddle
+      plan: pro
+      httpStatus: 200
+      created: 2
+    expect:
+      locked: true
+      plan: pro

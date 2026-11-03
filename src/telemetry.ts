@@ -31,7 +31,7 @@ export const PLATFORMS = ["linux", "darwin", "win32", "other"] as const;
 export const ARCHS = ["x64", "arm64", "other"] as const;
 export const TEMPLATES = ["drizzle", "prisma", "supabase", "generic", "auto"] as const;
 const INIT_TEMPLATE_FLAGS = TEMPLATES.filter((t) => t !== "auto");
-export const PACKS = ["chaos", "polar"] as const;
+export const PACKS = ["chaos", "polar", "paddle"] as const;
 /** The bundled free golden ids. Anything else passed to --suite reports as `custom`. */
 export const SUITES = [
   "paid_grants_access",

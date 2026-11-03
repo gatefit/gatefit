@@ -1,0 +1,55 @@
+# D9. A past_due Paddle subscription denies access until recovery.
+# PADDLE_SCHEMA v1+fixtures.1 (src/paddle-pack.ts). Paddle Billing v1 webhook event names.
+# Event id is the Paddle notification event_id. Paddle types carry no Stripe shortcut flags.
+# subscription.past_due locks. Policy: transaction.payment_failed leaves the row unchanged; the subscription
+# event decides. A subscription.updated with status active reopens. Polar sends subscription.updated too,
+# so that step carries provider: paddle.
+# HTTP 200 is not access. Paid Paddle provider pack; runs only with a Gatefit Indie License.
+id: paddle_past_due_denies_until_recovery
+subject: cus_paddle_d9
+steps:
+  - event:
+      id: evt_pd9_txn_completed
+      type: transaction.completed
+      customerId: cus_paddle_d9
+      status: completed
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_pd9_sub_past_due
+      type: subscription.past_due
+      customerId: cus_paddle_d9
+      status: past_due
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd9_txn_payment_failed
+      type: transaction.payment_failed
+      customerId: cus_paddle_d9
+      status: past_due
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd9_txn_paid_retry
+      type: transaction.paid
+      customerId: cus_paddle_d9
+      status: paid
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_pd9_sub_recovered
+      type: subscription.updated
+      customerId: cus_paddle_d9
+      status: active
+      provider: paddle
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
