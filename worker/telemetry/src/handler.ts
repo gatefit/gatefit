@@ -3,9 +3,14 @@
  * crypto.subtle only, so it runs on Workers and under the repo tests. Storage is behind
  * TelemetryStore; the Cloudflare D1 binding lives in index.ts.
  *
+ * GATEFIT-H30: GET /v1/status serves probe results from a StatusReader; /v1/status and
+ * /v1/stats carry read-only CORS for gatefit.io and a 60-second public cache.
+ *
  * Privacy: every value is allowlisted, the raw install id is hashed to a 16-hex day key
  * and dropped, nothing is logged, and client IPs and user agents are never read.
  */
+import { buildStatus, type StatusReader } from "./status.ts";
+
 export const SITE_ORIGIN = "https://gatefit.io";
 
 /** Must equal PAYLOAD_KEYS in src/telemetry.ts (asserted by the tests). */
@@ -192,6 +197,30 @@ async function handleSite(req: Request, store: TelemetryStore, now: Date): Promi
   return empty(204, SITE_CORS);
 }
 
+// Read-only CORS for the public status page. Static origin, so a cached response is the
+// same for every caller.
+const READ_CORS = {
+  "access-control-allow-origin": SITE_ORIGIN,
+  "access-control-allow-methods": "GET",
+  vary: "Origin",
+};
+
+const READ_HEADERS = {
+  ...READ_CORS,
+  "content-type": "application/json",
+  "cache-control": "public, max-age=60",
+};
+
+function json(body: unknown): Response {
+  return new Response(JSON.stringify(body), { status: 200, headers: READ_HEADERS });
+}
+
+async function handleStatus(req: Request, status: StatusReader, now: Date): Promise<Response> {
+  if (req.method === "OPTIONS") return empty(204, READ_CORS);
+  if (req.method === "HEAD") return new Response(null, { status: 200, headers: READ_HEADERS });
+  return json(await buildStatus(status, now));
+}
+
 async function handleStats(url: URL, store: TelemetryStore, now: Date): Promise<Response> {
   const raw = url.searchParams.get("days");
   let days = DEFAULT_DAYS;
@@ -201,14 +230,15 @@ async function handleStats(url: URL, store: TelemetryStore, now: Date): Promise<
     if (days < 1 || days > MAX_DAYS) return empty(400);
   }
   const since = dayOf(new Date(now.getTime() - (days - 1) * 86_400_000));
-  const stats = await store.stats(since);
-  return new Response(JSON.stringify(stats), {
-    status: 200,
-    headers: { "content-type": "application/json", "cache-control": "no-store" },
-  });
+  return json(await store.stats(since));
 }
 
-export async function handleRequest(req: Request, store: TelemetryStore, now: Date = new Date()): Promise<Response> {
+export async function handleRequest(
+  req: Request,
+  store: TelemetryStore,
+  now: Date = new Date(),
+  status?: StatusReader,
+): Promise<Response> {
   const url = new URL(req.url);
   switch (url.pathname) {
     case "/v1/event":
@@ -217,6 +247,9 @@ export async function handleRequest(req: Request, store: TelemetryStore, now: Da
       return req.method === "POST" || req.method === "OPTIONS" ? handleSite(req, store, now) : empty(405);
     case "/v1/stats":
       return req.method === "GET" ? handleStats(url, store, now) : empty(405);
+    case "/v1/status":
+      if (!status) return empty(404);
+      return ["GET", "HEAD", "OPTIONS"].includes(req.method) ? handleStatus(req, status, now) : empty(405);
     default:
       return empty(404);
   }

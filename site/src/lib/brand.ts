@@ -15,6 +15,11 @@ export const BRAND = {
 	red: '#F2555A',
 	// Text red on the raised surface-2 and the red-tinted leak pill (AA there).
 	redHigh: '#FF8487',
+	// H30 status page: degraded state (text and fill).
+	amber: '#FFC266',
+	// H30 non-text fills: the unknown state dot and empty (no data) uptime ticks, 3:1 on the surface.
+	unknown: '#7A89A8',
+	tickEmpty: '#5E7094',
 } as const;
 
 /** Open/pass state. Merged into the brand mint (H27); red stays locked/fail. */

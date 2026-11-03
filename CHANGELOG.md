@@ -11,6 +11,8 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 - Provider packs refuse Paddle API keys and notification secrets (`pdl_live_`, `pdl_sdbx_`, `pdl_ntfset_`) in the adapter source or environment, without printing the value.
 - Provider scoping: `subscription.created`, `.updated` and `.canceled` reach the Paddle rules only with `provider: paddle`; untagged ones keep folding with the Polar rules.
 - Opt-in telemetry accepts `pack: paddle`, in the CLI and in the collector Worker allowlist (the Worker needs a redeploy before it accepts it).
+- Public status page at `gatefit.io/status/`: current state and 90 days of daily uptime for gatefit.io, the npm package, the collector, the GitHub Action tag, and the Polar Checkout Link, plus the opt-in usage counts (runs, init, Buy clicks, provider packs) for 7, 30 or 90 days. Any failed or unexpected response shows unknown, never green. The page stores nothing in the browser and ships no sample data. Linked from the landing nav and the docs sidebar.
+- Collector Worker: `GET /v1/status`, a Cron Trigger that runs the checks every 5 minutes (Polar every 30 minutes) and rolls up finished days nightly, and migration `0002_checks.sql` (`checks`, `check_days`). `/v1/stats` and `/v1/status` send read-only CORS for gatefit.io and `cache-control: public, max-age=60` (was `no-store`). The Worker needs a redeploy and migration `0002` before the status page shows data; until then every tile shows unknown.
 
 ### Fixed
 

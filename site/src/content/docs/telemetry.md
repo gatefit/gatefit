@@ -62,3 +62,27 @@ Never sent: file paths, repo or package names, emails, adapter names or contents
 ### What the collector keeps
 
 The collector stores daily counts per allowed value. It keeps a 16-character SHA-256 prefix of the install id per day for distinct-install counts, and drops the raw id. Counts and install hashes sit in separate tables, so an install cannot be linked to the commands it ran. The collector does not log request bodies, client IPs, or user agents.
+
+## Status page
+
+[`/status/`](/status/) shows service health and the public usage counts from `GET https://t.gatefit.io/v1/stats`. A Cron Trigger on the collector Worker runs the checks and stores one row per check: every 5 minutes for four services, every 30 minutes for Polar. The page reads them from `GET https://t.gatefit.io/v1/status`.
+
+| Tile | What the check does |
+| --- | --- |
+| gatefit.io | `GET https://gatefit.io/` returns 200 and the page contains `Gatefit`. |
+| npm gatefit | `GET https://registry.npmjs.org/gatefit/latest` returns 200 with a valid version. The tile shows that version. |
+| t.gatefit.io | Runs `GET /v1/stats?days=1` in-process, inside the Worker, against D1. A Worker cannot reliably fetch its own domain, so this checks the Worker and its database, not the public route. |
+| GitHub Action | Fetches `action.yml` at the tag `v<npm latest>` from `raw.githubusercontent.com` and checks that it is a composite action. If the npm check failed there is no version to check, so this tile shows unknown. |
+| Polar checkout | `HEAD` on the Checkout Link (falling back to `GET` without following redirects). A 2xx, or a redirect to `polar.sh`, counts as up. This check runs every 30 minutes, on the hour and half hour, so it does not open a checkout session every 5 minutes. |
+
+- Checks run every 5 minutes, each with a 5-second timeout. A check that fails or times out is down. One that answers but takes more than 3 seconds is degraded.
+- Each tile shows the latest check. If that check is older than 15 minutes (45 for Polar), the tile shows unknown, so stopped checks never look green.
+- Each day bar is the share of checks that passed that UTC day: 99% or more is up, 95% or more is degraded, anything lower is down. A day where more than 10% of checks were slow is degraded. A day without checks has no data.
+- A nightly job rolls finished days into daily totals. Daily totals are kept for 90 days, and raw checks for two to three days.
+- The page treats every failure as unknown: a timeout, an error status, a body it cannot parse, or a shape it does not expect. It never shows green without a fresh answer for all five services.
+- Only a short code (`timeout`, `http 503`, `bad body`, `no version`) or the version that was checked is stored. Response bodies are not stored.
+- The status page and the usage counts store nothing in your browser.
+
+Until the collector Worker is redeployed with these checks and migration `0002` is applied, every tile shows unknown.
+
+A green tile means the endpoint answered. It is not access: Gatefit's proof is the access row after a transition, and HTTP 200 is not access.

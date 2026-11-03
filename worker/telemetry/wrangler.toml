@@ -15,3 +15,7 @@ database_name = "gatefit-telemetry"
 # D1 database id (created 2026-11-02 with `npx wrangler@4 d1 create gatefit-telemetry`). Public identifier only.
 database_id = "3d2616af-80d5-4e6d-adfa-db735d730262"
 migrations_dir = "migrations"
+
+# GATEFIT-H30 status probes every 5 minutes (Polar on :00 and :30 only) and the nightly rollup.
+[triggers]
+crons = ["*/5 * * * *", "15 0 * * *"]
