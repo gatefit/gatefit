@@ -3,7 +3,7 @@ title: Paddle pack
 description: A paid provider pack that checks your access table against ugly Paddle Billing webhook sequences.
 ---
 
-The Paddle provider pack arrives in the next release. Until then, run it from a checkout of this repo (`node bin/gatefit.js run --suite paddle ...`).
+The Paddle provider pack ships in 0.7.0 as `gatefit run --suite paddle` (`npx gatefit@0.7.0` or the installed package). It is not in 0.6.0.
 
 The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the provider packs. S1–S9 and Phase 2 stay free. Paddle is a provider your app bills through; it is not how you buy Gatefit.
 
@@ -13,10 +13,10 @@ HTTP 200 is not access. The pack asserts what your access table says after each 
 
 ```bash
 export GATEFIT_LICENSE_KEY=GATEFIT-...
-node bin/gatefit.js run --suite paddle --adapter ./gatefit/adapter.ts
+npx gatefit@0.7.0 run --suite paddle --adapter ./gatefit/adapter.ts
 ```
 
-Once a release includes the pack, the same command is `gatefit run --suite paddle --adapter <path>`.
+With the package installed, the same command is `gatefit run --suite paddle --adapter <path>`.
 
 The pack uses the same license gate as chaos mode and the Polar pack. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing. Pointing `--suite` at the pack's golden directory, or a file in it, goes through the same gate and, once licensed, runs exactly like `--suite paddle`. A `--suite` path that mixes Paddle goldens with free or Polar goldens is refused. Free suites never read the key and never call the license endpoint.
 

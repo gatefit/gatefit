@@ -282,8 +282,8 @@ test("status text passes WCAG AA on navy, the surface, and the banner tints; fil
 
 test("new status copy stays honest and avoids banned phrases", () => {
   const changelog = read("CHANGELOG.md");
-  const start = changelog.indexOf("## [Unreleased]");
-  const unreleased = changelog.slice(start, changelog.indexOf("\n## [", start + 1));
+  const start = changelog.indexOf("## [0.7.0]");
+  const released = changelog.slice(start, changelog.indexOf("\n## [", start + 1));
   const telemetry = read("site/src/content/docs/telemetry.md");
   const readme = read("worker/telemetry/README.md");
   const texts: Array<[string, string]> = [
@@ -291,17 +291,17 @@ test("new status copy stays honest and avoids banned phrases", () => {
     ["status.ts", read("site/src/scripts/status.ts")],
     ["telemetry.md", telemetry],
     ["worker README", readme],
-    ["[Unreleased]", unreleased],
+    ["[0.7.0]", released],
   ];
   for (const [name, text] of texts) {
     for (const banned of [/coming soon/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i, /\$19/, /monthly/i, /optional updates/i]) {
       assert.doesNotMatch(text, banned, `${name} ${banned}`);
     }
   }
-  assert.match(unreleased, /\/status/);
-  assert.match(unreleased, /\/v1\/status/);
-  assert.match(unreleased, /0002/);
-  assert.match(unreleased, /redeploy/);
+  assert.match(released, /\/status/);
+  assert.match(released, /\/v1\/status/);
+  assert.match(released, /0002/);
+  assert.match(released, /redeploy/);
   assert.match(telemetry, /## Status page/);
   assert.match(telemetry, /in-process|inside the Worker/i);
   assert.match(telemetry, /30 minutes/);

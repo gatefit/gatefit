@@ -23,8 +23,6 @@ npx gatefit telemetry on       # saves a random install id and opts in
 npx gatefit telemetry off      # opts out and deletes the install id
 ```
 
-Until 0.6.0 is published, run these from a checkout of this repo (`node bin/gatefit.js telemetry status`).
-
 The first rule that matches decides:
 
 1. `DO_NOT_TRACK` set (not empty, `0` or `false`): off.
@@ -47,14 +45,14 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | --- | --- |
 | `v` | `1` (number) |
 | `install_id` | random UUID v4 created on opt-in |
-| `version` | gatefit version, e.g. `0.6.0` |
+| `version` | gatefit version, e.g. `0.7.0` |
 | `node` | Node major version, e.g. `22` |
 | `platform` | `linux`, `darwin`, `win32`, or `other` |
 | `arch` | `x64`, `arm64`, or `other` |
 | `command` | `init`, `run`, `adapter-check`, or `live` |
 | `outcome` | `pass` (exit 0), `fail` (non-zero exit), or `error` (crash) |
 | `template` | `init` only: `drizzle`, `prisma`, `supabase`, `generic`, or `auto` (no `--template`); empty otherwise |
-| `pack` | `chaos`, `polar`, `paddle`, or empty. A `--suite` path into a pack's golden directory reports that pack (the path itself is not sent). |
+| `pack` | `chaos`, `polar`, `paddle`, or empty. A `--suite` path into a pack's golden directory reports that pack (the path itself is not sent). The collector accepts `paddle` only after the Worker is redeployed. |
 | `suite` | a bundled golden id, `pack` (a pack name, or a path into a pack's golden directory), `custom` (any other path or value), or empty |
 
 Never sent: file paths, repo or package names, emails, adapter names or contents, license keys, Stripe or Polar data, environment values, IP addresses, or command output.

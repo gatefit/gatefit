@@ -90,7 +90,7 @@ test("gatefit run refuses GATEFIT_LIVE_CLOCK", () => {
 test("gatefit --version prints package version", () => {
   const result = run(["--version"]);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /gatefit 0\.6\.0/);
+  assert.match(result.stdout, /gatefit 0\.7\.0/);
 });
 
 test("gatefit run from another cwd uses bundled suite id and caller adapter", () => {
@@ -210,7 +210,7 @@ test("gatefit bin finds hoisted tsx outside the package directory", () => {
     env: cleanEnv({ INIT_CWD: tmp }),
   });
   assert.equal(result.status, 0, result.stderr + result.stdout);
-  assert.match(result.stdout, /gatefit 0\.6\.0/);
+  assert.match(result.stdout, /gatefit 0\.7\.0/);
 });
 
 test("cli test children never send telemetry even when the parent env opts in", async () => {
