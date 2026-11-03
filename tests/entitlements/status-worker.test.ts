@@ -473,7 +473,8 @@ test("migration 0002 shape: CHECK constraints, both primary keys, no ids, IPs, o
   assert.match(sql, /CHECK \(length\(detail\) <= 64\)/);
   assert.match(sql, /PRIMARY KEY \(service, ts\)/);
   assert.match(sql, /PRIMARY KEY \(day, service\)/);
-  assert.doesNotMatch(sql, /install_id|\bip\b|body|user_agent|header/i);
+  const columns = sql.replace(/--[^\n]*/g, "");
+  assert.doesNotMatch(columns, /install_id|\bip\b|body|user_agent|header/i);
   assert.ok(!fs.existsSync(path.join(root, "worker/telemetry/migrations/0003_checks.sql")));
 });
 
