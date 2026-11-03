@@ -197,7 +197,7 @@ test("HTTP 200 still does not grant seats or unlock", () => {
 });
 
 test("nextSnapshot is a pure function of current + event (no Date.now)", () => {
-  for (const file of ["access-rules.ts", "polar-rules.ts"]) {
+  for (const file of ["access-rules.ts", "polar-rules.ts", "paddle-rules.ts"]) {
     const src = fs.readFileSync(path.join(import.meta.dirname, "../../src", file), "utf8");
     assert.doesNotMatch(src, /Date\.now/, file);
   }
@@ -408,3 +408,96 @@ test("stripe_order_updated_still_dispatches_to_polar_rules (H27 follow-up, docum
   );
   assert.deepEqual(row, { locked: false, plan: "pro" });
 });
+
+// Paddle scoping. Polar also sends subscription.created, .updated and .canceled, so
+// those shared names reach the Paddle rules only with provider: "paddle".
+const PADDLE_CASES: { name: string; events: BillingEvent[]; expect: AccessSnapshot }[] = [
+  {
+    name: "polar_subscription_updated_untagged_still_polar",
+    events: [
+      { id: "wh_s_active", type: "subscription.active", customerId: "cus_pd", status: "active", plan: "pro" },
+      { id: "wh_s_paused", type: "subscription.updated", customerId: "cus_pd", status: "paused" },
+    ],
+    expect: { locked: false, plan: "pro" },
+  },
+  {
+    name: "paddle_subscription_paused_requires_provider_paddle",
+    events: [
+      { id: "evt_pd_done", type: "transaction.completed", customerId: "cus_pd", status: "completed", plan: "pro" },
+      {
+        id: "evt_pd_paused",
+        type: "subscription.updated",
+        customerId: "cus_pd",
+        status: "paused",
+        provider: "paddle",
+        httpStatus: 200,
+      },
+    ],
+    expect: { locked: true, plan: "pro" },
+  },
+  {
+    name: "paddle_subscription_created_active_requires_provider_paddle",
+    events: [
+      {
+        id: "evt_pd_created",
+        type: "subscription.created",
+        customerId: "cus_pd",
+        status: "active",
+        provider: "paddle",
+        plan: "pro",
+        seats: 3,
+      },
+    ],
+    expect: { locked: false, plan: "pro", seats: 3 },
+  },
+  {
+    name: "paddle_chargeback_locks_and_clears_features",
+    events: [
+      { id: "evt_pd_done", type: "transaction.completed", customerId: "cus_pd", status: "completed", plan: "pro" },
+      { id: "evt_pd_summary", type: "entitlements.active_entitlement_summary.updated", customerId: "cus_pd", features: ["export"] },
+      {
+        id: "evt_pd_cb",
+        type: "adjustment.created",
+        customerId: "cus_pd",
+        action: "chargeback",
+        status: "approved",
+        httpStatus: 200,
+      },
+      { id: "evt_pd_cb_rev", type: "adjustment.created", customerId: "cus_pd", action: "chargeback_reverse", status: "approved" },
+    ],
+    expect: { locked: true, plan: "pro", features: [] },
+  },
+  {
+    name: "stripe_invoice_paid_unaffected_by_paddle_rules",
+    events: [
+      { id: "evt_pd_inv", type: "invoice.paid", customerId: "cus_pd", plan: "pro" },
+      { id: "evt_pd_txn_failed", type: "transaction.payment_failed", customerId: "cus_pd", status: "past_due" },
+    ],
+    expect: { locked: false, plan: "pro" },
+  },
+];
+
+for (const { name, events, expect } of PADDLE_CASES) {
+  test(name, () => {
+    const store = emptyStore();
+    for (const event of events) applyBillingEvent(store, event);
+    assert.deepEqual(store.rows.get("cus_pd"), expect);
+  });
+
+  test(`${name} (sqlite adapter)`, async (t) => {
+    const require = createRequire(import.meta.url);
+    try {
+      const Database = require("better-sqlite3") as new (file: string) => { close(): void };
+      new Database(":memory:").close();
+    } catch {
+      t.skip("better-sqlite3 native module is not installed");
+      return;
+    }
+    const { createAdapter } = (await import("../../src/adapters/sqlite.ts")) as {
+      createAdapter: () => AccessAdapter;
+    };
+    const adapter = createAdapter();
+    for (const event of events) await adapter.apply(event);
+    assert.deepEqual(await adapter.snapshot("cus_pd"), expect);
+  });
+}

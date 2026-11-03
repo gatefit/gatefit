@@ -255,6 +255,22 @@ test("on_sends_exact_key_set", async () => {
   assert.equal(JSON.parse(c.bodies.at(-1)!).template, "generic");
 });
 
+test("paddle_reports_pack_paddle", async () => {
+  const c = await collector();
+  const h = freshHome();
+  writeConfig(h, ON_CONFIG);
+  const env = { GATEFIT_TELEMETRY_URL: c.url };
+  const paddle = await runBin(["run", "--suite", "paddle", "--adapter", HARDENED], h, env);
+  assert.equal(paddle.status, 1, "unlicensed Paddle pack is locked");
+  const polar = await runBin(["run", "--suite", "polar", "--adapter", HARDENED], h, env);
+  assert.equal(polar.status, 1, "unlicensed Polar pack is locked");
+  assert.equal(c.bodies.length, 2);
+  const [p1, p2] = c.bodies.map((b) => JSON.parse(b) as Record<string, unknown>);
+  for (const p of [p1!, p2!]) assertAllowed(p);
+  assert.deepEqual([p1!.command, p1!.suite, p1!.pack, p1!.outcome], ["run", "pack", "paddle", "fail"]);
+  assert.deepEqual([p2!.command, p2!.suite, p2!.pack, p2!.outcome], ["run", "pack", "polar", "fail"]);
+});
+
 test("planted_secrets_never_leave", async () => {
   const c = await collector();
   const h = freshHome();
