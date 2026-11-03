@@ -49,3 +49,16 @@ test("H27 h13 detectors: mintPastBorder fires on mint inside the card, not on su
   assert.equal(mintPastBorder(img, 1, 1, 12, []), 1, "planted interior mint");
   assert.equal(mintPastBorder(img, 1, 1, 12, [{ x: 25, y: 25, w: 10, h: 10 }]), 0, "mint in a hole");
 });
+
+function over(fg: string, alpha: number, bg: string): [number, number, number] {
+  const [f, b] = [rgb(fg), rgb(bg)];
+  return [0, 1, 2].map((i) => Math.round(f[i]! * alpha + b[i]! * (1 - alpha))) as [number, number, number];
+}
+
+test("H29 h13 isOrbitMint: the mint-low chip fill is not orbit mint; faint orbit mint still is", () => {
+  assert.ok(!isOrbitMint(...rgb(BRAND.mintLow)), `isOrbitMint fired on mintLow ${BRAND.mintLow}`);
+  for (const alpha of [0.25, 0.5]) {
+    assert.ok(isOrbitMint(...over(BRAND.mint, alpha, BRAND.surface)), `${alpha * 100}% mint over surface`);
+    assert.ok(isOrbitMint(...over(BRAND.mint, alpha, BRAND.navy)), `${alpha * 100}% mint over navy`);
+  }
+});

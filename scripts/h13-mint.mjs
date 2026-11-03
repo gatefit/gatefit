@@ -32,8 +32,10 @@ export function insideRoundedRect(x, y, w, h, radius) {
 
 // Faint orbit mint (about 25% over the card surface) still lifts green above
 // the red/blue mean; navy, surface, hairlines, and text sit at or below zero.
+// g > 70 keeps the mint-low chip fill (#123F3A, g 63) out; orbit mint clears
+// the mean check only from about 21% alpha, where g is already about 75.
 export function isOrbitMint(r, g, b) {
-  return g > 55 && g > r + 30 && g - (r + b) / 2 > 12;
+  return g > 70 && g > r + 30 && g - (r + b) / 2 > 12;
 }
 
 export function mintPastBorder(img, scaleX, scaleY, radiusCss, holes) {
