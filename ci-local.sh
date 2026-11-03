@@ -515,6 +515,14 @@ assert_h13_dist() {
     fail "/polar/ redirect grew a head (favicon or og:image)"
   fi
   [[ -f site/dist/telemetry/index.html ]] || fail "built /telemetry/ is missing"
+  # H30: /status ships the unknown state, one analytics beacon, and no sample data.
+  [[ -f site/dist/status/index.html ]] || fail "built /status/ is missing"
+  [[ "$(grep -o 'static.cloudflareinsights.com/beacon.min.js' site/dist/status/index.html | wc -l)" -eq 1 ]] \
+    || fail "/status/ beacon count is not 1"
+  grep -q 'Status unknown' site/dist/status/index.html || fail "/status/ does not ship the unknown state"
+  if grep -R -q 'STATS =' site/dist/status/index.html site/dist/_astro 2>/dev/null; then
+    fail "/status/ ships sample STATS data"
+  fi
   if grep -q 'import PolarRedirect\|<PolarRedirect' site/dist/polar/index.html; then
     fail "built /polar/ shows the PolarRedirect component source"
   fi
