@@ -58,6 +58,7 @@ export default defineConfig({
 				{ label: 'Telemetry', slug: 'telemetry' },
 				{ label: 'Polar checkout', link: '/polar/' },
 				{ label: 'Pricing', link: '/#pricing' },
+				{ label: 'Status', link: '/status/' },
 			],
 		}),
 	],

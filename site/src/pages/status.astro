@@ -1,0 +1,115 @@
+---
+import '../styles/landing.css';
+import '../styles/status.css';
+
+// Static HTML is the unknown state. The script replaces it only with a valid API response.
+const services = [
+	{ id: 'site', name: 'gatefit.io', detail: 'landing + docs' },
+	{ id: 'npm', name: 'npm gatefit', detail: '—' },
+	{ id: 'telemetry', name: 't.gatefit.io', detail: 'usage collector' },
+	{ id: 'action', name: 'GitHub Action', detail: '—' },
+	{ id: 'polar', name: 'Polar checkout', detail: 'Buy link · $49 license' },
+];
+const ticks = Array.from({ length: 90 });
+const cards = [
+	{ k: 'gatefit run', s: 'CLI runs' },
+	{ k: 'gatefit init', s: 'projects set up' },
+	{ k: 'Buy clicks', s: 'site → Polar' },
+	{ k: 'Provider packs', s: 'distinct packs run' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Status · Gatefit</title>
+		<meta name="description" content="Gatefit service health and public, opt-in usage counts." />
+		<meta name="theme-color" content="#0B1B3A" />
+		<link rel="canonical" href="https://gatefit.io/status/" />
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<!-- Cloudflare Web Analytics --><script is:inline defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "82ff14a5563c492d869b6db741aac128"}'></script><!-- End Cloudflare Web Analytics -->
+	</head>
+	<body class="status-page">
+		<a class="skip" href="#status-main">Skip to content</a>
+		<header class="site-nav">
+			<div class="wrap">
+				<a class="word" href="/">Gatefit</a>
+				<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+					<span class="nav-toggle-open">Menu</span>
+					<span class="nav-toggle-close">Close</span>
+				</button>
+				<nav class="nav-links" id="nav-links" aria-label="Primary">
+					<a class="nav-link" href="/quickstart/">Quickstart</a>
+					<a class="nav-link" href="/action/">Action</a>
+					<a class="nav-link" href="/#pricing">Pricing</a>
+					<a class="nav-link" href="/status/" aria-current="page">Status</a>
+				</nav>
+			</div>
+		</header>
+
+		<main id="status-main" class="st">
+			<h1>Gatefit status</h1>
+			<p class="sub">Service health and public, opt-in usage counts.</p>
+			<div id="banner" class="banner unknown" role="status">
+				<span class="dot unknown"></span>
+				<span id="banner-text">Status unknown</span>
+				<span class="meta num" id="checked">Last checked: unknown</span>
+			</div>
+
+			<section aria-labelledby="h-svc">
+				<div class="sh"><h2 id="h-svc">Services</h2><span class="r">Last 90 days</span></div>
+				<div class="svc" id="svc">
+					{services.map((s) => (
+						<div class="row" data-service={s.id}>
+							<div class="rh">
+								<span class="dot unknown"></span>
+								<span class="name">{s.name}</span>
+								<span class="detail">{s.detail}</span>
+								<span class="state unknown">Unknown</span>
+							</div>
+							<div class="ticks" aria-hidden="true">{ticks.map(() => <i class="none" title="no data"></i>)}</div>
+							<div class="tf num"><span>90 days ago</span><span class="pct">uptime —</span><span>today</span></div>
+						</div>
+					))}
+				</div>
+			</section>
+
+			<section aria-labelledby="h-use">
+				<div class="sh">
+					<h2 id="h-use">Usage</h2>
+					<div class="seg" role="group" aria-label="Time range">
+						<button type="button" data-d="7" aria-pressed="false">7d</button><button type="button" data-d="30" aria-pressed="true">30d</button><button type="button" data-d="90" aria-pressed="false">90d</button>
+					</div>
+				</div>
+				<div class="cards" id="cards">
+					{cards.map((c) => (
+						<div class="card"><div class="k">{c.k}</div><div class="v num">—</div><div class="s">{c.s}</div></div>
+					))}
+				</div>
+				<div class="chart">
+					<div class="ct">
+						<span id="chart-title">Usage unavailable</span>
+						<div class="legend"><span class="lg-run">runs</span><span class="lg-init">init</span><span class="lg-buy">buy clicks</span></div>
+					</div>
+					<div class="bars" id="bars"></div>
+					<div class="axis num"><span id="ax0"></span><span id="ax1"></span></div>
+				</div>
+				<p class="note">Usage counts are opt-in, aggregate only, no install ids. <span class="num">DO_NOT_TRACK</span> always wins. Status checks run from a Cloudflare Worker; a green tile is not proof of access. <a href="/telemetry/#status-page">How status and telemetry work →</a></p>
+			</section>
+		</main>
+
+		<footer class="st-foot">
+			<span>Gatefit · open source</span>
+			<span><a href="https://github.com/gatefit/gatefit/releases">Release notes on GitHub →</a></span>
+		</footer>
+
+		<script>
+			import { start } from '../scripts/status';
+			start();
+		</script>
+	</body>
+</html>
