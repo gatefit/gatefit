@@ -15,6 +15,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 ### Fixed
 
 - Opt-in telemetry: a `--suite` path into the Polar or Paddle golden directory (or one file in it) reports `pack: polar|paddle` with `suite: pack`, licensed or not, instead of `suite: custom`. The path is still never sent; a mixed pack-and-free path that is refused stays `custom`.
+- Provider scoping: `order.created` and `order.updated` reach the Polar rules only with `provider: polar`, like `refund.*`, because Stripe's legacy Orders API sends the same names. In the reference adapters an untagged `order.updated` with status `paid` or `refunded` no longer changes access; it folds with the Stripe rules. `order.paid` and `order.refunded` are Polar-only and unchanged. Pack goldens are unchanged and still pass.
 
 ## [0.6.0] - 2026-11-02
 

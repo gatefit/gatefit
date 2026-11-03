@@ -400,14 +400,74 @@ for (const { name, events, expect } of REFUND_CASES) {
   });
 }
 
-test("stripe_order_updated_still_dispatches_to_polar_rules (H27 follow-up, documents current behavior)", () => {
-  // Stripe's legacy order.created/order.updated share Polar names and are not scoped yet.
-  const row = nextSnapshot(
-    { locked: true },
-    { id: "evt_o", type: "order.updated", customerId: "cus_o", status: "paid", plan: "pro" },
-  );
-  assert.deepEqual(row, { locked: false, plan: "pro" });
-});
+// Stripe legacy Orders scoping. Stripe also sends order.created and order.updated, so
+// those shared names reach the Polar rules only with provider: "polar".
+// order.paid and order.refunded are Polar-only names and need no tag.
+const ORDER_CASES: { name: string; events: BillingEvent[]; expect: AccessSnapshot }[] = [
+  {
+    name: "stripe_legacy_order_updated_untagged_stays_on_stripe_rules",
+    events: [{ id: "evt_o_upd", type: "order.updated", customerId: "cus_o", status: "paid", plan: "pro" }],
+    expect: { locked: true },
+  },
+  {
+    name: "stripe_legacy_order_updated_refunded_untagged_does_not_revoke",
+    events: [
+      { id: "evt_o_paid", type: "invoice.paid", customerId: "cus_o", plan: "pro" },
+      { id: "evt_o_ret", type: "order.updated", customerId: "cus_o", status: "refunded" },
+    ],
+    expect: { locked: false, plan: "pro" },
+  },
+  {
+    name: "stripe_legacy_order_created_untagged_is_noop",
+    events: [{ id: "evt_o_new", type: "order.created", customerId: "cus_o", status: "created", plan: "pro" }],
+    expect: { locked: true },
+  },
+  {
+    name: "polar_order_updated_paid_requires_provider_polar",
+    events: [
+      { id: "wh_o_upd", type: "order.updated", customerId: "cus_o", status: "paid", plan: "pro", provider: "polar" },
+    ],
+    expect: { locked: false, plan: "pro" },
+  },
+  {
+    name: "polar_order_updated_refunded_requires_provider_polar",
+    events: [
+      { id: "wh_o_paid", type: "order.paid", customerId: "cus_o", status: "paid", plan: "pro" },
+      { id: "wh_o_ref", type: "order.updated", customerId: "cus_o", status: "refunded", provider: "polar" },
+    ],
+    expect: { locked: true, plan: "pro" },
+  },
+  {
+    name: "polar_order_paid_untagged_still_grants",
+    events: [{ id: "wh_o_paid2", type: "order.paid", customerId: "cus_o", status: "paid", plan: "pro" }],
+    expect: { locked: false, plan: "pro" },
+  },
+];
+
+for (const { name, events, expect } of ORDER_CASES) {
+  test(name, () => {
+    const store = emptyStore();
+    for (const event of events) applyBillingEvent(store, event);
+    assert.deepEqual(store.rows.get("cus_o") ?? { locked: true }, expect);
+  });
+
+  test(`${name} (sqlite adapter)`, async (t) => {
+    const require = createRequire(import.meta.url);
+    try {
+      const Database = require("better-sqlite3") as new (file: string) => { close(): void };
+      new Database(":memory:").close();
+    } catch {
+      t.skip("better-sqlite3 native module is not installed");
+      return;
+    }
+    const { createAdapter } = (await import("../../src/adapters/sqlite.ts")) as {
+      createAdapter: () => AccessAdapter;
+    };
+    const adapter = createAdapter();
+    for (const event of events) await adapter.apply(event);
+    assert.deepEqual(await adapter.snapshot("cus_o"), expect);
+  });
+}
 
 // Paddle scoping. Polar also sends subscription.created, .updated and .canceled, so
 // those shared names reach the Paddle rules only with provider: "paddle".

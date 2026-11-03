@@ -8,9 +8,7 @@ import type { AccessSnapshot, BillingEvent } from "./access-adapter.ts";
 export const POLAR_EVENT_TYPES = new Set([
   "checkout.created",
   "checkout.updated",
-  "order.created",
   "order.paid",
-  "order.updated",
   "order.refunded",
   "subscription.created",
   "subscription.active",
@@ -23,8 +21,11 @@ export const POLAR_EVENT_TYPES = new Set([
   "benefit_grant.revoked",
 ]);
 
-/** Polar names Stripe sends too. These reach the Polar rules only with provider: "polar". */
-export const POLAR_SHARED_TYPES = new Set(["refund.created", "refund.updated"]);
+/**
+ * Polar names Stripe sends too (Refunds, and the legacy Orders API's order.created /
+ * order.updated). These reach the Polar rules only with provider: "polar".
+ */
+export const POLAR_SHARED_TYPES = new Set(["order.created", "order.updated", "refund.created", "refund.updated"]);
 
 export function isPolarEvent(event: BillingEvent): boolean {
   if (POLAR_EVENT_TYPES.has(event.type)) return true;
