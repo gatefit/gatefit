@@ -241,3 +241,24 @@ test("H25: telemetry docs list every payload key and stay honest", async () => {
     }
   }
 });
+
+test("h32_current_docs_have_no_banned_phrases_and_no_stale_redeploy_wording", () => {
+  const banned = [/coming soon/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i, /\$19/, /monthly/i, /optional updates/i];
+  const docs = fs.readdirSync(path.join(root, "docs")).filter((f) => f.endsWith(".md") && !f.startsWith("release-")).map((f) => `docs/${f}`);
+  for (const file of [...docs, "README.md", "worker/telemetry/README.md", "site/src/content/docs/telemetry.md"]) {
+    const text = read(file);
+    for (const re of banned) assert.doesNotMatch(text, re, `${file} has ${re}`);
+    assert.doesNotMatch(text, /does not serve them yet|after the Worker is redeployed|until the collector Worker is redeployed/i, `${file} has stale redeploy wording`);
+  }
+  assert.doesNotMatch(read("docs/license.md"), /first Pro pack/);
+  const variants = [/docs\W*(site)?\W*live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i];
+  const siteDocs = fs.readdirSync(path.join(root, "site/src/content/docs")).filter((f) => f.endsWith(".md")).map((f) => `site/src/content/docs/${f}`);
+  for (const file of ["README.md", ...docs, ...siteDocs]) {
+    const text = read(file);
+    for (const re of [...banned, ...variants]) assert.doesNotMatch(text, re, `${file} has ${re}`);
+  }
+  const card = read("site/src/pages/index.astro");
+  assert.match(card, /<li>Unlocks chaos mode, Polar and Paddle packs<\/li>/);
+  assert.doesNotMatch(card, /<li>Chaos mode<\/li>/, "price card repeats the Unlocks line");
+  assert.match(read("worker/telemetry/wrangler.toml"), /daily rollup at 00:15 UTC/);
+});

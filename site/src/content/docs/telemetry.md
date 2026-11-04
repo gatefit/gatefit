@@ -52,7 +52,7 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | `command` | `init`, `run`, `adapter-check`, or `live` |
 | `outcome` | `pass` (exit 0), `fail` (non-zero exit), or `error` (crash) |
 | `template` | `init` only: `drizzle`, `prisma`, `supabase`, `generic`, or `auto` (no `--template`); empty otherwise |
-| `pack` | `chaos`, `polar`, `paddle`, or empty. A `--suite` path into a pack's golden directory reports that pack (the path itself is not sent). The collector accepts `paddle` only after the Worker is redeployed. |
+| `pack` | `chaos`, `polar`, `paddle`, or empty. A `--suite` path into a pack's golden directory reports that pack (the path itself is not sent). The live collector accepts `paddle`. |
 | `suite` | a bundled golden id, `pack` (a pack name, or a path into a pack's golden directory), `custom` (any other path or value), or empty |
 
 Never sent: file paths, repo or package names, emails, adapter names or contents, license keys, Stripe or Polar data, environment values, IP addresses, or command output.
@@ -81,6 +81,6 @@ The collector stores daily counts per allowed value. It keeps a 16-character SHA
 - Only a short code (`timeout`, `http 503`, `bad body`, `no version`) or the version that was checked is stored. Response bodies are not stored.
 - The status page and the usage counts store nothing in your browser.
 
-Until the collector Worker is redeployed with these checks and migration `0002` is applied, every tile shows unknown.
+The collector Worker at `t.gatefit.io` runs these checks and serves `GET /v1/status`. If a check has not answered recently, its tile shows unknown.
 
 A green tile means the endpoint answered. It is not access: Gatefit's proof is the access row after a transition, and HTTP 200 is not access.

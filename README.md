@@ -2,15 +2,15 @@
 
 Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions.
 
-Fixture-first goldens, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI. 0.7.0 adds the paid Paddle provider pack and a public status page at gatefit.io/status/. This change does not publish `0.7.0`.
+YAML fixture scenarios, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI. 0.7.0 adds the paid Paddle provider pack and a public status page at gatefit.io/status/. This change does not publish `0.7.0`.
 
 ## Distribution
 
-The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). The Polar Checkout Link for the $49 one-time Gatefit Indie License is live ([pricing](https://gatefit.io/#pricing)).
+The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). Buy the $49 one-time Gatefit Indie License from https://gatefit.io/#pricing, which links to the Polar Checkout Link on buy.polar.sh.
 
-- **Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `.github/workflows/pages.yml` builds the site on pushes to `main` and does not deploy. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
+- **Docs site:** live. Hosted at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `.github/workflows/pages.yml` builds the site on pushes to `main` and does not deploy. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
 - **npm:** live. `npx gatefit` today is the published tarball `gatefit@0.6.0` at https://www.npmjs.com/package/gatefit. This repo is `0.7.0`. This change does not publish `0.7.0`. The named gate runs `npm publish --dry-run` only. A `v*` tag publishes with OIDC. See [Releasing](#releasing).
-- **Polar checkout:** live. Gatefit Indie License is **$49** one-time at `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain `site` build and `scripts/deploy-site.sh` use that committed link. `PUBLIC_POLAR_CHECKOUT_URL` may override it. Any other value fails closed.
+- **Polar checkout:** Gatefit Indie License, **$49** one-time via the Polar Checkout Link `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain `site` build and `scripts/deploy-site.sh` use that committed link. `PUBLIC_POLAR_CHECKOUT_URL` may override it. Any other value fails closed.
 
 ## Install / run
 
@@ -74,7 +74,7 @@ Opt-in live Test Clocks (not default CI): [docs/live-clock.md](docs/live-clock.m
 
 **Site analytics:** gatefit.io uses cookieless Cloudflare Web Analytics, with no cookies and no browser storage. A Buy click sends one `{"event":"buy_click"}` beacon to `https://t.gatefit.io/v1/site` and never blocks the Checkout Link.
 
-**CLI telemetry:** not shipped in 0.5.2. It ships in 0.6.0, and it is opt-in and off by default. The collector at `t.gatefit.io` is live. It accepts `pack: paddle` and serves the status checks for gatefit.io/status/ only after a redeploy and migration `0002` ([worker/telemetry/README.md](worker/telemetry/README.md)). Without `GATEFIT_TELEMETRY=1` or `gatefit telemetry on`, the CLI makes no telemetry request and writes no telemetry file. `DO_NOT_TRACK=1`, `GATEFIT_TELEMETRY=0`, and `gatefit telemetry off` always win. On CI, only `GATEFIT_TELEMETRY=1` opts in. When on, it sends one POST to `https://t.gatefit.io/v1/event` after `init`, `run`, `adapter-check`, or `live`. The request is bounded to about 1.5 s, fails silently, and never changes exit codes or output. `gatefit telemetry status` prints the exact JSON.
+**CLI telemetry:** not shipped in 0.5.2. It ships in 0.6.0, and it is opt-in and off by default. The collector at `t.gatefit.io` is live. It accepts `pack: paddle` and serves the status checks for gatefit.io/status/ at `GET /v1/status` ([worker/telemetry/README.md](worker/telemetry/README.md)). Without `GATEFIT_TELEMETRY=1` or `gatefit telemetry on`, the CLI makes no telemetry request and writes no telemetry file. `DO_NOT_TRACK=1`, `GATEFIT_TELEMETRY=0`, and `gatefit telemetry off` always win. On CI, only `GATEFIT_TELEMETRY=1` opts in. When on, it sends one POST to `https://t.gatefit.io/v1/event` after `init`, `run`, `adapter-check`, or `live`. The request is bounded to about 1.5 s, fails silently, and never changes exit codes or output. `gatefit telemetry status` prints the exact JSON.
 
 Payload keys, each value from a fixed list: `v`, `install_id` (random UUID), `version`, `node` (major), `platform`, `arch`, `command`, `outcome`, `template`, `pack`, `suite` (bundled golden id, `pack`, or `custom`). Paths, repo names, emails, keys, env values, adapter names, and Stripe or Polar data are never sent. Details: [site/src/content/docs/telemetry.md](site/src/content/docs/telemetry.md).
 

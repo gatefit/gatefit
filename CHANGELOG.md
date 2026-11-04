@@ -7,11 +7,19 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 ### Fixed
 
 - License copy: the $49 Gatefit Indie License now says what it unlocks (chaos mode, Polar and Paddle packs) instead of "Pro packs", on the landing page, the goldens docs, `docs/license.md`, and the README. S1–S9 and Phase 2 stay free.
-- README: the Distribution paragraph's cut-off Polar sentence now says the Checkout Link for the $49 one-time Indie License is live, linking https://gatefit.io/#pricing.
+- README: the Distribution paragraph's cut-off Polar sentence now says to buy the $49 one-time Indie License from https://gatefit.io/#pricing, which links to the Polar Checkout Link on buy.polar.sh.
 - Telemetry docs: the status checks are described from the registered Cron Triggers: `*/5 * * * *` runs the checks, with Polar probed only on the :00 and :30 runs, and `15 0 * * *` runs the daily rollup at 00:15 UTC.
-- Status page: a `checked_at` more than 5 minutes in the future is treated as stale, so every tile shows unknown, never green.
+- Status: a sample more than 5 minutes in the future (`FUTURE_SKEW_MS`) is no longer fresh. The collector's `GET /v1/status` reports unknown for that service, never ok, and leaves it out of the top-level `checked_at`, so one future sample no longer makes the status page show every tile as unknown. If every sample is that far ahead, `checked_at` is null. Exactly 5 minutes ahead still counts.
+- Docs wording: the Worker README and the Telemetry docs page now say the collector at `t.gatefit.io` is live, serves `GET /v1/status`, accepts `pack: paddle`, and runs its crons (`*/5 * * * *`, Polar on :00 and :30; daily rollup `15 0 * * *` at 00:15 UTC), instead of waiting on a redeploy. The README says the collector is live, accepts `pack: paddle` and serves `GET /v1/status`. `docs/paddle.md` says the live collector accepts `paddle`.
+- `docs/polar.md`, `docs/publish.md`, `docs/live-clock.md` and the README drop banned phrases and their variants: no "docs live at" or "Docs site: live at" (now "Docs: https://gatefit.io" or "**Docs site:** live. Hosted at https://gatefit.io"), no "checkout … is live" or "Polar checkout: live" (now "**Polar checkout:** … $49 one-time via the Polar Checkout Link"), and no fixture/goldens pairing (live-clock.md: "run only from YAML fixtures"; README tagline: "YAML fixture scenarios"). `docs/live-clock.md` says which fixtures set `period_end` + `now` on events: `cancel_at_period_end_keeps_access_until_end`, `upgrade_plus_cape_race` and `portal_downgrade_period_end_vs_immediate`, not `seat_qty_vs_db_cap`, H7 or the other S7–S9 fixtures. `docs/license.md` says the $49 license unlocks chaos mode and the Polar and Paddle packs, S1–S9 and Phase 2 stay free, instead of "first Pro pack".
+- Landing price card: the repeated "Chaos mode" bullet under "Unlocks chaos mode, Polar and Paddle packs" is gone.
+
+### Changed
+
 - `./ci-local.sh` also typechecks the collector Worker entry (`worker/telemetry/src/index.ts` and its imports) through `tsconfig.worker.json`. It had no type errors; no runtime change.
 - h13 mint detectors: regression test that `--mint-low` and its anti-aliased edges over navy and the surfaces never count as mint or orbit mint. The detector fix itself shipped in 0.7.0.
+- `worker/telemetry/wrangler.toml` comment: "daily rollup at 00:15 UTC" instead of "nightly rollup". No config change.
+- Tests: a scan of current `docs/` (not release notes), the README, the Worker README and the Telemetry page for banned phrases and stale redeploy wording, plus variant-tolerant regexes (docs/site live at, checkout … is live, fixture … goldens) over the README, current `docs/*.md` and `site/src/content/docs/*.md`.
 
 ## [0.7.0] - 2026-11-03
 

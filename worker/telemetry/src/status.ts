@@ -16,6 +16,8 @@ export const PROBE_TIMEOUT_MS = 5000;
 export const STALE_MS = 15 * 60_000;
 /** Polar runs every 30 minutes (see probePolarNow), so it gets a longer window. */
 export const POLAR_STALE_MS = 45 * 60_000;
+/** A sample this far in the future is still fresh; beyond it reports unknown. Equals FUTURE_SKEW_MS on the site. */
+export const FUTURE_SKEW_MS = 5 * 60_000;
 /** Raw rows are kept from the start of the UTC day this many days back. */
 export const RAW_KEEP_DAYS = 2;
 export const NO_VERSION = "no version";
@@ -206,7 +208,7 @@ export function dayState(agg: { total: number; up: number; slow: number }): { up
 function currentState(c: Check | undefined, now: number): State {
   if (!c) return "unknown";
   const stale = c.service === "polar" ? POLAR_STALE_MS : STALE_MS;
-  if (now - c.ts > stale) return "unknown";
+  if (now - c.ts > stale || c.ts - now > FUTURE_SKEW_MS) return "unknown";
   if (c.service === "action" && !c.ok && c.detail === NO_VERSION) return "unknown";
   return sampleState(c);
 }
@@ -239,8 +241,10 @@ export async function buildStatus(reader: StatusReader, now: Date): Promise<Stat
     }
     return out;
   });
-  const newest = latest.reduce((m, c) => Math.max(m, c.ts), -Infinity);
-  return { checked_at: latest.length ? new Date(newest).toISOString() : null, services };
+  // A sample beyond FUTURE_SKEW_MS would push checked_at ahead and the site would mark every tile unknown.
+  const counted = latest.filter((c) => c.ts - nowMs <= FUTURE_SKEW_MS);
+  const newest = counted.reduce((m, c) => Math.max(m, c.ts), -Infinity);
+  return { checked_at: counted.length ? new Date(newest).toISOString() : null, services };
 }
 
 /** Nightly window: roll up finished days still fully in raw, prune raw and old days. */
