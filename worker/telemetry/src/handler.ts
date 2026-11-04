@@ -4,7 +4,8 @@
  * TelemetryStore; the Cloudflare D1 binding lives in index.ts.
  *
  * GATEFIT-H30: GET /v1/status serves probe results from a StatusReader; /v1/status and
- * /v1/stats carry read-only CORS for gatefit.io and a 60-second public cache.
+ * /v1/stats carry read-only CORS for gatefit.io and a 60-second public cache. The probes
+ * and the daily rollup run from the Cron Triggers in index.ts (checks in status.ts), not here.
  *
  * Privacy: every value is allowlisted, the raw install id is hashed to a 16-hex day key
  * and dropped, nothing is logged, and client IPs and user agents are never read.

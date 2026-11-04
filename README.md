@@ -6,7 +6,7 @@ Fixture-first goldens, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not 
 
 ## Distribution
 
-The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). Polar checkout is.
+The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). The Polar Checkout Link for the $49 one-time Gatefit Indie License is live ([pricing](https://gatefit.io/#pricing)).
 
 - **Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `.github/workflows/pages.yml` builds the site on pushes to `main` and does not deploy. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
 - **npm:** live. `npx gatefit` today is the published tarball `gatefit@0.6.0` at https://www.npmjs.com/package/gatefit. This repo is `0.7.0`. This change does not publish `0.7.0`. The named gate runs `npm publish --dry-run` only. A `v*` tag publishes with OIDC. See [Releasing](#releasing).
@@ -97,7 +97,7 @@ One-time setup on npmjs.com for package `gatefit`: open Package settings, Truste
 
 S1–S6, S7–S9 (no-card trial, portal downgrade, active entitlement summary), seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.7.0`.
 
-The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is live. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
+The $49 Gatefit Indie License unlocks chaos mode, Polar and Paddle packs. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
 
 The Polar provider pack ships in 0.6.0 as `gatefit run --suite polar`. It uses the same license and checks your access table against Polar webhooks: [docs](site/src/content/docs/polar-pack.md).
 

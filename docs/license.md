@@ -2,7 +2,7 @@
 
 S1–S6, S7–S9 (no-card trial, portal downgrade, active entitlement summary), seats/races, dispute/unpaid, and live Test Clocks stay free. Free packs do not read `GATEFIT_LICENSE_KEY` and do not contact Polar. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.7.0`.
 
-The $49 Gatefit Indie License unlocks Pro packs. Chaos mode is live and is the first Pro pack. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. The buy page is https://gatefit.io/#pricing. See [chaos.md](chaos.md).
+The $49 Gatefit Indie License unlocks chaos mode, Polar and Paddle packs. Chaos mode is live and is the first Pro pack. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. The buy page is https://gatefit.io/#pricing. See [chaos.md](chaos.md).
 
 ## Environment
 

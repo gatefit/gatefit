@@ -310,7 +310,8 @@ test("new status copy stays honest and avoids banned phrases", () => {
   assert.match(released, /redeploy/);
   assert.match(telemetry, /## Status page/);
   assert.match(telemetry, /in-process|inside the Worker/i);
-  assert.match(telemetry, /30 minutes/);
+  assert.match(telemetry, /:00 and :30/);
+  assert.match(telemetry, /00:15 UTC/);
   assert.match(telemetry, /90 days/);
   assert.match(telemetry, /not access/i);
   assert.match(readme, /0002/);
