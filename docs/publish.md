@@ -4,7 +4,7 @@ The named gate does **not** publish. There is no npm token in this repo. Do not 
 
 **npm:** live. `npx gatefit` is the last published tarball, `gatefit@0.6.0`, at https://www.npmjs.com/package/gatefit. This repo is `0.7.0`. This change does not publish `0.7.0`. The named gate runs `npm publish --dry-run` only.
 
-**Docs site:** live at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` copies `site/dist` or deploys the Cloudflare target.
+**Docs:** https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` copies `site/dist` or deploys the Cloudflare target.
 
 **Polar checkout:** live. Gatefit Indie License, **$49** one-time: `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`.
 

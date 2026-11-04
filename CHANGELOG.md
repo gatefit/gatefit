@@ -7,12 +7,11 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 ### Fixed
 
 - License copy: the $49 Gatefit Indie License now says what it unlocks (chaos mode, Polar and Paddle packs) instead of "Pro packs", on the landing page, the goldens docs, `docs/license.md`, and the README. S1–S9 and Phase 2 stay free.
-- README: the Distribution paragraph's cut-off Polar sentence now says the Checkout Link for the $49 one-time Indie License is live, linking https://gatefit.io/#pricing.
+- README: the Distribution paragraph's cut-off Polar sentence now says to buy the $49 one-time Indie License through the Polar Checkout Link at https://gatefit.io/#pricing.
 - Telemetry docs: the status checks are described from the registered Cron Triggers: `*/5 * * * *` runs the checks, with Polar probed only on the :00 and :30 runs, and `15 0 * * *` runs the daily rollup at 00:15 UTC.
-- Status page: a `checked_at` more than 5 minutes in the future is treated as stale, so every tile shows unknown, never green.
-- Collector Worker status: a sample whose `checked_at` is more than 5 minutes in the future (the site's `FUTURE_SKEW_MS`) is no longer fresh, so `GET /v1/status` reports unknown for it, never ok. Exactly 5 minutes ahead still counts.
-- Docs wording: the Worker README, the Telemetry docs page, the README and `docs/paddle.md` now say the collector at `t.gatefit.io` is live, serves `GET /v1/status`, accepts `pack: paddle`, and runs its crons (`*/5 * * * *`, Polar on :00 and :30; daily rollup `15 0 * * *` at 00:15 UTC), instead of waiting on a redeploy.
-- `docs/polar.md` and `docs/live-clock.md` drop banned phrases. `docs/license.md` says the $49 license unlocks chaos mode and the Polar and Paddle packs, S1–S9 and Phase 2 stay free, instead of "first Pro pack".
+- Status: a `checked_at` more than 5 minutes in the future (the site's `FUTURE_SKEW_MS`) is no longer fresh. The status page shows unknown on every tile and the collector's `GET /v1/status` reports unknown for that sample, never green or ok. Exactly 5 minutes ahead still counts.
+- Docs wording: the Worker README and the Telemetry docs page now say the collector at `t.gatefit.io` is live, serves `GET /v1/status`, accepts `pack: paddle`, and runs its crons (`*/5 * * * *`, Polar on :00 and :30; daily rollup `15 0 * * *` at 00:15 UTC), instead of waiting on a redeploy. The README says the collector is live, accepts `pack: paddle` and serves `GET /v1/status`. `docs/paddle.md` says the live collector accepts `paddle`.
+- `docs/polar.md`, `docs/publish.md`, `docs/live-clock.md` and the README drop banned phrases and their variants: no "docs live at" or "Docs site: live at" (now "Docs: https://gatefit.io" or "**Docs site:** live. https://gatefit.io"), no "checkout … is live", and no fixture/goldens pairing (live-clock.md: "run only from YAML fixtures"; README tagline: "YAML fixture scenarios"). `docs/license.md` says the $49 license unlocks chaos mode and the Polar and Paddle packs, S1–S9 and Phase 2 stay free, instead of "first Pro pack".
 - Landing price card: the repeated "Chaos mode" bullet under "Unlocks chaos mode, Polar and Paddle packs" is gone.
 
 ### Changed
@@ -20,7 +19,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 - `./ci-local.sh` also typechecks the collector Worker entry (`worker/telemetry/src/index.ts` and its imports) through `tsconfig.worker.json`. It had no type errors; no runtime change.
 - h13 mint detectors: regression test that `--mint-low` and its anti-aliased edges over navy and the surfaces never count as mint or orbit mint. The detector fix itself shipped in 0.7.0.
 - `worker/telemetry/wrangler.toml` comment: "daily rollup at 00:15 UTC" instead of "nightly rollup". No config change.
-- Tests: a scan of current `docs/` (not release notes), the README, the Worker README and the Telemetry page for banned phrases and stale redeploy wording.
+- Tests: a scan of current `docs/` (not release notes), the README, the Worker README and the Telemetry page for banned phrases and stale redeploy wording, plus variant-tolerant regexes (docs/site live at, checkout … is live, fixture … goldens) over the README, current `docs/*.md` and `site/src/content/docs/*.md`.
 
 ## [0.7.0] - 2026-11-03
 
