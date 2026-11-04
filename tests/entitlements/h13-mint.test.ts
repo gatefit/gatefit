@@ -62,3 +62,18 @@ test("H29 h13 isOrbitMint: the mint-low chip fill is not orbit mint; faint orbit
     assert.ok(isOrbitMint(...over(BRAND.mint, alpha, BRAND.navy)), `${alpha * 100}% mint over navy`);
   }
 });
+
+test("H31 h13 detectors: --mint-low and its anti-aliased edges are never mint", () => {
+  assert.ok(!isMint(...rgb(BRAND.mintLow)), `isMint fired on mintLow ${BRAND.mintLow}`);
+  for (const bg of [BRAND.navy, BRAND.navyDeep, BRAND.surface, BRAND.surface2]) {
+    for (const alpha of [0.1, 0.25, 0.5, 0.75, 1]) {
+      const px = over(BRAND.mintLow, alpha, bg);
+      assert.ok(!isMint(...px), `isMint fired on ${alpha * 100}% mintLow over ${bg}`);
+      assert.ok(!isOrbitMint(...px), `isOrbitMint fired on ${alpha * 100}% mintLow over ${bg}`);
+    }
+  }
+  const img = image(60, 60, BRAND.surface);
+  for (let y = 20; y < 32; y += 1) for (let x = 14; x < 46; x += 1) plant(img, x, y, BRAND.mintLow);
+  assert.equal(mintPastBorder(img, 1, 1, 12, []), 0, "mint-low chip inside the card");
+  assert.equal(mintInside(img, { x: 0, y: 0, w: 60, h: 60 }, 1, 1), 0, "mint-low chip in a text region");
+});

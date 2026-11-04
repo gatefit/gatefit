@@ -6,6 +6,8 @@ export const STATUS_URL = 'https://t.gatefit.io/v1/status';
 export const STATS_URL = 'https://t.gatefit.io/v1/stats';
 /** checked_at older than this means the probes stopped: everything is unknown. */
 export const FRESH_MS = 15 * 60_000;
+/** checked_at further ahead of now than this is not trusted as fresh (clock skew allowance). */
+export const FUTURE_SKEW_MS = 5 * 60_000;
 const DAYS = 90;
 const DAY_MS = 86_400_000;
 
@@ -116,7 +118,8 @@ function emptyTicks(): ServiceView['ticks'] {
 }
 
 export function statusView(payload: StatusPayload | null, now: Date): StatusView {
-	const fresh = !!payload?.checked_at && now.getTime() - Date.parse(payload.checked_at) <= FRESH_MS;
+	const age = payload?.checked_at ? now.getTime() - Date.parse(payload.checked_at) : NaN;
+	const fresh = age <= FRESH_MS && age >= -FUTURE_SKEW_MS;
 	const byId = new Map((fresh ? payload!.services : []).map((s) => [s.id, s]));
 	const services = SERVICES.map((meta): ServiceView => {
 		const s = byId.get(meta.id);

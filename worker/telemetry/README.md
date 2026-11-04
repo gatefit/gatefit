@@ -17,7 +17,7 @@ never stores the raw install id, never reads client IPs or user agents, and neve
 request bodies. Status checks (`checks`, `check_days`, migration `0002`) hold only the
 time, service, pass/fail, latency, and a short code or version; never a response body.
 
-Retention: the nightly cron (`15 0 * * *`) rolls finished UTC days into `check_days`,
+Retention: the daily cron at 00:15 UTC (`15 0 * * *`) rolls finished UTC days into `check_days`,
 keeps raw `checks` from the start of the day before yesterday (two to three days), and
 keeps 90 days of `check_days`. `counts` and `installs` still have no retention job.
 

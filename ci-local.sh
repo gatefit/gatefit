@@ -307,6 +307,8 @@ export DO_NOT_TRACK=1
 XDG_CONFIG_HOME="$(mktemp -d)"
 export XDG_CONFIG_HOME
 npx tsc --noEmit || fail "typecheck"
+# H31: the Worker entry (and what it imports) is not reached from the tests; typecheck it too.
+npx tsc --noEmit -p tsconfig.worker.json || fail "typecheck: worker/telemetry/src/index.ts"
 # Files share process.env (GATEFIT_LIVE_CLOCK probe); keep the test runner serial.
 unit_log="$(mktemp)"
 npx tsx --test --test-concurrency=1 tests/entitlements/*.test.ts 2>&1 | tee "$unit_log" || fail "entitlement unit tests"

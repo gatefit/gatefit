@@ -132,6 +132,12 @@ test("only five fresh ok services make the banner green", () => {
   const stale = statusView(parseStatus(payload({}, "2026-11-03T11:44:00.000Z")), NOW);
   assert.equal(stale.banner.state, "unknown", "checked_at 16 minutes old");
   assert.ok(stale.services.every((s) => s.state === "unknown"));
+  const future = statusView(parseStatus(payload({}, "2026-11-03T12:10:00.000Z")), NOW);
+  assert.equal(future.banner.state, "unknown", "checked_at 10 minutes in the future");
+  assert.ok(future.services.every((s) => s.state === "unknown"));
+  assert.equal(future.checkedAt, null);
+  const skew = statusView(parseStatus(payload({}, "2026-11-03T12:02:00.000Z")), NOW);
+  assert.equal(skew.banner.state, "ok", "checked_at 2 minutes ahead is clock skew, still fresh");
   const nullChecked = statusView(parseStatus(payload({}, null as unknown as string)), NOW);
   assert.equal(nullChecked.banner.state, "unknown");
   const partly = statusView(parseStatus(payload({ polar: "unknown" })), NOW);
@@ -304,7 +310,8 @@ test("new status copy stays honest and avoids banned phrases", () => {
   assert.match(released, /redeploy/);
   assert.match(telemetry, /## Status page/);
   assert.match(telemetry, /in-process|inside the Worker/i);
-  assert.match(telemetry, /30 minutes/);
+  assert.match(telemetry, /:00 and :30/);
+  assert.match(telemetry, /00:15 UTC/);
   assert.match(telemetry, /90 days/);
   assert.match(telemetry, /not access/i);
   assert.match(readme, /0002/);

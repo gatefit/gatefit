@@ -4,6 +4,15 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ## [Unreleased]
 
+### Fixed
+
+- License copy: the $49 Gatefit Indie License now says what it unlocks (chaos mode, Polar and Paddle packs) instead of "Pro packs", on the landing page, the goldens docs, `docs/license.md`, and the README. S1–S9 and Phase 2 stay free.
+- README: the Distribution paragraph's cut-off Polar sentence now says the Checkout Link for the $49 one-time Indie License is live, linking https://gatefit.io/#pricing.
+- Telemetry docs: the status checks are described from the registered Cron Triggers: `*/5 * * * *` runs the checks, with Polar probed only on the :00 and :30 runs, and `15 0 * * *` runs the daily rollup at 00:15 UTC.
+- Status page: a `checked_at` more than 5 minutes in the future is treated as stale, so every tile shows unknown, never green.
+- `./ci-local.sh` also typechecks the collector Worker entry (`worker/telemetry/src/index.ts` and its imports) through `tsconfig.worker.json`. It had no type errors; no runtime change.
+- h13 mint detectors: regression test that `--mint-low` and its anti-aliased edges over navy and the surfaces never count as mint or orbit mint. The detector fix itself shipped in 0.7.0.
+
 ## [0.7.0] - 2026-11-03
 
 0.7.0 adds the paid Paddle provider pack and the public status page at gatefit.io/status/, backed by the collector Worker's checks and `GET /v1/status`, reports the pack name in opt-in telemetry for a `--suite` path into the Polar or Paddle golden directory, keeps untagged `order.created` and `order.updated` (Stripe sends the same names) away from the Polar rules, and fixes text contrast at the peak of the site's red glows (WCAG AA). This change does not publish the package and does not create the tag.

@@ -4,7 +4,7 @@ Fixture-first access checks. Each file is one customer and a list of `event` / `
 
 The Stripe API version is the pin in `src/stripe-clock.ts`: `2025-10-29.clover`. These files do not call Stripe. `sk_live` is refused. An event `httpStatus` of 200 is not access; the `expect` block is the access row.
 
-S1–S6, the Phase 2 packs, and S7–S9 are free. They do not read `GATEFIT_LICENSE_KEY` and do not call Polar. The $49 Indie License unlocks Pro packs. Chaos mode is live. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.7.0`.
+S1–S6, the Phase 2 packs, and S7–S9 are free. They do not read `GATEFIT_LICENSE_KEY` and do not call Polar. The $49 Indie License unlocks chaos mode, Polar and Paddle packs. Chaos mode is live. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.7.0`.
 
 | Id | Pack | Access row |
 | --- | --- | --- |
