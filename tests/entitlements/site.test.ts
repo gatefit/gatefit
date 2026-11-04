@@ -35,7 +35,8 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(index, /\$49/);
   assert.match(index, /Buy for \$49/);
   assert.match(index, /Indie License/);
-  assert.match(index, /Unlocks Pro packs/);
+  assert.match(index, /Unlocks chaos mode, Polar and Paddle packs/);
+  assert.doesNotMatch(index, /unlocks Pro packs/i);
   assert.match(index, /Chaos mode/);
   assert.match(index, /checks the access row/);
   assert.doesNotMatch(index, /Chaos mode coming/);

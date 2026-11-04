@@ -132,6 +132,12 @@ test("only five fresh ok services make the banner green", () => {
   const stale = statusView(parseStatus(payload({}, "2026-11-03T11:44:00.000Z")), NOW);
   assert.equal(stale.banner.state, "unknown", "checked_at 16 minutes old");
   assert.ok(stale.services.every((s) => s.state === "unknown"));
+  const future = statusView(parseStatus(payload({}, "2026-11-03T12:10:00.000Z")), NOW);
+  assert.equal(future.banner.state, "unknown", "checked_at 10 minutes in the future");
+  assert.ok(future.services.every((s) => s.state === "unknown"));
+  assert.equal(future.checkedAt, null);
+  const skew = statusView(parseStatus(payload({}, "2026-11-03T12:02:00.000Z")), NOW);
+  assert.equal(skew.banner.state, "ok", "checked_at 2 minutes ahead is clock skew, still fresh");
   const nullChecked = statusView(parseStatus(payload({}, null as unknown as string)), NOW);
   assert.equal(nullChecked.banner.state, "unknown");
   const partly = statusView(parseStatus(payload({ polar: "unknown" })), NOW);
