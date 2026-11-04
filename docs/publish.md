@@ -6,7 +6,7 @@ The named gate does **not** publish. There is no npm token in this repo. Do not 
 
 **Docs:** https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` copies `site/dist` or deploys the Cloudflare target.
 
-**Polar checkout:** live. Gatefit Indie License, **$49** one-time: `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`.
+**Polar checkout:** Gatefit Indie License, **$49** one-time via the Polar Checkout Link `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`.
 
 **Tag:** `v0.7.0` must match `package.json` `version`. Do not create the git tag or the GitHub Release from the named gate. Notes: [release-v0.7.0.md](release-v0.7.0.md).
 

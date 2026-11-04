@@ -251,11 +251,11 @@ test("h32_current_docs_have_no_banned_phrases_and_no_stale_redeploy_wording", ()
     assert.doesNotMatch(text, /does not serve them yet|after the Worker is redeployed|until the collector Worker is redeployed/i, `${file} has stale redeploy wording`);
   }
   assert.doesNotMatch(read("docs/license.md"), /first Pro pack/);
-  const variants = [/docs\W*(site)?\W*live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /fixture[-*\s\w]*goldens/i];
+  const variants = [/docs\W*(site)?\W*live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i];
   const siteDocs = fs.readdirSync(path.join(root, "site/src/content/docs")).filter((f) => f.endsWith(".md")).map((f) => `site/src/content/docs/${f}`);
   for (const file of ["README.md", ...docs, ...siteDocs]) {
     const text = read(file);
-    for (const re of variants) assert.doesNotMatch(text, re, `${file} has a variant of ${re}`);
+    for (const re of [...banned, ...variants]) assert.doesNotMatch(text, re, `${file} has ${re}`);
   }
   const card = read("site/src/pages/index.astro");
   assert.match(card, /<li>Unlocks chaos mode, Polar and Paddle packs<\/li>/);

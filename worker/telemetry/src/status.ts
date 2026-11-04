@@ -241,8 +241,10 @@ export async function buildStatus(reader: StatusReader, now: Date): Promise<Stat
     }
     return out;
   });
-  const newest = latest.reduce((m, c) => Math.max(m, c.ts), -Infinity);
-  return { checked_at: latest.length ? new Date(newest).toISOString() : null, services };
+  // A sample beyond FUTURE_SKEW_MS would push checked_at ahead and the site would mark every tile unknown.
+  const counted = latest.filter((c) => c.ts - nowMs <= FUTURE_SKEW_MS);
+  const newest = counted.reduce((m, c) => Math.max(m, c.ts), -Infinity);
+  return { checked_at: counted.length ? new Date(newest).toISOString() : null, services };
 }
 
 /** Nightly window: roll up finished days still fully in raw, prune raw and old days. */

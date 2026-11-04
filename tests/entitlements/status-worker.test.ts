@@ -291,6 +291,25 @@ test("future_checked_at_beyond_5_min_is_not_fresh", async () => {
   assert.equal(await at("polar", t + 10 * MIN), "unknown", "polar's longer window does not cover the future");
 });
 
+test("future_sample_does_not_drag_top_level_checked_at_into_the_future", async () => {
+  const t = NOW.getTime();
+  const fresh = t - 2 * MIN;
+  const status = await buildStatus(
+    new MemoryReader([
+      check("site", t + 10 * MIN),
+      check("npm", fresh, 1, 100, "0.6.0"),
+      check("telemetry", t + 5 * MIN),
+      check("action", fresh, 1, 100, "0.6.0"),
+    ]),
+    NOW,
+  );
+  assert.equal(status.checked_at, new Date(t + 5 * MIN).toISOString(), "now+10 min is ignored; now+5:00 still counts");
+  const svc = Object.fromEntries(status.services.map((s) => [s.id, s.state]));
+  assert.deepEqual([svc.site, svc.npm, svc.telemetry, svc.action], ["unknown", "ok", "ok", "ok"]);
+  const onlyFuture = await buildStatus(new MemoryReader([check("site", t + 5 * MIN + 1)]), NOW);
+  assert.equal(onlyFuture.checked_at, null, "every sample beyond the skew leaves checked_at null");
+});
+
 test("no_rows_reports_unknown_and_null_checked_at", async () => {
   const status = await buildStatus(new MemoryReader(), NOW);
   assert.equal(status.checked_at, null);
