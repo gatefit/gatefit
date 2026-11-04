@@ -2,7 +2,7 @@
 
 Polar is the merchant of record for the Gatefit Indie License. npm `gatefit` and the GitHub Action stay free.
 
-Polar checkout is live: **$49** one-time, benefit “Gatefit License Key”.
+The Polar Checkout Link sells the license: **$49** one-time, benefit “Gatefit License Key”.
 
 Committed Checkout Link (public, not a secret):
 

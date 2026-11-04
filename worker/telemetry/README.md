@@ -6,9 +6,10 @@ GATEFIT-H30 adds the status checks behind `gatefit.io/status/`: a Cron Trigger p
 the site, npm, the Action tag, the Polar Checkout Link and the Worker itself, and
 `GET /v1/status` serves the results (see the Telemetry docs page, "Status page").
 Live at `https://t.gatefit.io`. Not part of `./ci-local.sh`, not in the npm tarball.
-The CLI side of the ping ships in 0.6.0 and stays opt-in. `GET /v1/status`, the cron
-checks, and accepting `pack: paddle` (CLI side ships in 0.7.0) need a redeploy and
-migration `0002` first; the deployed Worker does not serve them yet. The pure handler
+The CLI side of the ping ships in 0.6.0 and stays opt-in. The deployed Worker has
+migration `0002`, serves `GET /v1/status`, and accepts `pack: paddle` (CLI side ships in
+0.7.0). Its crons run: `*/5 * * * *` runs the checks (Polar only on the :00 and :30 runs)
+and `15 0 * * *` runs the daily rollup at 00:15 UTC. The pure handler
 (`src/handler.ts`) is covered by `tests/entitlements/telemetry-worker.test.ts`.
 
 What it stores: daily counters per allowlisted value (`counts`) and a 16-hex SHA-256

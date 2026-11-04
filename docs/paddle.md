@@ -12,7 +12,7 @@ The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks onl
 - Rules: `src/paddle-rules.ts`. Paddle runs before Polar in `nextSnapshot`. `subscription.created`, `.updated` and `.canceled` reach the Paddle rules only with `provider: paddle`; untagged ones fold with the Polar rules.
 - Policy: only `transaction.completed` grants; `transaction.payment_failed` is unchanged; only an approved full refund adjustment locks; an approved chargeback locks and clears features; `chargeback_reverse` and credits do not re-grant.
 - Secrets: the pack refuses `pdl_live_`, `pdl_sdbx_` and `pdl_ntfset_` keys in the adapter source or environment, plus Polar tokens and `sk_live`, without printing the value.
-- Telemetry: an opted-in run reports `pack: paddle`. The collector Worker allowlist accepts `paddle` once it is redeployed; until then those pings are rejected and dropped, and the CLI is unaffected.
+- Telemetry: an opted-in run reports `pack: paddle`. The live collector Worker at `t.gatefit.io` accepts `paddle`; a failed ping never affects the CLI.
 - E2E: `tests/entitlements/paddle-pack.test.ts`. HTTP 200 is not access.
 
 Site page: `site/src/content/docs/paddle-pack.md`.
