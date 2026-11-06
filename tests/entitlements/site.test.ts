@@ -79,7 +79,7 @@ test("Polar pack page is honest about price, release, and HTTP 200", () => {
   assert.match(page, /The Polar provider pack ships in 0\.6\.0\./);
   assert.match(
     page,
-    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S9 and Phase 2 stay free\./,
+    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S12 and Phase 2 stay free\./,
   );
   assert.match(page, /HTTP 200 is not access/);
   const schema = read("src/polar-pack.ts").match(/export const POLAR_SCHEMA = "([^"]+)";/)?.[1];
@@ -109,7 +109,7 @@ test("Paddle pack page is honest about price, release, and HTTP 200", () => {
   assert.match(page, /The Paddle provider pack ships in 0\.7\.0 as `gatefit run --suite paddle`/);
   assert.match(
     page,
-    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S9 and Phase 2 stay free\./,
+    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S12 and Phase 2 stay free\./,
   );
   assert.match(page, /HTTP 200 is not access/);
   const schema = read("src/paddle-pack.ts").match(/export const PADDLE_SCHEMA = "([^"]+)";/)?.[1];

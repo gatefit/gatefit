@@ -53,6 +53,22 @@ test("gatefit run S7–S9: hardened passes and naive fails each golden", () => {
   }
 });
 
+const s10s12 = [
+  "trial_end_pause_resume_waits_for_paid",
+  "smart_retries_unpaid_then_paid_recovers",
+  "pause_collection_void_locks_draft_keeps",
+];
+
+test("gatefit run S10–S12: hardened passes and naive fails each golden", () => {
+  for (const id of s10s12) {
+    const hardened = run(["run", "--suite", id, "--adapter", "src/adapters/hardened.ts"]);
+    assert.equal(hardened.status, 0, hardened.stderr);
+    const naive = run(["run", "--suite", id, "--adapter", "src/adapters/naive.ts"]);
+    assert.equal(naive.status, 1, naive.stderr);
+    assert.match(naive.stderr, new RegExp(`FAIL ${id}`));
+  }
+});
+
 test("gatefit run naive S1 exits 1", () => {
   const result = run([
     "run",

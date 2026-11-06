@@ -62,6 +62,9 @@ need_file tests/entitlements/goldens/unpaid_after_retries_revokes.yaml
 need_file tests/entitlements/goldens/trial_no_card.yaml
 need_file tests/entitlements/goldens/portal_downgrade_period_end_vs_immediate.yaml
 need_file tests/entitlements/goldens/entitlements_active_summary.yaml
+need_file tests/entitlements/goldens/trial_end_pause_resume_waits_for_paid.yaml
+need_file tests/entitlements/goldens/smart_retries_unpaid_then_paid_recovers.yaml
+need_file tests/entitlements/goldens/pause_collection_void_locks_draft_keeps.yaml
 need_file tests/entitlements/goldens/README.md
 need_file src/polar-pack.ts
 need_file src/polar-rules.ts

@@ -176,6 +176,86 @@ test("S7–S9 goldens pin the Stripe API version and stay fixture-only", () => {
   assert.equal(summary.steps[3]?.expect.locked, false);
 });
 
+test("S10–S12 goldens pin the Stripe API version and stay fixture-only", () => {
+  const names = [
+    "trial_end_pause_resume_waits_for_paid.yaml",
+    "smart_retries_unpaid_then_paid_recovers.yaml",
+    "pause_collection_void_locks_draft_keeps.yaml",
+  ];
+  for (const name of names) {
+    const file = path.join(import.meta.dirname, "goldens", name);
+    const raw = fs.readFileSync(file, "utf8");
+    assert.match(raw, new RegExp(STRIPE_API_VERSION.replace(/\./g, "\\.")));
+    assert.match(raw, /HTTP 200 is not access/);
+    assert.match(raw, /Assumed policy/);
+    assert.doesNotMatch(raw, /sk_live/);
+    const suite = loadGolden(file);
+    assert.equal(LIVE_SCENARIO_IDS.includes(suite.id as (typeof LIVE_SCENARIO_IDS)[number]), false);
+    assert.ok(suite.steps.some((step) => step.event.httpStatus === 200 && step.expect.locked === true));
+    for (const step of suite.steps) {
+      assert.notEqual(step.expect.locked, undefined);
+      assert.equal(step.event.stripeHttpStatus, undefined);
+      assert.equal(step.event.created, undefined);
+    }
+  }
+  const resume = loadGolden(
+    path.join(import.meta.dirname, "goldens/trial_end_pause_resume_waits_for_paid.yaml"),
+  );
+  assert.equal(resume.steps[0]?.event.status, "trialing");
+  assert.equal(resume.steps[1]?.event.type, "customer.subscription.paused");
+  assert.equal(resume.steps[1]?.expect.locked, true);
+  assert.equal(resume.steps[2]?.event.type, "customer.subscription.resumed");
+  assert.equal(resume.steps[2]?.event.status, "active");
+  assert.equal(resume.steps[2]?.event.httpStatus, 200);
+  assert.equal(resume.steps[2]?.expect.locked, true);
+  assert.equal(resume.steps[3]?.event.type, "invoice.payment_failed");
+  assert.equal(resume.steps[3]?.expect.locked, true);
+  assert.equal(resume.steps[4]?.event.type, "invoice.paid");
+  assert.equal(resume.steps[4]?.expect.locked, false);
+  assert.equal(resume.steps[5]?.event.id, resume.steps[2]?.event.id);
+  assert.equal(resume.steps[5]?.expect.locked, false);
+  const retries = loadGolden(
+    path.join(import.meta.dirname, "goldens/smart_retries_unpaid_then_paid_recovers.yaml"),
+  );
+  assert.equal(retries.steps[0]?.event.type, "invoice.paid");
+  const failed = retries.steps.slice(1, 4);
+  assert.equal(new Set(failed.map((step) => step.event.id)).size, 3);
+  for (const step of failed) {
+    assert.equal(step.event.type, "invoice.payment_failed");
+    assert.equal(step.expect.locked, true);
+  }
+  assert.equal(failed.filter((step) => step.event.httpStatus === 200).length, 1);
+  assert.equal(retries.steps[4]?.event.status, "unpaid");
+  assert.equal(retries.steps[4]?.expect.locked, true);
+  assert.equal(retries.steps[4]?.expect.plan, "pro");
+  assert.equal(retries.steps[5]?.event.type, "invoice.paid");
+  assert.equal(retries.steps[5]?.expect.locked, false);
+  assert.equal(retries.steps[6]?.event.id, retries.steps[3]?.event.id);
+  assert.equal(retries.steps[6]?.expect.locked, false);
+  const pause = loadGolden(
+    path.join(import.meta.dirname, "goldens/pause_collection_void_locks_draft_keeps.yaml"),
+  );
+  assert.equal(pause.steps[0]?.event.type, "invoice.paid");
+  assert.equal(pause.steps[1]?.event.pause_collection_behavior, "keep_as_draft");
+  assert.equal(pause.steps[1]?.expect.locked, false);
+  assert.equal(pause.steps[2]?.event.pause_collection_behavior, "mark_uncollectible");
+  assert.equal(pause.steps[2]?.expect.locked, false);
+  assert.equal(pause.steps[3]?.event.type, "invoice.marked_uncollectible");
+  assert.equal(pause.steps[3]?.event.pause_collection_behavior, "mark_uncollectible");
+  assert.equal(pause.steps[3]?.expect.locked, false);
+  assert.equal(pause.steps[4]?.event.pause_collection_behavior, "void");
+  assert.equal(pause.steps[4]?.event.httpStatus, 200);
+  assert.equal(pause.steps[4]?.expect.locked, true);
+  assert.equal(pause.steps[5]?.event.pause_collection_behavior, null);
+  assert.equal(pause.steps[5]?.event.httpStatus, 200);
+  assert.equal(pause.steps[5]?.expect.locked, true);
+  assert.equal(pause.steps[6]?.event.type, "invoice.paid");
+  assert.equal(pause.steps[6]?.expect.locked, false);
+  assert.equal(pause.steps[7]?.event.type, "invoice.marked_uncollectible");
+  assert.equal(pause.steps[7]?.event.pause_collection_behavior, undefined);
+  assert.equal(pause.steps[7]?.expect.locked, true);
+});
+
 test("runGolden refuses GATEFIT_LIVE_CLOCK", async () => {
   const prev = process.env.GATEFIT_LIVE_CLOCK;
   process.env.GATEFIT_LIVE_CLOCK = "1";
