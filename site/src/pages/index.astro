@@ -7,6 +7,12 @@ import { landingSets, loadStripeGoldens } from '../lib/stripeGoldens';
 
 const initCmd = 'npx gatefit init';
 
+// Break golden ids after underscores so a narrow column wraps at the word, not mid-token.
+function goldenId(id: string): string {
+	if (!/^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(id)) throw new Error(`unexpected golden id ${id}`);
+	return id.replaceAll('_', '_<wbr>');
+}
+
 // The replay in the hero frame: one customer, three Stripe events, the row each one should leave.
 const events = [
 	{ name: 'customer.subscription.created', want: 'trialing', ok: true },
@@ -94,7 +100,7 @@ const sets = landingSets(
 					<div class="hero-copy">
 						<p class="eyebrow"><span class="pip"></span>Stripe → access DB → CI</p>
 						<h1 id="hero-title">CI tests for the access table behind your Stripe paywall.</h1>
-						<p class="hero-sub">Gatefit replays refunds, disputes, replays and <code>past_due</code> in CI and checks the access row your app writes. A 200 from Stripe is not access.</p>
+						<p class="hero-sub">Gatefit replays refunds, disputes, duplicate webhooks and <code>past_due</code> in CI and checks the access row your app writes. A 200 from Stripe is not access.</p>
 						<div class="hero-cta">
 							<button type="button" class="cmd" data-copy={initCmd} aria-label={`Copy ${initCmd}`}>
 								<span class="cmd-prompt" aria-hidden="true">$</span>
@@ -182,11 +188,11 @@ const sets = landingSets(
 					<div class="golden-sets">
 						<div class="set">
 							<p class="set-h"><span>{sets.sLabel}</span><span class="count">{sets.free.length}</span></p>
-							<ul class="tags">{sets.free.map((g) => <li><Icon name="check" size={14} />{g}</li>)}</ul>
+							<ul class="tags">{sets.free.map((g) => <li><Icon name="check" size={14} /><span class="tag-id" set:html={goldenId(g)} /></li>)}</ul>
 						</div>
 						<div class="set">
 							<p class="set-h"><span>Phase 2</span><span class="count">{sets.phase2.length}</span></p>
-							<ul class="tags">{sets.phase2.map((g) => <li><Icon name="check" size={14} />{g}</li>)}</ul>
+							<ul class="tags">{sets.phase2.map((g) => <li><Icon name="check" size={14} /><span class="tag-id" set:html={goldenId(g)} /></li>)}</ul>
 						</div>
 					</div>
 					<a class="quiet" href="/goldens/">See every golden <Icon name="arrow-right" size={16} /></a>
@@ -197,7 +203,7 @@ const sets = landingSets(
 				<div class="wrap">
 					<div class="head">
 						<h2 id="pricing-title">Free core, $49 for chaos mode and packs</h2>
-						<p class="lede">The CLI, the Action and every golden stay free. The Indie License is a one-time Polar checkout.</p>
+						<p class="lede">The CLI, the Action and the Stripe goldens ({sets.sLabel} and Phase 2) stay free. Polar and Paddle pack goldens are on the Indie License, a one-time Polar checkout.</p>
 					</div>
 					<div class="prices">
 						<article class="price-card">
@@ -235,7 +241,7 @@ const sets = landingSets(
 					<div class="final-band">
 						<div>
 							<h2 id="final-title">Ship the gate before the refund</h2>
-							<p class="lede">Run the free CLI today, or buy the Indie License for chaos mode.</p>
+							<p class="lede">Run the free CLI today, or buy the Indie License for chaos mode and the Polar and Paddle packs.</p>
 						</div>
 						<div class="hero-cta">
 							<PolarBuyCta label="Buy for $49" />

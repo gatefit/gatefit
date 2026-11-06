@@ -386,7 +386,8 @@ h1 {
 .chip { justify-self: start; padding: 7px 10px; border-radius: 4px; background: var(--surface-2); color: var(--body); font-family: var(--mono); font-size: 0.82rem; overflow-wrap: anywhere; }
 .chip-row { color: var(--mint); }
 .verdict-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
-.v { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--r-btn); border: 1px solid var(--line-strong); color: var(--body); font-size: 0.95rem; }
+/* Scoped: /status uses .v for metric figures. An unscoped .v paints those as chips. */
+.landing .v { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--r-btn); border: 1px solid var(--line-strong); color: var(--body); font-size: 0.95rem; }
 .v-bad .icon { color: var(--red-high); }
 .v-ok .icon { color: var(--mint); }
 
@@ -396,7 +397,8 @@ h1 {
 .set-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; color: var(--text); font-weight: 600; }
 .count { display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 8px; border-radius: 4px; background: var(--mint-low); color: var(--mint-high); font-family: var(--mono); font-size: 0.85rem; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.tags li { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 6px 10px; border-radius: 4px; background: var(--surface-2); color: var(--body); font-family: var(--mono); font-size: 0.8rem; overflow-wrap: anywhere; }
+.tags li { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; padding: 6px 10px; border-radius: 4px; background: var(--surface-2); color: var(--body); font-family: var(--mono); font-size: 0.8rem; }
+.tag-id { min-width: 0; }
 .tags .icon { color: var(--mint); flex: 0 0 auto; }
 
 /* Pricing */
@@ -406,10 +408,11 @@ h1 {
 .tier { color: var(--muted); font-family: var(--mono); font-size: 0.85rem; }
 .amount { color: var(--text); font-size: 3rem; font-weight: 660; letter-spacing: -0.05em; line-height: 1; }
 .amount-note { color: var(--muted); font-size: 1rem; font-weight: 500; letter-spacing: 0; }
-.ticks { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; color: var(--body); }
-.ticks li { display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
-.ticks .icon { color: var(--mint); margin-top: 2px; flex: 0 0 auto; }
-.indie .ticks li::before { content: ''; flex: 0 0 auto; width: 8px; height: 8px; margin-top: 7px; border-radius: 2px; background: var(--mint); }
+/* Scoped: /status uses .ticks for the 90-day uptime bars. */
+.landing .ticks { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; color: var(--body); }
+.landing .ticks li { display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+.landing .ticks .icon { color: var(--mint); margin-top: 2px; flex: 0 0 auto; }
+.landing .indie .ticks li::before { content: ''; flex: 0 0 auto; width: 8px; height: 8px; margin-top: 7px; border-radius: 2px; background: var(--mint); }
 .suites { display: flex; flex-wrap: wrap; gap: 8px; }
 .suite { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 4px; background: var(--mint-low); color: var(--mint-high); }
 .suite code { font-size: 0.82rem; }
@@ -523,7 +526,7 @@ h1 {
 	.tags { gap: 10px; }
 	.prices { gap: 24px; }
 	.price-card { padding: 28px 22px; gap: 22px; }
-	.ticks { gap: 14px; }
+	.landing .ticks { gap: 14px; }
 	.final-band { padding: 36px 22px; gap: 24px; }
 	.status-card { margin-top: 28px; padding: 22px 20px; }
 	.site-foot { padding: 40px 0 56px; }
