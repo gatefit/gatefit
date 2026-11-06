@@ -12,6 +12,8 @@ export default defineConfig({
 			description:
 				'Stripe Entitlement Edge Pack. CI that asserts the access DB survives ugly billing transitions.',
 			favicon: '/favicon.svg',
+			// H35: the G mark beside the wordmark in the docs header.
+			logo: { src: './src/assets/gatefit-mark.svg', alt: '' },
 			// Cloudflare Web Analytics: cookieless page views. Keep "automatic setup" off for
 			// the Pages project or every page view counts twice.
 			head: [
@@ -41,6 +43,32 @@ export default defineConfig({
 			customCss: ['./src/styles/docs.css'],
 			expressiveCode: {
 				themes: ['github-dark'],
+				// H35: code frames on the brand navy, mint focus and copy feedback.
+				styleOverrides: {
+					borderRadius: '8px',
+					borderColor: 'rgba(158, 184, 230, 0.14)',
+					codeBackground: '#071330',
+					codeFontFamily: "'Geist Mono Variable', ui-monospace, monospace",
+					codeFontSize: '0.86rem',
+					uiFontFamily: "'Geist Variable', sans-serif",
+					focusBorder: '#5EE0A8',
+					frames: {
+						editorBackground: '#071330',
+						terminalBackground: '#071330',
+						editorTabBarBackground: '#0B1B3A',
+						editorActiveTabBackground: '#071330',
+						editorActiveTabIndicatorTopColor: '#5EE0A8',
+						editorActiveTabIndicatorBottomColor: 'transparent',
+						terminalTitlebarBackground: '#0B1B3A',
+						terminalTitlebarBorderBottomColor: 'rgba(158, 184, 230, 0.14)',
+						terminalTitlebarDotsForeground: '#5E7094',
+						inlineButtonForeground: '#D3DCEB',
+						inlineButtonBorder: 'rgba(158, 184, 230, 0.3)',
+						tooltipSuccessBackground: '#5EE0A8',
+						tooltipSuccessForeground: '#0B1B3A',
+						frameBoxShadowCssValue: 'none',
+					},
+				},
 			},
 			components: {
 				ThemeSelect: './src/components/docs/ThemeSelect.astro',

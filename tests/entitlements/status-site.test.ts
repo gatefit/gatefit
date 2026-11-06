@@ -317,3 +317,127 @@ test("new status copy stays honest and avoids banned phrases", () => {
   assert.match(readme, /0002/);
   assert.doesNotMatch(readme, /No retention job/);
 });
+
+// /status reuses class names the landing also uses. A landing rule matches when its
+// selector fits the status node (body.status-page, not body.landing), including rules
+// nested in @media. Chip padding, borders and the phone .ticks gap are the leak.
+type StatusNode = { tag: string; classes: string[]; parent: StatusNode | null };
+
+function statusNode(tag: string, classes: string[], parent: StatusNode | null): StatusNode {
+  return { tag, classes, parent };
+}
+
+const statusBody = statusNode("body", ["status-page"], null);
+const statusMain = statusNode("main", ["st"], statusBody);
+
+function statusMetric(): StatusNode {
+  const cards = statusNode("div", ["cards"], statusNode("section", [], statusMain));
+  return statusNode("div", ["v", "num"], statusNode("div", ["card"], cards));
+}
+
+function statusUptime(): StatusNode {
+  const svc = statusNode("div", ["svc"], statusNode("section", [], statusMain));
+  return statusNode("div", ["ticks"], statusNode("div", ["row"], svc));
+}
+
+function cssRules(src: string): Array<{ selector: string; decls: string }> {
+  const css = src.replace(/\/\*[\s\S]*?\*\//g, "");
+  const out: Array<{ selector: string; decls: string }> = [];
+  const walk = (text: string) => {
+    let i = 0;
+    while (i < text.length) {
+      while (i < text.length && /\s/.test(text[i]!)) i += 1;
+      if (i >= text.length) break;
+      const open = text.indexOf("{", i);
+      if (open < 0) break;
+      const head = text.slice(i, open).trim();
+      let depth = 1;
+      let j = open + 1;
+      while (j < text.length && depth > 0) {
+        if (text[j] === "{") depth += 1;
+        else if (text[j] === "}") depth -= 1;
+        j += 1;
+      }
+      const inner = text.slice(open + 1, j - 1);
+      if (head.startsWith("@keyframes") || head.startsWith("@font-face")) {
+        i = j;
+        continue;
+      }
+      if (head.startsWith("@")) walk(inner);
+      else if (head) out.push({ selector: head, decls: inner });
+      i = j;
+    }
+  };
+  walk(css);
+  return out;
+}
+
+function compoundMatches(compound: string, node: StatusNode): boolean {
+  const parts = compound.match(/[a-zA-Z][\w-]*|\.[_a-zA-Z][\w-]*|\[.*?\]|::?[\w-]+(?:\([^)]*\))?/g);
+  if (!parts || parts.length === 0) return false;
+  for (const part of parts) {
+    if (part.startsWith(".")) {
+      if (!node.classes.includes(part.slice(1))) return false;
+    } else if (part.startsWith(":") || part.startsWith("[")) return false;
+    else if (node.tag !== part) return false;
+  }
+  return true;
+}
+
+function selectorMatches(selector: string, node: StatusNode): boolean {
+  return selector.split(",").some((alternative) => {
+    const tokens = alternative.trim().split(/\s*([>+~])\s*|\s+/).filter(Boolean);
+    if (tokens.length === 0) return false;
+    let index = tokens.length - 1;
+    let current: StatusNode | null = node;
+    if (!current || !compoundMatches(tokens[index]!, current)) return false;
+    index -= 1;
+    while (index >= 0) {
+      if (!current) return false;
+      const here: StatusNode = current;
+      const combinator = tokens[index] === ">" || tokens[index] === "+" || tokens[index] === "~" ? tokens[index]! : " ";
+      if (combinator !== " ") index -= 1;
+      const compound = tokens[index];
+      if (!compound) return false;
+      if (combinator === ">") {
+        const next: StatusNode | null = here.parent;
+        if (!next || !compoundMatches(compound, next)) return false;
+        current = next;
+      } else if (combinator === " ") {
+        let ancestor: StatusNode | null = here.parent;
+        let found = false;
+        while (ancestor) {
+          if (compoundMatches(compound, ancestor)) {
+            found = true;
+            current = ancestor;
+            break;
+          }
+          ancestor = ancestor.parent;
+        }
+        if (!found) return false;
+      } else return false;
+      index -= 1;
+    }
+    return true;
+  });
+}
+
+test("landing chip styles do not apply to status metric values or uptime ticks", () => {
+  const landing = read("site/src/styles/landing.css");
+  const leaks: string[] = [];
+  for (const rule of cssRules(landing)) {
+    for (const [name, node] of [[".v", statusMetric()], [".ticks", statusUptime()]] as const) {
+      if (!selectorMatches(rule.selector, node)) continue;
+      const decls = rule.decls.replace(/\s+/g, " ").trim();
+      if (decls) leaks.push(`${name} <= ${rule.selector} { ${decls} }`);
+    }
+  }
+  assert.deepEqual(leaks, []);
+  const verdict = rule(landing, ".landing .v");
+  assert.match(verdict, /display: inline-flex/);
+  assert.match(verdict, /padding: 10px 14px/);
+  assert.match(verdict, /border: 1px solid/);
+  assert.match(rule(landing, ".landing .ticks"), /display: grid/);
+  assert.equal(selectorMatches(".landing .v", statusMetric()), false);
+  assert.equal(selectorMatches(".landing .ticks", statusUptime()), false);
+});

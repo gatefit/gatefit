@@ -1,6 +1,7 @@
 ---
 import '../styles/landing.css';
 import '../styles/status.css';
+import mark from '../assets/gatefit-mark.svg?raw';
 
 // Static HTML is the unknown state. The script replaces it only with a valid API response.
 const services = [
@@ -37,7 +38,7 @@ const cards = [
 		<a class="skip" href="#status-main">Skip to content</a>
 		<header class="site-nav">
 			<div class="wrap">
-				<a class="word" href="/">Gatefit</a>
+				<a class="word" href="/"><span class="mark" set:html={mark} />Gatefit</a>
 				<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
 					<span class="nav-toggle-open">Menu</span>
 					<span class="nav-toggle-close">Close</span>
