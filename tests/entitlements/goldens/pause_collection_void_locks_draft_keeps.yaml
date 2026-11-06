@@ -1,0 +1,86 @@
+# S12. Payment collection paused with pause_collection.behavior.
+# Stripe API version 2025-10-29.clover (src/stripe-clock.ts).
+# Source: https://docs.stripe.com/billing/subscriptions/pause-payment
+# The event field pause_collection_behavior is a flat copy of the
+# subscription's pause_collection.behavior; on invoice events it carries the
+# parent subscription's pause. The subscription stays active either way.
+# Assumed policy: void locks. keep_as_draft and mark_uncollectible leave
+# access unchanged and never grant to a locked row. invoice.marked_uncollectible
+# during a mark_uncollectible pause does not revoke; without a pause it still
+# locks. Clearing the pause does not grant; a later invoice.paid does. HTTP 200
+# is not access. Fixture-only; not a live Test Clock id. No license key.
+id: pause_collection_void_locks_draft_keeps
+subject: cus_s12
+steps:
+  - event:
+      id: evt_s12_paid
+      type: invoice.paid
+      customerId: cus_s12
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s12_pause_keep_as_draft
+      type: customer.subscription.updated
+      customerId: cus_s12
+      status: active
+      pause_collection_behavior: keep_as_draft
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s12_pause_mark_uncollectible
+      type: customer.subscription.updated
+      customerId: cus_s12
+      status: active
+      pause_collection_behavior: mark_uncollectible
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s12_invoice_marked_uncollectible_paused
+      type: invoice.marked_uncollectible
+      customerId: cus_s12
+      pause_collection_behavior: mark_uncollectible
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s12_pause_void
+      type: customer.subscription.updated
+      customerId: cus_s12
+      status: active
+      plan: pro
+      pause_collection_behavior: void
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s12_pause_cleared
+      type: customer.subscription.updated
+      customerId: cus_s12
+      status: active
+      pause_collection_behavior: null
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s12_paid_after_resume
+      type: invoice.paid
+      customerId: cus_s12
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s12_invoice_marked_uncollectible
+      type: invoice.marked_uncollectible
+      customerId: cus_s12
+    expect:
+      locked: true
+      plan: pro

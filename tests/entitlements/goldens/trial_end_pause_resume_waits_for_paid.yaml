@@ -1,0 +1,68 @@
+# S10. Trial ends with no payment method and the subscription pauses.
+# Stripe API version 2025-10-29.clover (src/stripe-clock.ts).
+# Sources: https://docs.stripe.com/billing/subscriptions/trials and
+# https://docs.stripe.com/api/subscriptions/resume
+# Assumed policy: resuming is not a payment. customer.subscription.paused
+# and customer.subscription.resumed stay locked, and so does the failed
+# resumption charge (past_due). Only invoice.paid unlocks. A replayed resume
+# event does not re-lock. HTTP 200 is not access. Fixture-only; not a live
+# Test Clock id. No license key.
+id: trial_end_pause_resume_waits_for_paid
+subject: cus_s10
+steps:
+  - event:
+      id: evt_s10_trialing
+      type: customer.subscription.updated
+      customerId: cus_s10
+      status: trialing
+      plan: pro
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s10_paused
+      type: customer.subscription.paused
+      customerId: cus_s10
+      status: paused
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s10_resumed
+      type: customer.subscription.resumed
+      customerId: cus_s10
+      status: active
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s10_resume_charge_failed
+      type: invoice.payment_failed
+      customerId: cus_s10
+      status: past_due
+      plan: pro
+    expect:
+      locked: true
+      plan: pro
+  - event:
+      id: evt_s10_paid
+      type: invoice.paid
+      customerId: cus_s10
+      plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s10_resumed
+      type: customer.subscription.resumed
+      customerId: cus_s10
+      status: active
+      plan: pro
+      httpStatus: 200
+    expect:
+      locked: false
+      plan: pro
