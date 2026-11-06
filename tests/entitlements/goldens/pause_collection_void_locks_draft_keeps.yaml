@@ -7,8 +7,8 @@
 # Assumed policy: void locks. keep_as_draft and mark_uncollectible leave
 # access unchanged and never grant to a locked row. invoice.marked_uncollectible
 # during a mark_uncollectible pause does not revoke; without a pause it still
-# locks. Clearing the pause does not grant; a later invoice.paid does. HTTP 200
-# is not access. Fixture-only; not a live Test Clock id. No license key.
+# locks. Clearing the pause does not grant; a later invoice.paid does.
+# HTTP 200 is not access. Fixture-only; not a live Test Clock id. No license key.
 id: pause_collection_void_locks_draft_keeps
 subject: cus_s12
 steps:

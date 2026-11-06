@@ -42,6 +42,12 @@ export type BillingEvent = {
   action?: string;
   /** Paddle adjustment type. Only an approved full refund locks. */
   adjustment_type?: "full" | "partial";
+  /**
+   * Flat copy of Stripe's subscription pause_collection.behavior. On invoice events it
+   * carries the parent subscription's pause. void locks; keep_as_draft and
+   * mark_uncollectible leave access unchanged. null means the pause was cleared.
+   */
+  pause_collection_behavior?: "keep_as_draft" | "mark_uncollectible" | "void" | null;
   /** Original timeline position. Chaos folds on this so arrival order is not access. */
   created?: number;
 };

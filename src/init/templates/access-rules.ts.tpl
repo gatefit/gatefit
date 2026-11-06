@@ -33,6 +33,8 @@ export type BillingEvent = {
   pending_plan?: string;
   period_end?: number;
   now?: number;
+  /** Stripe pause_collection.behavior, flattened. null means the pause was cleared. */
+  pause_collection_behavior?: "keep_as_draft" | "mark_uncollectible" | "void" | null;
   created?: number;
 };
 
@@ -61,7 +63,13 @@ const isDispute = (e: BillingEvent) =>
 
 const isRefund = (e: BillingEvent) => e.refunded === true || e.type === "charge.refunded";
 
-const isUnpaidExhaust = (e: BillingEvent) => e.status === "unpaid" || e.type === "invoice.marked_uncollectible";
+// A mark_uncollectible collection pause marks invoices uncollectible on purpose. It does not revoke.
+const isUnpaidExhaust = (e: BillingEvent) =>
+  e.status === "unpaid" ||
+  (e.type === "invoice.marked_uncollectible" && e.pause_collection_behavior !== "mark_uncollectible");
+
+const isCollectionVoided = (e: BillingEvent) =>
+  e.type === "customer.subscription.updated" && e.pause_collection_behavior === "void";
 
 const isPastDue = (e: BillingEvent) => e.status === "past_due" || e.type === "invoice.payment_failed";
 
@@ -93,7 +101,7 @@ export function nextSnapshot(current: AccessSnapshot, event: BillingEvent): Acce
   // Active entitlement summaries replace features. They are not a payment.
   if (isActiveEntitlementSummary(event)) return { ...current, features: event.features ?? [] };
   if (isTrialing(event) || isPaused(event)) return withEntitlements({ ...current, locked: true }, event);
-  if (isRefund(event) || isImmediateCancel(event) || isPastDue(event) || isUnpaidExhaust(event)) {
+  if (isRefund(event) || isImmediateCancel(event) || isPastDue(event) || isUnpaidExhaust(event) || isCollectionVoided(event)) {
     return { ...current, locked: true };
   }
   if (isCapePeriodEnded(event)) return { ...current, locked: true };
