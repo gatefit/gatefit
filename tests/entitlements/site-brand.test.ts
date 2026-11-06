@@ -133,19 +133,52 @@ test("H27: text tokens pass WCAG AA on navy and surface; CTA navy-on-mint passes
 });
 
 // H35: the redesigned landing. Red is a tint behind the leaking row and the failed tag; text on it
-// is red-high, mint, or muted. Small labels on the raised surface-2 (events, chips, golden tags).
-test("H35: text on surface-2 (events, chips, golden tags) passes WCAG AA", async () => {
+// is red-high, mint, or muted. Small labels on the raised surface-2 (events, chips).
+test("H35: text on surface-2 (events, chips) passes WCAG AA", async () => {
   const { BRAND } = await import("../../site/src/lib/brand.ts");
   const landing = read("site/src/styles/landing.css");
   for (const k of ["text", "body", "muted", "mint", "redHigh"] as const) {
     const ratio = contrast(BRAND[k], BRAND.surface2);
     assert.ok(ratio >= 4.5, `${k} ${BRAND[k]} on surface-2 is ${ratio.toFixed(2)}:1`);
   }
-  for (const sel of [".ev", ".chip", ".tags li"]) {
+  for (const sel of [".ev", ".chip"]) {
     assert.match(rule(landing, sel), /background: var\(--surface-2\)/, `${sel} sits on surface-2`);
     assert.match(rule(landing, sel), /color: var\(--(body|text)\)/, `${sel} text colour`);
   }
   assert.match(rule(landing, ".chip-row"), /color: var\(--mint\)/);
+});
+
+// H36: golden labels sit on the surface. Outcome stamps are navy text on mint or brand red.
+test("H36: golden labels and outcome pills pass WCAG AA", async () => {
+  const { BRAND } = await import("../../site/src/lib/brand.ts");
+  const landing = read("site/src/styles/landing.css");
+  const pairs: Array<[string, string, string]> = [
+    [".golden-label on surface", BRAND.text, BRAND.surface],
+    [".golden-detail on surface", BRAND.muted, BRAND.surface],
+    [".golden-id on surface", BRAND.muted, BRAND.surface],
+    [".cat-h on navy", BRAND.text, BRAND.navy],
+    [".cat-icon", BRAND.mintHigh, BRAND.mintLow],
+    [".outcome-kept", BRAND.navy, BRAND.mint],
+    [".outcome-revoked", BRAND.navy, BRAND.red],
+    [".outcome-locked", BRAND.navy, BRAND.red],
+  ];
+  for (const [what, fg, bg] of pairs) {
+    const ratio = contrast(fg, bg);
+    assert.ok(ratio >= 4.5, `${what}: ${fg} on ${bg} is ${ratio.toFixed(2)}:1`);
+  }
+  assert.match(rule(landing, ".golden-row"), /background: var\(--surface\)/);
+  assert.match(rule(landing, ".golden-label"), /color: var\(--text\)/);
+  assert.match(rule(landing, ".golden-detail"), /color: var\(--muted\)/);
+  assert.match(rule(landing, ".golden-id"), /color: var\(--muted\)/);
+  assert.match(rule(landing, ".cat-h"), /color: var\(--text\)/);
+  assert.match(rule(landing, ".cat-icon"), /background: var\(--mint-low\)/);
+  assert.match(rule(landing, ".cat-icon"), /color: var\(--mint-high\)/);
+  assert.match(rule(landing, ".outcome-kept"), /background: var\(--mint\)/);
+  assert.match(rule(landing, ".outcome-kept"), /color: var\(--navy\)/);
+  assert.match(rule(landing, ".outcome-revoked"), /background: var\(--red\)/);
+  assert.match(rule(landing, ".outcome-revoked"), /color: var\(--navy\)/);
+  assert.match(rule(landing, ".outcome-locked"), /background: var\(--red\)/);
+  assert.match(rule(landing, ".outcome-locked"), /color: var\(--navy\)/);
 });
 
 test("H35: leak text passes WCAG AA over its red tints (access row, failed tag, failed event)", async () => {

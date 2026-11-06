@@ -2,7 +2,7 @@
 // GATEFIT-H35 landing frame checks (fail modes first; the page was redesigned in H35).
 // - No sideways scroll at 360, 390, 768, 1024, 1280 or 1440.
 // - Text in a section never overlaps other text, and text inside the hero frame, the
-//   how-it-works steps, the golden sets and the price cards stays inside its box.
+//   how-it-works steps, the golden rows and the price cards stays inside its box.
 // - The hero headline has no one-word line at 360, 390, 1280 or 1440 (text-wrap: balance).
 // - At 1280x800 and 1440x900 the hero h1, the init copy button and the hero Buy sit on the
 //   first screen.
@@ -139,7 +139,7 @@ async function checkLayout(width, height) {
       }
       return true;
     };
-    const hosts = '.frame, .step, .set, .price-card, .final-band, .status-card, .verdict-bar .v, .cmd';
+    const hosts = '.frame, .step, .golden-row, .price-card, .final-band, .status-card, .verdict-bar .v, .cmd';
     for (const section of document.querySelectorAll('main > section')) {
       const leaves = [...section.querySelectorAll('h1, h2, h3, p, li, td, th, span, code, a, button')].flatMap((el) => {
         const own = [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim());
