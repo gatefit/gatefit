@@ -3,6 +3,7 @@ import '../styles/landing.css';
 import Icon from '../components/Icon.astro';
 import PolarBuyCta from '../components/PolarBuyCta.astro';
 import mark from '../assets/gatefit-mark.svg?raw';
+import { groupStripeGoldens } from '../lib/goldenLabels';
 import { landingSets, loadStripeGoldens } from '../lib/stripeGoldens';
 
 const initCmd = 'npx gatefit init';
@@ -27,8 +28,10 @@ const steps = [
 ] as const;
 
 // Display order from phase A. Membership and the totals come from the golden files.
+const goldens = loadStripeGoldens();
+const groups = groupStripeGoldens(goldens);
 const sets = landingSets(
-	loadStripeGoldens(),
+	goldens,
 	[
 		'refund_revokes_access',
 		'cancel_revokes_access',
@@ -182,18 +185,34 @@ const sets = landingSets(
 			<section class="section goldens" id="goldens" aria-labelledby="goldens-title">
 				<div class="wrap">
 					<div class="head">
-						<h2 id="goldens-title">{sets.total} Stripe transitions, checked for free</h2>
-						<p class="lede">Each golden is a named transition with the access row it must leave. A naive adapter fails them.</p>
+						<h2 id="goldens-title">{groups.total} Stripe transitions, checked for free</h2>
+						<p class="lede">Each one is a billing change. The pill is how access ends up.</p>
 					</div>
-					<div class="golden-sets">
-						<div class="set">
-							<p class="set-h"><span>{sets.sLabel}</span><span class="count">{sets.free.length}</span></p>
-							<ul class="tags">{sets.free.map((g) => <li><Icon name="check" size={14} /><span class="tag-id" set:html={goldenId(g)} /></li>)}</ul>
-						</div>
-						<div class="set">
-							<p class="set-h"><span>Phase 2</span><span class="count">{sets.phase2.length}</span></p>
-							<ul class="tags">{sets.phase2.map((g) => <li><Icon name="check" size={14} /><span class="tag-id" set:html={goldenId(g)} /></li>)}</ul>
-						</div>
+					<div class="golden-board">
+						{groups.categories.map((category) => (
+							<section class="golden-cat" aria-labelledby={`cat-${category.id}`}>
+								<h3 id={`cat-${category.id}`} class="cat-h">
+									<span class="cat-icon"><Icon name={category.icon} size={18} /></span>
+									<span class="cat-title">{category.title}</span>
+									<span class="count">{category.items.length}</span>
+								</h3>
+								<ul class="golden-list">
+									{category.items.map((item) => (
+										<li class:list={['golden-row', `is-${item.outcome}`]}>
+											<div class="golden-top">
+												<p class="golden-label">{item.label}</p>
+												<span class:list={['outcome', `outcome-${item.outcome}`]}>
+													<Icon name={item.icon} size={14} />
+													{item.pill}
+												</span>
+											</div>
+											{item.detail && <p class="golden-detail">{item.detail}</p>}
+											<code class="golden-id" set:html={goldenId(item.id)} />
+										</li>
+									))}
+								</ul>
+							</section>
+						))}
 					</div>
 					<a class="quiet" href="/goldens/">See every golden <Icon name="arrow-right" size={16} /></a>
 				</div>
