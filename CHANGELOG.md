@@ -4,6 +4,16 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ## [Unreleased]
 
+### Added
+
+- Free S10–S12 goldens. They do not read a license key and do not call Polar. Stripe API version stays `2025-10-29.clover`. They are not live Test Clock ids, and each has an HTTP 200 step that must stay locked.
+  - `trial_end_pause_resume_waits_for_paid` (S10): a trial ends and pauses; `customer.subscription.paused`, `customer.subscription.resumed` and a failed resumption charge stay locked, and only `invoice.paid` unlocks. Sources: https://docs.stripe.com/billing/subscriptions/trials and https://docs.stripe.com/api/subscriptions/resume.
+  - `smart_retries_unpaid_then_paid_recovers` (S11): failed Smart Retries and `unpaid` stay locked with plan and seats kept; paying the latest invoice unlocks. Sources: https://docs.stripe.com/billing/revenue-recovery/smart-retries and https://docs.stripe.com/billing/subscriptions/overview.
+  - `pause_collection_void_locks_draft_keeps` (S12): a `void` collection pause locks; `keep_as_draft` and `mark_uncollectible` leave access; clearing the pause does not grant. Source: https://docs.stripe.com/billing/subscriptions/pause-payment.
+- `BillingEvent.pause_collection_behavior` (`"keep_as_draft" | "mark_uncollectible" | "void" | null`), a flat copy of Stripe's `pause_collection.behavior`. The reference rules lock a `customer.subscription.updated` with `void`, and `invoice.marked_uncollectible` no longer locks when it carries `mark_uncollectible`. Without that field it still locks.
+- The `gatefit init` rules template (`src/init/templates/access-rules.ts.tpl`) has the same field and rule changes. Regenerate with `gatefit init` to pick them up.
+- Telemetry: the three new ids are in `SUITES` and the collector's `suite` allow-list. Code only: there is no Worker deploy in this change, so the live collector does not know these ids yet.
+
 ### Fixed
 
 - License copy: the $49 Gatefit Indie License now says what it unlocks (chaos mode, Polar and Paddle packs) instead of "Pro packs", on the landing page, the goldens docs, `docs/license.md`, and the README. S1–S9 and Phase 2 stay free.

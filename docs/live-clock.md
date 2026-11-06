@@ -9,7 +9,7 @@ H6 seats / CAPE / upgrade-race run only from YAML fixtures, not as default `gate
 
 H7 dispute / unpaid-exhaust run only from YAML fixtures, not as default `gatefit live` ids. Stripe Test Clocks plus `charge.dispute.created` flake (auto-cancel delay); do not port them to the live lane for merge.
 
-S7–S9 (`trial_no_card`, `portal_downgrade_period_end_vs_immediate`, `entitlements_active_summary`) run only from YAML fixtures, not as default `gatefit live` ids. Only `portal_downgrade_period_end_vs_immediate` sets `period_end` + `now` on events. The API version pin for fixtures and the live client is `2025-10-29.clover` in `src/stripe-clock.ts`.
+S7–S12 (`trial_no_card`, `portal_downgrade_period_end_vs_immediate`, `entitlements_active_summary`, `trial_end_pause_resume_waits_for_paid`, `smart_retries_unpaid_then_paid_recovers`, `pause_collection_void_locks_draft_keeps`) run only from YAML fixtures, not as default `gatefit live` ids. Only `portal_downgrade_period_end_vs_immediate` sets `period_end` + `now` on events. The API version pin for fixtures and the live client is `2025-10-29.clover` in `src/stripe-clock.ts`.
 
 ## Local
 

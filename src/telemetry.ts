@@ -48,6 +48,9 @@ export const SUITES = [
   "trial_no_card",
   "portal_downgrade_period_end_vs_immediate",
   "entitlements_active_summary",
+  "trial_end_pause_resume_waits_for_paid",
+  "smart_retries_unpaid_then_paid_recovers",
+  "pause_collection_void_locks_draft_keeps",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];

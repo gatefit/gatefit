@@ -64,7 +64,7 @@ Nested path still works:
     adapter: src/your-access-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo. `uses: gatefit/gatefit@v0.7.0` runs this repo’s goldens, including free S7–S9. 0.5.2 is the first release that ships them. This change does not publish that tag. See [docs/publish.md](docs/publish.md) and the release notes [docs/release-v0.7.0.md](docs/release-v0.7.0.md).
+The Action wraps `gatefit run`. Adapter path is in *your* repo. `uses: gatefit/gatefit@v0.7.0` runs this repo’s goldens, including free S7–S12. 0.5.2 is the first release that ships S7–S9; S10–S12 are not in a release yet. This change does not publish that tag. See [docs/publish.md](docs/publish.md) and the release notes [docs/release-v0.7.0.md](docs/release-v0.7.0.md).
 
 Do not set `GATEFIT_LIVE_CLOCK` for the named gate. Do not use `sk_live`. Never treat Stripe HTTP 200 as proof of access.
 
@@ -95,7 +95,7 @@ One-time setup on npmjs.com for package `gatefit`: open Package settings, Truste
 
 ## License
 
-S1–S6, S7–S9 (no-card trial, portal downgrade, active entitlement summary), seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.7.0`.
+S1–S6, S7–S12 (no-card trial, portal downgrade, active entitlement summary, trial pause and resume, Smart Retries recovery from unpaid, collection pause), seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar. 0.5.2 is the first release that ships S7–S9. S10–S12 are not in a release yet. This change does not publish `0.7.0`.
 
 The $49 Gatefit Indie License unlocks chaos mode, Polar and Paddle packs. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
 
