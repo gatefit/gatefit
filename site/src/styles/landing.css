@@ -329,7 +329,14 @@ h1 {
 .frame-bar { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--navy-deep); }
 .dots { display: inline-flex; gap: 6px; }
 .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--surface-2); }
-.frame-title { color: var(--muted); font-family: var(--mono); font-size: 0.82rem; }
+.frame-title { min-width: 0; color: var(--muted); font-family: var(--mono); font-size: 0.82rem; }
+.frame-example {
+	color: var(--mint-high);
+	background: var(--mint-low);
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-weight: 650;
+}
 .frame-tag { margin-left: auto; padding: 3px 8px; border-radius: 4px; font-family: var(--mono); font-size: 0.76rem; }
 .frame-tag.bad { background: rgba(242, 85, 90, 0.14); color: var(--red-high); }
 .frame-body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
@@ -489,4 +496,36 @@ h1 {
 	.price-card { padding: 22px; }
 	.amount { font-size: 2.5rem; }
 	.head { margin-bottom: 32px; }
+}
+
+/* H35 phase B: looser rhythm at the 390px review width (and the same phone band). */
+@media (max-width: 430px) {
+	.wrap { width: calc(100% - 40px); }
+	.site-nav .wrap { width: 100%; padding: 16px 18px; row-gap: 16px; }
+	.hero .wrap { gap: 64px; padding: 52px 0 88px; }
+	h1 { line-height: 1.12; }
+	.hero-sub { margin-top: 20px; line-height: 1.65; }
+	.hero-cta { margin-top: 36px; gap: 16px; }
+	.facts { margin-top: 22px; gap: 12px 18px; }
+	.section { padding: 104px 0; }
+	.head { margin-bottom: 40px; }
+	.lede { margin-top: 18px; line-height: 1.65; }
+	.frame-bar { flex-wrap: wrap; row-gap: 10px; padding: 14px 16px; }
+	.col { padding: 24px 18px; }
+	.events { gap: 14px; }
+	.ev { padding: 12px; }
+	.run-log { padding: 18px 18px 22px; gap: 12px; }
+	.strip { gap: 28px; }
+	.step { padding: 26px 22px; gap: 18px; }
+	.verdict-bar { margin-top: 28px; gap: 14px; }
+	.golden-sets { gap: 24px; margin-bottom: 32px; }
+	.set { padding: 26px 20px; }
+	.tags { gap: 10px; }
+	.prices { gap: 24px; }
+	.price-card { padding: 28px 22px; gap: 22px; }
+	.ticks { gap: 14px; }
+	.final-band { padding: 36px 22px; gap: 24px; }
+	.status-card { margin-top: 28px; padding: 22px 20px; }
+	.site-foot { padding: 40px 0 56px; }
+	.foot-links { gap: 16px 20px; }
 }

@@ -3,6 +3,7 @@ import '../styles/landing.css';
 import Icon from '../components/Icon.astro';
 import PolarBuyCta from '../components/PolarBuyCta.astro';
 import mark from '../assets/gatefit-mark.svg?raw';
+import { landingSets, loadStripeGoldens } from '../lib/stripeGoldens';
 
 const initCmd = 'npx gatefit init';
 
@@ -19,24 +20,28 @@ const steps = [
 	{ icon: 'database', n: '03', h: 'Checks the access row', chip: 'locked: true', tone: 'row' },
 ] as const;
 
-const free = [
-	'refund_revokes_access',
-	'cancel_revokes_access',
-	'paid_grants_access',
-	'trial_to_paid_grants',
-	'past_due_denies_until_recovery',
-	'duplicate_webhook_idempotent',
-	'trial_no_card',
-	'portal_downgrade_period_end_vs_immediate',
-	'entitlements_active_summary',
-];
-const phase2 = [
-	'seat_qty_vs_db_cap',
-	'cancel_at_period_end_keeps_access_until_end',
-	'upgrade_plus_cape_race',
-	'dispute_revokes_or_flags',
-	'unpaid_after_retries_revokes',
-];
+// Display order from phase A. Membership and the totals come from the golden files.
+const sets = landingSets(
+	loadStripeGoldens(),
+	[
+		'refund_revokes_access',
+		'cancel_revokes_access',
+		'paid_grants_access',
+		'trial_to_paid_grants',
+		'past_due_denies_until_recovery',
+		'duplicate_webhook_idempotent',
+		'trial_no_card',
+		'portal_downgrade_period_end_vs_immediate',
+		'entitlements_active_summary',
+	],
+	[
+		'seat_qty_vs_db_cap',
+		'cancel_at_period_end_keeps_access_until_end',
+		'upgrade_plus_cape_race',
+		'dispute_revokes_or_flags',
+		'unpaid_after_retries_revokes',
+	],
+);
 ---
 
 <!doctype html>
@@ -100,16 +105,16 @@ const phase2 = [
 						</div>
 						<p class="cmd-status" role="status" aria-live="polite"></p>
 						<ul class="facts">
-							<li><Icon name="check" size={16} /> 14 transitions free</li>
+							<li><Icon name="check" size={16} /> {sets.total} transitions free</li>
 							<li><Icon name="check" size={16} /> GitHub Action</li>
 							<li><Icon name="check" size={16} /> $49 one-time</li>
 						</ul>
 					</div>
 
-					<figure class="frame" aria-label="A Gatefit run replaying a refund against the access table">
+					<figure class="frame" aria-label="Example run. A Gatefit replay of a refund against the access table. Not a live result.">
 						<div class="frame-bar">
 							<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-							<span class="frame-title">gatefit run · <span class="mono">cus_9fQ2</span></span>
+							<span class="frame-title"><span class="frame-example">example run</span> · <span class="mono">cus_9fQ2</span></span>
 							<span class="frame-tag bad">1 failed</span>
 						</div>
 						<div class="frame-body">
@@ -140,7 +145,7 @@ const phase2 = [
 							<li class="ok"><Icon name="check" size={14} /> paid_grants_access</li>
 							<li class="ok"><Icon name="check" size={14} /> trial_to_paid_grants</li>
 							<li class="bad"><Icon name="x" size={14} /> refund_revokes_access <span class="dim">expected locked: true</span></li>
-							<li class="sum"><Icon name="git-pull-request" size={14} /> 13 passed · 1 failed · merge blocked</li>
+							<li class="sum"><Icon name="git-pull-request" size={14} /> {sets.total - 1} passed · 1 failed · merge blocked</li>
 						</ol>
 					</figure>
 				</div>
@@ -171,17 +176,17 @@ const phase2 = [
 			<section class="section goldens" id="goldens" aria-labelledby="goldens-title">
 				<div class="wrap">
 					<div class="head">
-						<h2 id="goldens-title">14 Stripe transitions, checked for free</h2>
+						<h2 id="goldens-title">{sets.total} Stripe transitions, checked for free</h2>
 						<p class="lede">Each golden is a named transition with the access row it must leave. A naive adapter fails them.</p>
 					</div>
 					<div class="golden-sets">
 						<div class="set">
-							<p class="set-h"><span>S1–S9</span><span class="count">9</span></p>
-							<ul class="tags">{free.map((g) => <li><Icon name="check" size={14} />{g}</li>)}</ul>
+							<p class="set-h"><span>{sets.sLabel}</span><span class="count">{sets.free.length}</span></p>
+							<ul class="tags">{sets.free.map((g) => <li><Icon name="check" size={14} />{g}</li>)}</ul>
 						</div>
 						<div class="set">
-							<p class="set-h"><span>Phase 2</span><span class="count">5</span></p>
-							<ul class="tags">{phase2.map((g) => <li><Icon name="check" size={14} />{g}</li>)}</ul>
+							<p class="set-h"><span>Phase 2</span><span class="count">{sets.phase2.length}</span></p>
+							<ul class="tags">{sets.phase2.map((g) => <li><Icon name="check" size={14} />{g}</li>)}</ul>
 						</div>
 					</div>
 					<a class="quiet" href="/goldens/">See every golden <Icon name="arrow-right" size={16} /></a>
@@ -201,7 +206,7 @@ const phase2 = [
 							<ul class="ticks">
 								<li><Icon name="check" size={16} /> <code>npx gatefit</code> and the GitHub Action</li>
 								<li><Icon name="check" size={16} /> <code>gatefit init</code> adapter scaffold</li>
-								<li><Icon name="check" size={16} /> S1–S9 goldens</li>
+								<li><Icon name="check" size={16} /> {sets.sLabel} goldens</li>
 								<li><Icon name="check" size={16} /> Phase 2 goldens</li>
 							</ul>
 							<a class="quiet" href="/quickstart/">Read the quickstart <Icon name="arrow-right" size={16} /></a>

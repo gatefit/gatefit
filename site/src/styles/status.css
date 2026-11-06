@@ -129,3 +129,19 @@
 	.st-foot { padding: 20px 18px 32px; }
 	.chart .ct { flex-direction: column; gap: 8px; }
 }
+
+/* H35 phase B: the 640px rules tighten the page; phones at 390 get that space back. */
+@media (max-width: 430px) {
+	.st { padding: 44px 22px 32px; }
+	.st h1 { line-height: 1.2; }
+	.st .sub { margin-bottom: 28px; line-height: 1.55; }
+	.st section { margin-top: 52px; }
+	.banner { padding: 18px; gap: 12px; }
+	.sh { margin-bottom: 16px; }
+	.row { padding: 20px 18px; }
+	.cards { gap: 14px; }
+	.card { padding: 18px 16px; }
+	.chart { margin-top: 16px; padding: 20px 18px; }
+	.st .note { margin-top: 18px; line-height: 1.6; }
+	.st-foot { margin-top: 48px; padding: 24px 22px 48px; }
+}
