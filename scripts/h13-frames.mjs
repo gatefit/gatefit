@@ -1,27 +1,18 @@
 #!/usr/bin/env node
-// Settled hero and leak frames must not stack text or clip it.
-// The landing also must not scroll sideways at 390px, and the hero
-// headline must not leave a one-word line at desktop widths.
-// Stripe event names in the hero panel must not split inside a word.
-// A hero-panel token (event name, chip, or access value) must stay
-// one line tall in every replay state.
-// Mobile scroll through every scroll-driven section must not overflow
-// sideways or stack text, at 390 and 360, including after the URL bar
-// changes the viewport height. Layout heights use svh or dvh, never vh.
-// The Indie [data-count] digits stay the large price, and the "$" glyph
-// uses that same font size. Desktop scenario names stay inside the dial
-// label and break only at "_". The Indie orbit stays behind the card text. The
-// hero headline has no one-word line at 360 or 390 either. An open mobile
-// menu at 360 and 390 is an opaque sheet whose links do not cover the hero.
-// Under 900px the Indie glow must not paint across the title, price, or
-// bullets, including halfway through the orbit spin.
-// On desktop the Indie orbit is a border ring. At 1280 and 1440 the
-// title, $49, and one-time stay free of mint (gold before H27) at early, mid, and settled
-// points of the 4s spin, and the orbit opacity is 0 once the spin ends.
-// During the spin, mint more than 4px inside the card border fails.
-// The Buy button is excluded. Mobile stays a static edge with no cone.
-// With prefers-reduced-motion at 1280 and 1440 the dial centre shows one
-// label, the end-state readout (9 pass / 1 leak), never the 0 / 10 counter.
+// GATEFIT-H35 landing frame checks (fail modes first; the page was redesigned in H35).
+// - No sideways scroll at 360, 390, 768, 1024, 1280 or 1440.
+// - Text in a section never overlaps other text, and text inside the hero frame, the
+//   how-it-works steps, the golden sets and the price cards stays inside its box.
+// - The hero headline has no one-word line at 360, 390, 1280 or 1440 (text-wrap: balance).
+// - At 1280x800 and 1440x900 the hero h1, the init copy button and the hero Buy sit on the
+//   first screen.
+// - The nav Buy and nav links are not clipped at 390. An open mobile menu at 360 and 390 is an
+//   opaque sheet whose links do not cover the hero.
+// - Exactly 4 Buy links render with a visible box at 1280 and 390.
+// - The copy button puts `npx gatefit init` on the clipboard and says so; with the Clipboard
+//   API refused it still copies through the fallback, and never reports a copy it did not make.
+// - With prefers-reduced-motion nothing animates and no main text is hidden.
+// - Built HTML carries none of the internal status phrases.
 // Playwright drives the built site. Chrome is the system browser, or a
 // headless shell installed into /tmp when CI has neither.
 
@@ -30,8 +21,6 @@ import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { inflateSync } from 'node:zlib';
-import { mintInside, mintPastBorder } from './h13-mint.mjs';
 
 const dist = process.argv[2];
 if (!dist || !existsSync(join(dist, 'index.html'))) {
@@ -113,115 +102,105 @@ function note(where, found) {
   for (const item of found) issues.push(`${where}: ${item}`);
 }
 
-async function inspect(page, scope) {
-  return page.evaluate((scopeSel) => {
-    const root = document.querySelector(scopeSel);
-    if (!root || getComputedStyle(root).display === 'none') return [];
-    const used = (el) => {
-      let opacity = 1;
-      for (let node = el; node; node = node.parentElement) {
-        const style = getComputedStyle(node);
-        if (style.display === 'none' || style.visibility === 'hidden') return 0;
-        opacity *= Number.parseFloat(style.opacity);
-        if (Number.isNaN(opacity)) return 0;
-      }
-      return opacity;
-    };
-    const leaves = [...root.querySelectorAll('h3, p, span, li, button')].flatMap((el) => {
-      const own = [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim());
-      if (!own || used(el) < 0.3) return [];
-      const rect = el.getBoundingClientRect();
-      if (rect.width < 1 || rect.height < 1) return [];
-      return [{ text: el.textContent.trim().replace(/\s+/g, ' ').slice(0, 60), rect, el }];
-    });
-    const found = [];
-    for (let i = 0; i < leaves.length; i += 1) {
-      for (let j = i + 1; j < leaves.length; j += 1) {
-        const a = leaves[i];
-        const b = leaves[j];
-        if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
-        const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
-        const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
-        if (x > 2 && y > 2) found.push(`overlap "${a.text}" ∩ "${b.text}"`);
-      }
-    }
-    const hosts = '.db, .node, .sim-row, .verdicts, .leak-headlines, .m-node, .stack-card';
-    for (const leaf of leaves) {
-      const host = leaf.el.parentElement?.closest(hosts);
-      if (!host) continue;
-      const box = host.getBoundingClientRect();
-      const { rect } = leaf;
-      if (rect.left < box.left - 2 || rect.right > box.right + 2 || rect.top < box.top - 2 || rect.bottom > box.bottom + 2) {
-        found.push(`clip "${leaf.text}"`);
-      }
-    }
-    return found;
-  }, scope);
-}
-
 async function settle(page) {
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
-const heroStates = ['created', 'paid', 'refund', 'dispute', 'past_due'];
-
-async function checkHero(width, height, reduced) {
-  const page = await browser.newPage();
-  if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.setViewportSize({ width, height });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
+async function open(width, height, opts = {}) {
+  const context = await browser.newContext({ viewport: { width, height }, reducedMotion: opts.reduced ? 'reduce' : 'no-preference', permissions: opts.permissions ?? [] });
+  const page = await context.newPage();
+  await page.route(/cloudflareinsights|t\.gatefit\.io/, (route) => route.abort());
+  if (opts.init) await page.addInitScript(opts.init);
+  await page.goto(`${origin}/`, { waitUntil: 'networkidle' });
   await settle(page);
-  for (const state of heroStates) {
-    await page.evaluate((next) => {
-      document.querySelector('#sim')?.setAttribute('data-state', next);
-    }, state);
-    await settle(page);
-    const label = `hero ${state} ${width}x${height}${reduced ? ' reduced' : ''}`;
-    note(label, await inspect(page, '#sim'));
-    if (width < 900) note(label, await inspect(page, '.leak-mobile'));
-  }
-  await page.close();
+  return { page, close: () => context.close() };
 }
 
-async function checkLeak(width) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height: 900 });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await page.addStyleTag({ content: 'html { scroll-snap-type: none !important; }' });
-  await settle(page);
-  const steps = [
-    ['000', 0.08],
-    ['025', 0.35],
-    ['050', 0.5],
-    ['075', 0.75],
-    ['100', 0.92],
-  ];
-  for (const [name, progress] of steps) {
-    await page.evaluate((fraction) => {
-      const track = document.querySelector('#leak-track');
-      if (!track) return;
-      const top = track.getBoundingClientRect().top + window.scrollY;
-      const pin = Math.max(track.offsetHeight - window.innerHeight, 0);
-      window.scrollTo(0, top + pin * fraction);
-    }, progress);
-    await settle(page);
-    note(`leak ${name} ${width}`, await inspect(page, '#leak-stage'));
-  }
-  await page.close();
+const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+function resolveShotDir() {
+  const fromEnv = process.env.GATEFIT_H13_SHOT_DIR?.trim();
+  if (fromEnv) return resolve(fromEnv);
+  return join(repoRoot, '.artifacts/h13-frames');
 }
+const shotDir = resolveShotDir();
 
-async function checkNavOverflow() {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  await page.waitForTimeout(1600);
-  note('nav 390', await page.evaluate(() => {
+async function checkLayout(width, height) {
+  const { page, close } = await open(width, height);
+  note(`layout ${width}`, await page.evaluate(() => {
     const found = [];
     const doc = document.documentElement;
     const extra = doc.scrollWidth - doc.clientWidth;
     if (extra > 1) found.push(`horizontal overflow ${extra}px`);
+    const shown = (el) => {
+      for (let node = el; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number.parseFloat(style.opacity) < 0.3) return false;
+      }
+      return true;
+    };
+    const hosts = '.frame, .step, .set, .price-card, .final-band, .status-card, .verdict-bar .v, .cmd';
+    for (const section of document.querySelectorAll('main > section')) {
+      const leaves = [...section.querySelectorAll('h1, h2, h3, p, li, td, th, span, code, a, button')].flatMap((el) => {
+        const own = [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim());
+        if (!own || !shown(el)) return [];
+        const rect = el.getBoundingClientRect();
+        if (rect.width < 1 || rect.height < 1) return [];
+        return [{ text: el.textContent.trim().replace(/\s+/g, ' ').slice(0, 50), rect, el }];
+      });
+      for (let i = 0; i < leaves.length; i += 1) {
+        for (let j = i + 1; j < leaves.length; j += 1) {
+          const a = leaves[i];
+          const b = leaves[j];
+          if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
+          const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
+          const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
+          if (x > 2 && y > 2) found.push(`overlap "${a.text}" ∩ "${b.text}"`);
+        }
+      }
+      for (const leaf of leaves) {
+        const host = leaf.el.closest(hosts);
+        if (!host) continue;
+        const box = host.getBoundingClientRect();
+        const { rect } = leaf;
+        if (rect.left < box.left - 1 || rect.right > box.right + 1 || rect.top < box.top - 1 || rect.bottom > box.bottom + 1) {
+          found.push(`clip "${leaf.text}"`);
+        }
+      }
+    }
+    const buys = [...document.querySelectorAll('a[data-gf-buy]')];
+    if (buys.length !== 4) found.push(`${buys.length} Buy links, expected 4`);
+    for (const buy of buys) {
+      const rect = buy.getBoundingClientRect();
+      if (!shown(buy) || rect.width < 40 || rect.height < 30) found.push('a Buy link is hidden or collapsed');
+    }
+    return found;
+  }));
+  if (width === 1280 || width === 390) {
+    mkdirSync(shotDir, { recursive: true });
+    await page.screenshot({ path: join(shotDir, `h35-landing-${width}.png`), fullPage: true });
+  }
+  await close();
+}
+
+async function checkFold(width, height) {
+  const { page, close } = await open(width, height);
+  note(`fold ${width}x${height}`, await page.evaluate(() => {
+    const found = [];
+    for (const [sel, name] of [['#hero-title', 'h1'], ['.hero .cmd', 'init copy button'], ['.hero .buy', 'hero Buy']]) {
+      const rect = document.querySelector(sel)?.getBoundingClientRect();
+      if (!rect || rect.height < 1) found.push(`${name} missing`);
+      else if (rect.bottom > window.innerHeight) found.push(`${name} below the fold (${Math.round(rect.bottom)}px)`);
+    }
+    return found;
+  }));
+  await close();
+}
+
+async function checkNavOverflow() {
+  const { page, close } = await open(390, 844);
+  note('nav 390', await page.evaluate(() => {
+    const found = [];
     const buy = document.querySelector('.site-nav .buy');
     const box = buy?.getBoundingClientRect();
     if (!box || box.width < 40 || box.left < -1 || box.right > window.innerWidth + 1) {
@@ -236,101 +215,11 @@ async function checkNavOverflow() {
     }
     return found;
   }));
-  await page.close();
-}
-
-async function checkEventNames(width) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height: 900 });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  note(`event names ${width}`, await page.evaluate(() => {
-    const found = [];
-    for (const el of document.querySelectorAll('#sim .sim-row .name')) {
-      const label = (el.textContent ?? '').replace(/\s+/g, '');
-      if (!label) {
-        found.push('empty event name');
-        continue;
-      }
-      if (el.scrollWidth > el.clientWidth + 1) found.push(`clipped "${label}"`);
-      const parts = [];
-      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      let node = walker.nextNode();
-      while (node) {
-        const value = node.textContent ?? '';
-        for (let i = 0; i < value.length; i += 1) {
-          const range = document.createRange();
-          range.setStart(node, i);
-          range.setEnd(node, i + 1);
-          const rect = range.getClientRects()[0];
-          if (!rect || rect.width < 0.2) continue;
-          parts.push({ ch: value[i], top: rect.top });
-        }
-        node = walker.nextNode();
-      }
-      let word = [];
-      const flush = () => {
-        if (word.length < 2) {
-          word = [];
-          return;
-        }
-        const top = word[0].top;
-        if (word.some((part) => Math.abs(part.top - top) > 2)) {
-          found.push(`mid-word "${word.map((part) => part.ch).join('')}" in "${label}"`);
-        }
-        word = [];
-      };
-      for (const part of parts) {
-        if (/[A-Za-z0-9]/.test(part.ch)) word.push(part);
-        else flush();
-      }
-      flush();
-    }
-    return found;
-  }));
-  await page.close();
-}
-
-async function checkHeroTokens(width, height) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  for (const state of heroStates) {
-    await page.evaluate((next) => {
-      document.querySelector('#sim')?.setAttribute('data-state', next);
-    }, state);
-    await settle(page);
-    note(`tokens ${state} ${width}`, await page.evaluate(() => {
-      const found = [];
-      const tokens = document.querySelectorAll('#sim .token');
-      if (!tokens.length) return ['no hero tokens'];
-      for (const el of tokens) {
-        const style = getComputedStyle(el);
-        if (style.display === 'none' || style.visibility === 'hidden') continue;
-        const fontSize = Number.parseFloat(style.fontSize);
-        let line = Number.parseFloat(style.lineHeight);
-        if (!Number.isFinite(line)) line = fontSize * 1.35;
-        const pad = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom);
-        const border = Number.parseFloat(style.borderTopWidth) + Number.parseFloat(style.borderBottomWidth);
-        const box = el.getBoundingClientRect();
-        if (box.width < 1 || box.height < 1) continue;
-        const content = box.height - pad - border;
-        const label = (el.textContent ?? '').trim().replace(/\s+/g, ' ');
-        if (content > line + 1) found.push(`wrapped "${label}"`);
-        if (el.scrollWidth > el.clientWidth + 1) found.push(`clipped "${label}"`);
-      }
-      return found;
-    }));
-  }
-  await page.close();
+  await close();
 }
 
 async function checkHeroLines(width) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height: 900 });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
+  const { page, close } = await open(width, 900);
   note(`hero lines ${width}`, await page.evaluate(() => {
     const h1 = document.querySelector('#hero-title');
     if (!h1) return ['hero title missing'];
@@ -366,52 +255,11 @@ async function checkHeroLines(width) {
     }
     return found;
   }));
-  await page.close();
-}
-
-async function checkPriceDigits(width) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height: 900 });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  note(`price ${width}`, await page.evaluate(() => {
-    const count = document.querySelector('.price-indie [data-count]');
-    const amount = count?.closest('.amount');
-    if (!count || !amount) return ['indie amount missing'];
-    const found = [];
-    const digits = (count.textContent ?? '').trim();
-    if (!/^\d+$/.test(digits)) found.push(`data-count is "${digits}"`);
-    if (digits.includes('$')) found.push('dollar sign is inside data-count');
-    const countSize = Number.parseFloat(getComputedStyle(count).fontSize);
-    const amountSize = Number.parseFloat(getComputedStyle(amount).fontSize);
-    if (!(countSize >= amountSize - 0.5)) found.push(`digits ${countSize}px under amount ${amountSize}px`);
-    let dollarSize = null;
-    const walker = document.createTreeWalker(amount, NodeFilter.SHOW_TEXT);
-    let node = walker.nextNode();
-    while (node) {
-      if ((node.textContent ?? '').includes('$')) {
-        dollarSize = Number.parseFloat(getComputedStyle(node.parentElement).fontSize);
-        break;
-      }
-      node = walker.nextNode();
-    }
-    if (dollarSize == null) found.push('dollar glyph missing');
-    else if (Math.abs(dollarSize - countSize) > 0.5) found.push(`$ ${dollarSize}px vs 49 ${countSize}px`);
-    for (const el of amount.querySelectorAll('span')) {
-      if ((el.textContent ?? '').trim() === '$' && el.hasAttribute('data-count')) {
-        found.push('dollar span is data-count');
-      }
-    }
-    return found;
-  }));
-  await page.close();
+  await close();
 }
 
 async function checkMobileMenu(width, height) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
+  const { page, close } = await open(width, height);
   const toggle = page.locator('.nav-toggle');
   await toggle.click();
   await settle(page);
@@ -427,7 +275,7 @@ async function checkMobileMenu(width, height) {
     const parts = color.match(/[\d.]+/g)?.map(Number) ?? [];
     const alpha = parts.length >= 4 ? parts[3] : (color === 'transparent' ? 0 : 1);
     if (!(alpha >= 0.99)) found.push(`panel background ${color}`);
-    const heroes = [document.querySelector('.eyebrow'), document.querySelector('#hero-title')].filter(Boolean);
+    const heroes = [document.querySelector('.hero .eyebrow'), document.querySelector('#hero-title')].filter(Boolean);
     for (const link of panel.querySelectorAll('a')) {
       const linkBox = link.getBoundingClientRect();
       if (linkBox.width < 1 || linkBox.height < 1) {
@@ -443,633 +291,85 @@ async function checkMobileMenu(width, height) {
     }
     return found;
   }));
-  await page.close();
+  await close();
 }
 
-async function checkScenarioTitles(width) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height: 900 });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  await page.evaluate(() => document.querySelector('#scenarios')?.scrollIntoView());
-  await settle(page);
-  note(`scenario ${width}`, await page.evaluate(() => {
-    const name = 'cancel_at_period_end_keeps_access_until_end';
-    const headings = [...document.querySelectorAll('#scenarios .dial-name')].filter((el) => el.getClientRects().length);
-    const target = headings.find((el) => (el.textContent ?? '').replace(/\s+/g, '') === name);
-    if (!target) return [`missing ${name}`];
+const INIT = 'npx gatefit init';
+
+async function checkCopy() {
+  // Clipboard API granted: the real clipboard gets the command.
+  {
+    const { page, close } = await open(1280, 900, { permissions: ['clipboard-read', 'clipboard-write'] });
+    await page.locator('.hero .cmd').click();
+    await page.waitForTimeout(100);
     const found = [];
-    for (const h3 of headings) {
-      const label = (h3.textContent ?? '').replace(/\s+/g, '');
-      const tile = h3.closest('.dial-label');
-      if (!tile) continue;
-      const box = tile.getBoundingClientRect();
-      const style = getComputedStyle(tile);
-      const clip = {
-        left: box.left + Number.parseFloat(style.borderLeftWidth),
-        right: box.right - Number.parseFloat(style.borderRightWidth),
-        top: box.top + Number.parseFloat(style.borderTopWidth),
-        bottom: box.bottom - Number.parseFloat(style.borderBottomWidth),
-      };
-      if (h3.scrollWidth > h3.clientWidth + 1 || h3.scrollHeight > h3.clientHeight + 1) {
-        found.push(`overflow "${label}"`);
-      }
-      const walker = document.createTreeWalker(h3, NodeFilter.SHOW_TEXT);
-      let node = walker.nextNode();
-      while (node) {
-        const text = node.textContent ?? '';
-        const re = /[A-Za-z0-9]+/g;
-        let match = re.exec(text);
-        while (match) {
-          const range = document.createRange();
-          range.setStart(node, match.index);
-          range.setEnd(node, match.index + match[0].length);
-          const rects = [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0);
-          const tops = new Set(rects.map((rect) => Math.round(rect.top)));
-          if (tops.size > 1) found.push(`mid-word "${match[0]}" in "${label}"`);
-          for (const rect of rects) {
-            if (rect.left < clip.left - 1 || rect.right > clip.right + 1 || rect.top < clip.top - 1 || rect.bottom > clip.bottom + 1) {
-              found.push(`clip "${label}"`);
-            }
-          }
-          match = re.exec(text);
-        }
-        node = walker.nextNode();
-      }
-    }
-    return found;
-  }));
-  await page.close();
-}
-
-function decodePng(buf) {
-  const png = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
-  const sig = [137, 80, 78, 71, 13, 10, 26, 10];
-  for (let i = 0; i < sig.length; i += 1) {
-    if (png[i] !== sig[i]) throw new Error('png signature');
+    const clip = await page.evaluate(() => navigator.clipboard.readText().catch(() => null));
+    if (clip !== INIT) found.push(`clipboard holds ${JSON.stringify(clip)}`);
+    const state = await page.evaluate(() => ({
+      copied: document.querySelector('.hero .cmd')?.classList.contains('is-copied'),
+      status: document.querySelector('.cmd-status')?.textContent ?? '',
+    }));
+    if (!state.copied) found.push('button does not show the copied state');
+    if (!state.status.includes(`Copied: ${INIT}`)) found.push(`status says "${state.status}"`);
+    note('copy api', found);
+    await close();
   }
-  let pos = 8;
-  let width = 0;
-  let height = 0;
-  let colorType = 0;
-  const idat = [];
-  while (pos < png.length) {
-    const len = png.readUInt32BE(pos);
-    pos += 4;
-    const type = png.toString('ascii', pos, pos + 4);
-    pos += 4;
-    const data = png.subarray(pos, pos + len);
-    pos += len + 4;
-    if (type === 'IHDR') {
-      width = data.readUInt32BE(0);
-      height = data.readUInt32BE(4);
-      colorType = data[9];
-      if (data[8] !== 8 || data[12] !== 0) throw new Error('unsupported png');
-    } else if (type === 'IDAT') idat.push(data);
-    else if (type === 'IEND') break;
-  }
-  const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : 0;
-  if (!channels) throw new Error(`png color ${colorType}`);
-  const inflated = inflateSync(Buffer.concat(idat));
-  const stride = width * channels;
-  const rgb = Buffer.alloc(width * height * 3);
-  let src = 0;
-  let prev = Buffer.alloc(stride);
-  for (let y = 0; y < height; y += 1) {
-    const filter = inflated[src];
-    src += 1;
-    const row = Buffer.from(inflated.subarray(src, src + stride));
-    src += stride;
-    for (let i = 0; i < stride; i += 1) {
-      const left = i >= channels ? row[i - channels] : 0;
-      const up = prev[i];
-      const ul = i >= channels ? prev[i - channels] : 0;
-      let value = row[i];
-      if (filter === 1) value = (value + left) & 255;
-      else if (filter === 2) value = (value + up) & 255;
-      else if (filter === 3) value = (value + ((left + up) >> 1)) & 255;
-      else if (filter === 4) {
-        const paeth = left + up - ul;
-        const pa = Math.abs(paeth - left);
-        const pb = Math.abs(paeth - up);
-        const pc = Math.abs(paeth - ul);
-        const pred = pa <= pb && pa <= pc ? left : pb <= pc ? up : ul;
-        value = (value + pred) & 255;
-      }
-      row[i] = value;
-    }
-    for (let x = 0; x < width; x += 1) {
-      const from = x * channels;
-      const to = (y * width + x) * 3;
-      rgb[to] = row[from];
-      rgb[to + 1] = row[from + 1];
-      rgb[to + 2] = row[from + 2];
-    }
-    prev = row;
-  }
-  return { width, height, rgb };
-}
-
-async function seekIndieGlow(page, fraction) {
-  await page.evaluate((fraction) => {
-    document.querySelector('#pricing')?.classList.add('lit');
-    const card = document.querySelector('.price-indie');
-    card?.classList.add('lit');
-    const orbit = card?.querySelector('.orbit');
-    const glow = card?.querySelector('.indie-glow');
-    for (const anim of document.getAnimations()) {
-      const target = anim.effect?.target;
-      if (target !== orbit && target !== glow) continue;
-      anim.pause();
-      const dur = anim.effect.getComputedTiming().duration;
-      if (typeof dur === 'number' && dur > 0) anim.currentTime = dur * fraction;
-    }
-  }, fraction);
-}
-
-async function checkOrbitCone(width, height) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  await page.locator('.price-indie').scrollIntoViewIfNeeded();
-  await settle(page);
-  const fractions = [0, 0.25, 0.5, 0.75];
-  for (const fraction of fractions) {
-    await seekIndieGlow(page, fraction);
-    await settle(page);
-    const card = page.locator('.price-indie');
-    const cardBox = await card.boundingBox();
-    if (!cardBox) {
-      note(`cone ${width} ${fraction}`, ['indie card missing']);
-      continue;
-    }
-    const png = await card.screenshot();
-    const img = decodePng(png);
-    const scaleX = img.width / cardBox.width;
-    const scaleY = img.height / cardBox.height;
-    const regions = await page.evaluate(() => {
-      const root = document.querySelector('.price-indie');
-      const card = root.getBoundingClientRect();
-      const pick = (sel) => {
-        const el = root.querySelector(sel);
-        if (!el) return null;
-        const rect = el.getBoundingClientRect();
-        return {
-          sel,
-          text: (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 32),
-          x: rect.left - card.left,
-          y: rect.top - card.top,
-          w: rect.width,
-          h: rect.height,
+  // Clipboard API refused: the textarea fallback still copies; a failed fallback says so.
+  for (const fallbackWorks of [true, false]) {
+    const { page, close } = await open(390, 844, {
+      init: `(() => {
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) } });
+        window.__copied = null;
+        document.execCommand = (cmd) => {
+          if (cmd !== 'copy' || !${fallbackWorks}) return false;
+          window.__copied = document.activeElement && 'value' in document.activeElement ? document.activeElement.value : null;
+          return true;
         };
-      };
-      return [pick('h3'), pick('.amount'), pick('li')].filter(Boolean);
+      })()`,
     });
+    await page.locator('.hero .cmd').click();
+    await page.waitForTimeout(100);
+    const state = await page.evaluate(() => ({
+      copied: document.querySelector('.hero .cmd')?.classList.contains('is-copied'),
+      status: document.querySelector('.cmd-status')?.textContent ?? '',
+      value: window.__copied,
+      left: document.querySelectorAll('textarea').length,
+    }));
     const found = [];
-    for (const region of regions) {
-      if (region.w < 4 || region.h < 4) {
-        found.push(`missing "${region.text}"`);
-        continue;
-      }
-      const mint = mintInside(img, region, scaleX, scaleY);
-      if (mint > 24) found.push(`cone over "${region.text}" at ${fraction} (${mint}px)`);
+    if (state.left) found.push('fallback textarea left in the page');
+    if (fallbackWorks) {
+      if (state.value !== INIT) found.push(`fallback copied ${JSON.stringify(state.value)}`);
+      if (!state.copied || !state.status.includes(`Copied: ${INIT}`)) found.push('fallback copy not reported');
+    } else {
+      if (state.copied || state.status.includes('Copied')) found.push('a failed copy is reported as copied');
+      if (!state.status.includes(INIT)) found.push('a failed copy does not show the command');
     }
-    note(`cone ${width} ${fraction}`, found);
+    note(`copy fallback ${fallbackWorks ? 'ok' : 'fails'}`, found);
+    await close();
   }
-  await page.close();
 }
 
-const desktopOrbitPhases = [
-  { name: 'early', fraction: 0.08 },
-  { name: 'mid', fraction: 0.5 },
-  { name: 'settled', fraction: 1 },
-];
-
-function orbitShot(width, phase) {
-  return join(shotDir, `h13c-orbit-${width}-${phase}.png`);
-}
-
-async function checkDesktopOrbit(width, height) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  await page.locator('.price-indie').scrollIntoViewIfNeeded();
-  await settle(page);
-  await page.evaluate(() => {
-    document.querySelector('#pricing')?.classList.add('lit');
-    const card = document.querySelector('.price-indie');
-    if (!card) return;
-    card.classList.add('lit');
-    card.style.animation = 'none';
-    card.style.opacity = '1';
-    card.style.transform = 'none';
-  });
-  await settle(page);
-  for (const phase of desktopOrbitPhases) {
-    const label = `desktop orbit ${width} ${phase.name}`;
-    const primed = await page.evaluate((fraction) => {
-      const card = document.querySelector('.price-indie');
-      const orbit = card?.querySelector('.orbit');
-      if (!card || !orbit) return { ok: false, reason: 'indie orbit missing' };
-      const anims = orbit.getAnimations();
-      if (!anims.length) return { ok: false, reason: 'orbit animation missing' };
-      for (const anim of anims) {
-        anim.pause();
-        const dur = anim.effect.getComputedTiming().duration;
-        if (typeof dur !== 'number' || dur <= 0) return { ok: false, reason: 'orbit duration missing' };
-        anim.currentTime = dur * fraction;
-      }
-      const opacity = Number.parseFloat(getComputedStyle(orbit).opacity);
-      return { ok: true, opacity };
-    }, phase.fraction);
-    if (!primed.ok) {
-      note(label, [primed.reason]);
-      continue;
-    }
-    await settle(page);
-    const card = page.locator('.price-indie');
-    const cardBox = await card.boundingBox();
-    if (!cardBox) {
-      note(label, ['indie card missing']);
-      continue;
-    }
-    const png = await card.screenshot();
-    mkdirSync(shotDir, { recursive: true });
-    writeFileSync(orbitShot(width, phase.name), png);
-    const img = decodePng(png);
-    const scaleX = img.width / cardBox.width;
-    const scaleY = img.height / cardBox.height;
-    const geometry = await page.evaluate(() => {
-      const root = document.querySelector('.price-indie');
-      const cardRect = root.getBoundingClientRect();
-      const radius = Number.parseFloat(getComputedStyle(root).borderTopLeftRadius) || 0;
-      const buy = (root.querySelector('.buy-wrap') ?? root.querySelector('.buy'))?.getBoundingClientRect();
-      const hole = buy ? {
-        x: buy.left - cardRect.left - buy.width * 0.55,
-        y: buy.top - cardRect.top - buy.height * 0.55,
-        w: buy.width * 2.1,
-        h: buy.height * 2.1,
-      } : null;
-      return { radius, hole };
-    });
-    const regions = await page.evaluate(() => {
-      const root = document.querySelector('.price-indie');
-      const cardRect = root.getBoundingClientRect();
-      const pick = (sel) => {
-        const el = root.querySelector(sel);
-        if (!el) return null;
-        const rect = el.getBoundingClientRect();
-        return {
-          text: (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40),
-          x: rect.left - cardRect.left,
-          y: rect.top - cardRect.top,
-          w: rect.width,
-          h: rect.height,
-        };
-      };
-      return [pick('h3'), pick('.amount-figure'), pick('.amount-note')].filter(Boolean);
-    });
+async function checkReducedMotion() {
+  const { page, close } = await open(1280, 900, { reduced: true });
+  note('reduced motion', await page.evaluate(() => {
     const found = [];
-    if (phase.name === 'settled' && primed.opacity > 0.05) {
-      found.push(`orbit still visible (opacity ${primed.opacity.toFixed(3)})`);
-    }
-    if (phase.name !== 'settled' && primed.opacity < 0.5) {
-      found.push(`orbit hidden during spin (opacity ${primed.opacity.toFixed(3)})`);
-    }
-    if (phase.name !== 'settled') {
-      const interior = mintPastBorder(img, scaleX, scaleY, geometry.radius, geometry.hole ? [geometry.hole] : []);
-      if (interior > 0) found.push(`mint inside border at ${phase.name} (${interior}px)`);
-    }
-    const expect = ['Indie License', '$49', 'one-time'];
-    if (regions.length < expect.length) found.push(`text area missing (${regions.map((region) => region.text).join(', ')})`);
-    for (const region of regions) {
-      if (region.w < 4 || region.h < 4) {
-        found.push(`missing "${region.text}"`);
-        continue;
-      }
-      const mint = mintInside(img, region, scaleX, scaleY);
-      if (mint > 24) found.push(`mint wedge over "${region.text}" at ${phase.name} (${mint}px)`);
-    }
-    note(label, found);
-  }
-  await page.close();
-}
-
-async function checkOrbitBehindText(width, height) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  await page.evaluate(() => document.querySelector('.price-indie')?.scrollIntoView({ block: 'center' }));
-  await settle(page);
-  note(`orbit ${width}`, await page.evaluate(() => {
-    const card = document.querySelector('.price-indie');
-    const orbit = card?.querySelector('.orbit');
-    const glow = card?.querySelector('.indie-glow');
-    if (!card || !orbit) return ['indie orbit missing'];
-    card.classList.add('lit');
-    for (const el of [orbit, glow]) {
-      if (!el) continue;
-      el.style.pointerEvents = 'auto';
-      el.style.opacity = '1';
-    }
-    const probes = [card.querySelector('[data-count]'), card.querySelector('h3')].filter(Boolean);
-    if (!probes.length) return ['indie text missing'];
-    const found = [];
-    for (const el of probes) {
-      const rect = el.getBoundingClientRect();
-      const x = Math.min(Math.max(rect.left + Math.min(rect.width / 2, 12), 0), window.innerWidth - 1);
-      const y = rect.top + rect.height / 2;
-      const label = (el.textContent ?? '').trim().slice(0, 40);
-      if (y < 0 || y > window.innerHeight) {
-        found.push(`probe offscreen "${label}"`);
-        continue;
-      }
-      const hit = document.elementFromPoint(x, y);
-      if (hit === orbit || hit === glow || hit?.closest('.orbit') || hit?.closest('.indie-glow')) {
-        found.push(`glow covers "${label}"`);
-      }
-    }
-    return found;
-  }));
-  await page.close();
-}
-
-const scrollSections = ['#leak', '#how', '#scenarios', '#pricing', '#final'];
-const scrollFractions = [0, 0.25, 0.5, 0.75, 1];
-const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-
-function resolveShotDir() {
-  const fromEnv = process.env.GATEFIT_H13_SHOT_DIR?.trim();
-  if (fromEnv) return resolve(fromEnv);
-  return join(repoRoot, '.artifacts/h13-frames');
-}
-const shotDir = resolveShotDir();
-
-function bareViewportUnits(root) {
-  const found = [];
-  const bare = /(?<![a-zA-Z])\d*\.?\d+vh\b/g;
-  const walk = (dir) => {
-    for (const name of readdirSync(dir)) {
-      const file = join(dir, name);
-      if (statSync(file).isDirectory()) {
-        walk(file);
-        continue;
-      }
-      if (!name.endsWith('.css')) continue;
-      const text = readFileSync(file, 'utf8');
-      if (!text.includes('leak-track')) continue;
-      const hits = text.match(bare);
-      if (hits) found.push(`${name} uses ${[...new Set(hits)].join(', ')}`);
-    }
-  };
-  walk(root);
-  return found;
-}
-
-function shotFile(widthLabel, fraction) {
-  const pct = String(Math.round(fraction * 100)).padStart(3, '0');
-  return join(shotDir, `h13-mobile-scroll-${widthLabel}-${pct}.png`);
-}
-
-async function scrollSection(page, selector, fraction) {
-  await page.evaluate(({ selector, fraction }) => {
-    const el = document.querySelector(selector);
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    const range = Math.max(el.offsetHeight - window.innerHeight, 0);
-    window.scrollTo(0, top + range * fraction);
-  }, { selector, fraction });
-  await settle(page);
-}
-
-async function mobileAudit(page, selector) {
-  return page.evaluate((scopeSel) => {
-    const issues = [];
-    const doc = document.documentElement;
-    const extra = doc.scrollWidth - doc.clientWidth;
-    if (extra > 1) issues.push(`horizontal overflow ${extra}px`);
-    const stage = document.querySelector('#leak-stage');
-    if (stage) {
-      const style = getComputedStyle(stage);
-      if (style.display !== 'none' && (style.position === 'fixed' || style.position === 'sticky')) {
-        issues.push('leak stage still pinned');
-      }
-    }
-    if (document.querySelector('.pin-spacer')) issues.push('pin spacer present');
-    const track = document.querySelector('#leak-track');
-    if (track && window.innerWidth < 900 && track.offsetHeight > window.innerHeight * 1.25) {
-      issues.push(`leak track is a tall scrub (${track.offsetHeight}px)`);
-    }
-
-    const nav = document.querySelector('.site-nav')?.getBoundingClientRect();
-    const bands = [];
-    const seenUnderNav = new Set();
-    for (const el of document.querySelectorAll('main h1, main h2, main h3, main p, main li, main span, main a, main button, main summary, footer p, footer a')) {
-      if (el.closest('.site-nav')) continue;
-      const own = [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim());
-      if (!own) continue;
-      let opacity = 1;
-      let hidden = false;
+    const running = document.getAnimations().filter((a) => a.playState === 'running');
+    if (running.length) found.push(`${running.length} animation(s) running`);
+    for (const el of document.querySelectorAll('main h1, main h2, main h3, main p, main li')) {
+      if (!el.textContent.trim()) continue;
       for (let node = el; node; node = node.parentElement) {
         const style = getComputedStyle(node);
-        if (style.display === 'none' || style.visibility === 'hidden') hidden = true;
-        opacity *= Number.parseFloat(style.opacity);
-      }
-      if (hidden || !Number.isFinite(opacity) || opacity < 0.3) continue;
-      const text = el.textContent.trim().replace(/\s+/g, ' ').slice(0, 60);
-      for (const rect of el.getClientRects()) {
-        const left = Math.max(rect.left, 0);
-        const right = Math.min(rect.right, window.innerWidth);
-        const top = Math.max(rect.top, 0);
-        const bottom = Math.min(rect.bottom, window.innerHeight);
-        if (right - left < 2 || bottom - top < 2) continue;
-        if (nav && nav.bottom > 1) {
-          const overlapY = Math.min(rect.bottom, nav.bottom) - Math.max(rect.top, nav.top);
-          const overlapX = Math.min(rect.right, nav.right) - Math.max(rect.left, nav.left);
-          if (overlapY > 2 && overlapX > 2 && !seenUnderNav.has(text)) {
-            seenUnderNav.add(text);
-            issues.push(`text under nav "${text}"`);
-          }
-        }
-        bands.push([top, bottom]);
-      }
-    }
-    bands.sort((a, b) => a[0] - b[0]);
-    let cursor = nav && nav.bottom > 0 ? nav.bottom : 0;
-    let maxGap = 0;
-    for (const [top, bottom] of bands) {
-      if (top > cursor) maxGap = Math.max(maxGap, top - cursor);
-      cursor = Math.max(cursor, bottom);
-    }
-    const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
-    const tail = window.innerHeight - cursor;
-    if (!(atEnd && cursor > window.innerHeight * 0.35)) maxGap = Math.max(maxGap, tail);
-    if (maxGap > window.innerHeight * 0.42) issues.push(`empty scroll ${Math.round(maxGap)}px`);
-
-    const root = document.querySelector(scopeSel);
-    if (!root || getComputedStyle(root).display === 'none') return issues;
-    const used = (el) => {
-      let opacity = 1;
-      for (let node = el; node; node = node.parentElement) {
-        const style = getComputedStyle(node);
-        if (style.display === 'none' || style.visibility === 'hidden') return 0;
-        opacity *= Number.parseFloat(style.opacity);
-        if (Number.isNaN(opacity)) return 0;
-      }
-      return opacity;
-    };
-    const frags = [];
-    for (const el of root.querySelectorAll('h2, h3, p, span, li, a, button')) {
-      const own = [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim());
-      if (!own || used(el) < 0.3) continue;
-      const text = el.textContent.trim().replace(/\s+/g, ' ').slice(0, 60);
-      for (const rect of el.getClientRects()) {
-        if (rect.width < 1 || rect.height < 1) continue;
-        if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) continue;
-        frags.push({ text, rect, el });
-      }
-    }
-    for (let i = 0; i < frags.length; i += 1) {
-      for (let j = i + 1; j < frags.length; j += 1) {
-        const a = frags[i];
-        const b = frags[j];
-        if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
-        const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
-        const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
-        if (x > 2 && y > 2) issues.push(`overlap "${a.text}" ∩ "${b.text}"`);
-      }
-    }
-    for (const frag of frags) {
-      for (let node = frag.el.parentElement; node && node !== root.parentElement; node = node.parentElement) {
-        const style = getComputedStyle(node);
-        const ox = style.overflowX;
-        const oy = style.overflowY;
-        if (ox === 'auto' || ox === 'scroll' || oy === 'auto' || oy === 'scroll') break;
-        if (ox !== 'hidden' && ox !== 'clip' && oy !== 'hidden' && oy !== 'clip') continue;
-        const box = node.getBoundingClientRect();
-        const { rect } = frag;
-        if (rect.left < box.left - 2 || rect.right > box.right + 2 || rect.top < box.top - 2 || rect.bottom > box.bottom + 2) {
-          issues.push(`clip "${frag.text}"`);
+        if (style.visibility === 'hidden' || Number.parseFloat(style.opacity) < 0.99) {
+          if (el.classList.contains('cmd-status')) break;
+          found.push(`hidden "${el.textContent.trim().slice(0, 40)}"`);
           break;
         }
       }
     }
-    return issues;
-  }, selector);
+    return found;
+  }));
+  await close();
 }
-
-async function checkMobileScroll() {
-  mkdirSync(shotDir, { recursive: true });
-  const profiles = [
-    {
-      label: '390',
-      width: 390,
-      height: 844,
-      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
-      shots: scrollFractions,
-    },
-    {
-      label: '360',
-      width: 360,
-      height: 740,
-      userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36',
-      shots: [0.5],
-    },
-  ];
-  for (const profile of profiles) {
-    const context = await browser.newContext({
-      viewport: { width: profile.width, height: profile.height },
-      userAgent: profile.userAgent,
-      isMobile: true,
-      hasTouch: true,
-      deviceScaleFactor: 2,
-    });
-    const page = await context.newPage();
-    await page.goto(`${origin}/`, { waitUntil: 'networkidle' });
-    await settle(page);
-    await page.waitForTimeout(1600);
-    for (const selector of scrollSections) {
-      for (const fraction of scrollFractions) {
-        await scrollSection(page, selector, fraction);
-        const pct = String(Math.round(fraction * 100)).padStart(3, '0');
-        note(`scroll ${profile.label} ${selector} ${pct}`, await mobileAudit(page, selector));
-      }
-    }
-    const collapsed = Math.round(profile.height * 0.82);
-    await page.setViewportSize({ width: profile.width, height: collapsed });
-    await settle(page);
-    for (const selector of scrollSections) {
-      await scrollSection(page, selector, 0.5);
-      note(`scroll ${profile.label} urlbar ${selector}`, await mobileAudit(page, selector));
-    }
-    await page.setViewportSize({ width: profile.width, height: profile.height });
-    await settle(page);
-    for (const fraction of profile.shots) {
-      await scrollSection(page, '#leak', fraction);
-      const end = await page.evaluate(() => {
-        const leak = document.querySelector('#leak');
-        const final = document.querySelector('#final');
-        if (!leak || !final) return 0;
-        const start = leak.getBoundingClientRect().top + window.scrollY;
-        const bottom = final.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
-        return Math.max(bottom, start);
-      });
-      await page.evaluate(({ fraction, end }) => {
-        const leak = document.querySelector('#leak');
-        if (!leak) return;
-        const start = leak.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo(0, start + (end - start) * fraction);
-      }, { fraction, end });
-      await settle(page);
-      note(`scroll shot ${profile.label} ${fraction}`, await mobileAudit(page, 'main'));
-      await page.screenshot({ path: shotFile(profile.label, fraction), fullPage: false });
-    }
-    await context.close();
-  }
-}
-
-await checkHero(1440, 900, false);
-await checkHero(390, 844, false);
-await checkHero(1440, 900, true);
-await checkHero(390, 844, true);
-await checkLeak(1440);
-await checkLeak(1100);
-await checkNavOverflow();
-await checkHeroLines(1280);
-await checkHeroLines(1440);
-await checkHeroLines(1920);
-await checkHeroLines(360);
-await checkHeroLines(390);
-await checkPriceDigits(360);
-await checkPriceDigits(390);
-await checkPriceDigits(1440);
-await checkMobileMenu(390, 844);
-await checkMobileMenu(360, 740);
-await checkScenarioTitles(1280);
-await checkScenarioTitles(1440);
-await checkScenarioTitles(1920);
-await checkOrbitBehindText(360, 740);
-await checkOrbitBehindText(390, 844);
-await checkOrbitCone(360, 740);
-await checkOrbitCone(390, 844);
-await checkDesktopOrbit(1280, 900);
-await checkDesktopOrbit(1440, 900);
-await checkEventNames(1280);
-await checkEventNames(1440);
-await checkEventNames(1920);
-await checkHeroTokens(1280, 900);
-await checkHeroTokens(1440, 900);
-await checkHeroTokens(1920, 900);
-await checkHeroTokens(390, 844);
-note('viewport units', bareViewportUnits(dist));
-await checkMobileScroll();
-note('status copy', statusPhrases(dist));
-await checkDial();
-await shotPricing(390, 844, 'dial-price-390.png');
-await shotPricing(1440, 900, 'dial-price-1440.png');
 
 function statusPhrases(root) {
   const banned = [
@@ -1100,398 +400,16 @@ function statusPhrases(root) {
   return found;
 }
 
-async function shotPricing(width, height, file) {
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height });
-  await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(page);
-  await page.locator('#pricing .price-indie .buy').scrollIntoViewIfNeeded();
-  await page.evaluate(() => {
-    const buy = document.querySelector('#pricing .price-indie .buy');
-    if (!buy) return;
-    const rect = buy.getBoundingClientRect();
-    window.scrollTo(0, Math.max(0, window.scrollY + rect.bottom - window.innerHeight * 0.42));
-  });
-  await settle(page);
-  const text = await page.locator('#pricing').innerText();
-  const found = [];
-  if (/polar checkout is live/i.test(text)) found.push('Polar checkout is live still on the price card');
-  if (/coming soon/i.test(text)) found.push('coming soon still on the price card');
-  if (/merchant of record/i.test(text)) found.push('merchant of record still on the price card');
-  note(`price ${width}`, found);
-  mkdirSync(shotDir, { recursive: true });
-  await page.screenshot({ path: join(shotDir, file), fullPage: false });
-  await page.close();
-}
-
-function shotDial(name) {
-  return join(shotDir, name);
-}
-
-async function scrollPin(page, selector, fraction) {
-  await page.evaluate(({ selector, fraction }) => {
-    const track = document.querySelector(selector);
-    if (!track) return;
-    const top = track.getBoundingClientRect().top + window.scrollY;
-    const pin = Math.max(track.offsetHeight - window.innerHeight, 0);
-    window.scrollTo(0, top + pin * fraction);
-  }, { selector, fraction });
-  await settle(page);
-}
-
-async function scrollCover(page, selector, fraction) {
-  await page.evaluate(({ selector, fraction }) => {
-    const el = document.querySelector(selector);
-    if (!el) return;
-    const docTop = el.getBoundingClientRect().top + window.scrollY;
-    const start = docTop - window.innerHeight;
-    const end = docTop + el.offsetHeight;
-    window.scrollTo(0, start + (end - start) * fraction);
-  }, { selector, fraction });
-  await settle(page);
-}
-
-async function dialProbe(page) {
-  return page.evaluate(() => {
-    const found = [];
-    const doc = document.documentElement;
-    const extra = doc.scrollWidth - doc.clientWidth;
-    if (extra > 1) found.push(`horizontal overflow ${extra}px`);
-    const root = document.querySelector('#scenarios');
-    if (!root) {
-      found.push('scenarios section missing');
-      return { found, angle: null, count: 0, qty: 0, disputeChip: 0, leak: 0, pass: 0, seats: 0, cancel: 0, scrubberOpacity: 0, race: false };
-    }
-    if (root.querySelector('.bento')) found.push('scenario bento still mounted');
-    const text = root.innerText || '';
-    if (text.includes('upgrade_plus_cape_race')) found.push('cape typo still on the dial');
-    if (!text.includes('upgrade_plus_cancel_race')) found.push('upgrade_plus_cancel_race missing');
-    const dial = document.querySelector('#access-dial, #access-dial-mobile');
-    const visibleDial = [...document.querySelectorAll('#access-dial, #access-dial-mobile')].find((el) => getComputedStyle(el).display !== 'none' && el.getClientRects().length);
-    if (!visibleDial) found.push('access dial missing');
-    else if (visibleDial.querySelectorAll('.dial-station').length !== 10) found.push('dial does not have 10 stations');
-    const used = (el) => {
-      let opacity = 1;
-      for (let node = el; node; node = node.parentElement) {
-        const style = getComputedStyle(node);
-        if (style.display === 'none' || style.visibility === 'hidden') return 0;
-        opacity *= Number.parseFloat(style.opacity);
-        if (Number.isNaN(opacity)) return 0;
-      }
-      return opacity;
-    };
-    const scope = visibleDial ? visibleDial.closest('#scenarios') : root;
-    const leaves = [];
-    for (const el of scope.querySelectorAll('.dial-chip, .dial-name, .dial-card-chip, .dial-card-name, .dial-center-chip, .dial-count, .dial-badge span, .dial-kicker, .dial-card-kicker')) {
-      if (used(el) < 0.3) continue;
-      const textLeaf = el.textContent.trim().replace(/\s+/g, ' ').slice(0, 80);
-      if (!textLeaf) continue;
-      for (const rect of el.getClientRects()) {
-        if (rect.width < 1 || rect.height < 1) continue;
-        if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) continue;
-        leaves.push({ text: textLeaf, rect, el });
-      }
-    }
-    for (let i = 0; i < leaves.length; i += 1) {
-      for (let j = i + 1; j < leaves.length; j += 1) {
-        const a = leaves[i];
-        const b = leaves[j];
-        if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
-        const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
-        const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
-        if (x > 2 && y > 2) found.push(`overlap "${a.text}" ∩ "${b.text}"`);
-      }
-    }
-    const opacityOf = (selector) => {
-      const els = [...document.querySelectorAll(selector)];
-      if (!els.length) return 0;
-      return Math.max(...els.map((el) => used(el)));
-    };
-    let angle = null;
-    const target = [...document.querySelectorAll('.dial-scrubber')].find((el) => used(el) > 0.05);
-    if (target) {
-      const style = getComputedStyle(target);
-      const match = style.transform.match(/matrix\(([^)]+)\)/);
-      if (match) {
-        const parts = match[1].split(',').map((n) => Number.parseFloat(n));
-        angle = Math.atan2(parts[1], parts[0]) * 180 / Math.PI;
-        if (angle < 0) angle += 360;
-      } else if (style.transform === 'none') angle = 0;
-    }
-    return {
-      found,
-      angle,
-      count: opacityOf('.dial-count'),
-      qty: opacityOf('.dial-center-chip[data-id="seats"]'),
-      disputeChip: opacityOf('.dial-center-chip[data-id="dispute"], .dial-card-face[data-id="dispute"] .dial-card-chip'),
-      leak: opacityOf('.dial-leak'),
-      pass: opacityOf('.dial-badge-pass'),
-      seats: opacityOf('.dial-station[data-id="seats"] .dial-lit'),
-      cancel: opacityOf('.dial-station[data-id="cancel"] .dial-lit'),
-      scrubberOpacity: target ? used(target) : 0,
-      race: text.includes('upgrade_plus_cancel_race'),
-    };
-  });
-}
-
-function near(angle, expect, slack) {
-  if (angle == null || Number.isNaN(angle)) return false;
-  const delta = Math.abs(((angle - expect + 540) % 360) - 180);
-  return delta <= slack;
-}
-
-async function checkDial() {
-  mkdirSync(shotDir, { recursive: true });
-  const shots = new Set([
-    'dial-1280-000.png',
-    'dial-1280-035.png',
-    'dial-1280-075.png',
-    'dial-1280-100.png',
-    'dial-1440-000.png',
-    'dial-1440-035.png',
-    'dial-1440-075.png',
-    'dial-1440-100.png',
-    'dial-390-000.png',
-    'dial-390-100.png',
-    'dial-360-100.png',
-  ]);
-  const profiles = [
-    { label: '1280', width: 1280, height: 900, mobile: false },
-    { label: '1440', width: 1440, height: 900, mobile: false },
-    { label: '390', width: 390, height: 844, mobile: true },
-    { label: '360', width: 360, height: 740, mobile: true },
-  ];
-  const fractions = [0, 0.35, 0.75, 1];
-  for (const profile of profiles) {
-    const page = await browser.newPage();
-    await page.setViewportSize({ width: profile.width, height: profile.height });
-    await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-    await page.addStyleTag({ content: 'html { scroll-snap-type: none !important; }' });
-    await settle(page);
-    if (!profile.mobile) {
-      note(`dial pin ${profile.label}`, await page.evaluate(() => {
-        const track = document.querySelector('#dial-track');
-        if (!track) return ['dial track missing'];
-        const pin = track.offsetHeight - window.innerHeight;
-        const ratio = pin / window.innerHeight;
-        if (ratio < 2 || ratio > 2.4) return [`pin is ${ratio.toFixed(2)} viewport heights`];
-        return [];
-      }));
-    } else {
-      note(`dial mobile ${profile.label}`, await page.evaluate(() => {
-        const found = [];
-        const track = document.querySelector('#dial-track');
-        if (track) {
-          const style = getComputedStyle(track);
-          if (style.display !== 'none' && track.offsetHeight > window.innerHeight * 1.25) {
-            found.push(`dial track is a tall scrub (${track.offsetHeight}px)`);
-          }
-        }
-        if (document.querySelector('.pin-spacer')) found.push('pin spacer present');
-        if (!document.querySelector('.dial-mobile-wrap')) found.push('mobile readout missing');
-        return found;
-      }));
-    }
-    let holdAngle = null;
-    for (const fraction of fractions) {
-      if (profile.mobile) await scrollPin(page, '.dial-mobile-wrap', fraction);
-      else await scrollPin(page, '#dial-track', fraction);
-      const pct = String(Math.round(fraction * 100)).padStart(3, '0');
-      const probe = await dialProbe(page);
-      const where = `dial ${profile.label} ${pct}`;
-      note(where, probe.found);
-      if (fraction === 0) {
-        if (probe.count < 0.5) note(where, ['center is not 0 / 10 events']);
-        if (probe.pass > 0.2) note(where, ['9 pass is visible at the start']);
-        if (probe.leak > 0.2) note(where, ['leak caught is visible at the start']);
-        if (!profile.mobile && !near(probe.angle, 0, 18)) note(where, [`scrubber angle ${probe.angle}`]);
-      }
-      if (fraction === 0.35) {
-        if (probe.qty < 0.5 && probe.seats < 0.5) note(where, ['seats station is not the active stop']);
-        if (probe.cancel > 0.35) note(where, ['cancel is lit too early']);
-        if (probe.pass > 0.2) note(where, ['9 pass is visible at 35%']);
-        if (!profile.mobile && !near(probe.angle, 134, 18)) note(where, [`scrubber angle ${probe.angle}`]);
-      }
-      if (fraction === 0.75) {
-        if (probe.leak < 0.5) note(where, ['leak caught is hidden at dispute']);
-        if (probe.disputeChip < 0.5) note(where, ['dispute chip is hidden']);
-        if (probe.pass > 0.2) note(where, ['9 pass is visible during the hold']);
-        holdAngle = probe.angle;
-        if (!profile.mobile && !near(probe.angle, 288, 18)) note(where, [`scrubber angle ${probe.angle}`]);
-      }
-      if (fraction === 1) {
-        if (probe.pass < 0.5) note(where, ['9 pass is hidden at the end']);
-        if (probe.leak < 0.5) note(where, ['leak caught is hidden at the end']);
-        if (!profile.mobile && probe.scrubberOpacity > 0.2) note(where, [`scrubber still visible (${probe.scrubberOpacity.toFixed(2)})`]);
-      }
-      const file = `dial-${profile.label}-${pct}.png`;
-      if (shots.has(file)) await page.screenshot({ path: shotDial(file), fullPage: false });
-    }
-    if (!profile.mobile) {
-      await scrollPin(page, '#dial-track', 0.81);
-      const mid = await dialProbe(page);
-      if (holdAngle == null || mid.angle == null || !near(mid.angle, holdAngle, 8)) {
-        note(`dial ${profile.label} hold`, [`hold broke ${holdAngle} -> ${mid.angle}`]);
-      }
-    }
-    await page.close();
-  }
-
-  const reducedProfiles = [
-    { width: 1280, height: 900, shot: null },
-    { width: 1440, height: 900, shot: 'dial-reduced-1440.png' },
-  ];
-  for (const profile of reducedProfiles) {
-    const reduced = await browser.newPage();
-    await reduced.emulateMedia({ reducedMotion: 'reduce' });
-    await reduced.setViewportSize({ width: profile.width, height: profile.height });
-    await reduced.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-    await settle(reduced);
-    note(`dial reduced ${profile.width}`, await reduced.evaluate(() => {
-      const found = [];
-      const track = document.querySelector('#dial-track');
-      if (!track) return ['dial track missing'];
-      if (track.offsetHeight > window.innerHeight * 1.25) found.push(`reduced motion still pins (${track.offsetHeight}px)`);
-      const used = (el) => {
-        if (!el || el.getClientRects().length === 0) return 0;
-        let opacity = 1;
-        for (let node = el; node; node = node.parentElement) {
-          const style = getComputedStyle(node);
-          if (style.display === 'none' || style.visibility === 'hidden') return 0;
-          opacity *= Number.parseFloat(style.opacity);
-          if (Number.isNaN(opacity)) return 0;
-        }
-        return opacity;
-      };
-      if (used(document.querySelector('.dial-badge-pass')) < 0.5) found.push('reduced motion is not the end state');
-      if (used(document.querySelector('.dial-leak')) < 0.5) found.push('reduced motion hides the leak');
-      const labels = [...document.querySelectorAll('#access-dial .dial-center-label')].filter((el) => used(el) > 0.1);
-      if (labels.length !== 1) {
-        const shown = labels.map((el) => `${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 32)}@${used(el).toFixed(2)}`);
-        found.push(`center labels ${labels.length} [${shown.join(' | ')}]`);
-      } else {
-        const text = labels[0].textContent.trim().replace(/\s+/g, ' ');
-        const endState = text.includes('9 pass') && text.includes('1 leak') && !text.includes('0 / 10');
-        if (!endState) found.push(`center readout is not 9 pass / 1 leak ("${text.slice(0, 48)}")`);
-      }
-      return found;
-    }));
-    if (profile.shot) {
-      await reduced.evaluate(() => {
-        const el = document.querySelector('#scenarios');
-        if (!el) return;
-        const nav = document.querySelector('.site-nav')?.getBoundingClientRect().height ?? 0;
-        const top = el.getBoundingClientRect().top + window.scrollY - nav;
-        window.scrollTo(0, Math.max(0, top));
-      });
-      await settle(reduced);
-      await reduced.screenshot({ path: shotDial(profile.shot), fullPage: false });
-    }
-    await reduced.close();
-  }
-  const reducedMobile = await browser.newPage();
-  await reducedMobile.emulateMedia({ reducedMotion: 'reduce' });
-  await reducedMobile.setViewportSize({ width: 390, height: 844 });
-  await reducedMobile.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-  await settle(reducedMobile);
-  await reducedMobile.evaluate(() => {
-    const el = document.querySelector('.dial-mobile-wrap');
-    if (!el) return;
-    const nav = document.querySelector('.site-nav')?.getBoundingClientRect().height ?? 0;
-    const top = el.getBoundingClientRect().top + window.scrollY - nav;
-    window.scrollTo(0, Math.max(0, top));
-  });
-  await settle(reducedMobile);
-  await reducedMobile.screenshot({ path: shotDial('dial-reduced-390.png'), fullPage: false });
-  await reducedMobile.close();
-  await checkDialSteps();
-}
-
-async function checkDialSteps() {
-  const profiles = [
-    { width: 1280, height: 800 },
-    { width: 1280, height: 900 },
-    { width: 1440, height: 900 },
-  ];
-  for (const profile of profiles) {
-    const page = await browser.newPage();
-    await page.setViewportSize(profile);
-    await page.goto(`${origin}/?frames=1`, { waitUntil: 'networkidle' });
-    await settle(page);
-    for (let step = 0; step <= 10; step += 1) {
-      const fraction = step / 10;
-      await scrollPin(page, '#dial-track', fraction);
-      note(`dial step ${profile.width}x${profile.height} ${step * 10}`, await page.evaluate((pct) => {
-        const found = [];
-        const used = (el) => {
-          if (!el || el.getClientRects().length === 0) return 0;
-          let opacity = 1;
-          for (let node = el; node; node = node.parentElement) {
-            const style = getComputedStyle(node);
-            if (style.display === 'none' || style.visibility === 'hidden') return 0;
-            opacity *= Number.parseFloat(style.opacity);
-            if (Number.isNaN(opacity)) return 0;
-          }
-          return opacity;
-        };
-        const box = (el) => {
-          const rect = el.getBoundingClientRect();
-          return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height };
-        };
-        const hits = (a, b) => {
-          const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-          const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-          return x > 0.5 && y > 0.5;
-        };
-        const labels = [...document.querySelectorAll('#access-dial .dial-center-label')].filter((el) => used(el) > 0.1);
-        if (labels.length !== 1) {
-          const shown = labels.map((el) => `${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 32)}@${used(el).toFixed(2)}`);
-          found.push(`center labels ${labels.length} [${shown.join(' | ')}]`);
-        }
-        const texts = [...document.querySelectorAll('#access-dial .dial-chip, #access-dial .dial-name')].filter((el) => used(el) > 0.05);
-        const icons = [...document.querySelectorAll('#access-dial .dial-station, #access-dial .dial-halo, #access-dial .dial-center-halo')].filter((el) => {
-          if (el.getClientRects().length === 0) return false;
-          if (el.classList.contains('dial-halo') || el.classList.contains('dial-center-halo')) return used(el) > 0.1;
-          return true;
-        });
-        for (const text of texts) {
-          const a = box(text);
-          if (a.width < 1 || a.height < 1) continue;
-          for (const icon of icons) {
-            const b = box(icon);
-            if (b.width < 1 || b.height < 1) continue;
-            if (hits(a, b)) {
-              const name = text.textContent.trim().replace(/\s+/g, ' ').slice(0, 42);
-              found.push(`"${name}" intersects a station`);
-            }
-          }
-        }
-        if (pct === 0) {
-          const headline = document.querySelector('#dial-stage h2');
-          const range = document.createRange();
-          if (headline) range.selectNodeContents(headline);
-          const lines = headline ? new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size : 0;
-          if (lines !== 2) found.push(`headline lines ${lines}`);
-          const copy = (headline?.innerText ?? '').replace(/\s+/g, ' ').trim();
-          if (copy !== 'Ten transitions, one access row.') found.push(`headline copy "${copy}"`);
-        }
-        if (pct === 80 || pct === 100) {
-          const halo = document.querySelector('#access-dial .dial-center-halo');
-          if (used(halo) <= 0.1) found.push('center leak halo missing');
-          const pill = [...document.querySelectorAll('#access-dial .dial-leak')].find((el) => used(el) > 0.1);
-          if (!pill) found.push('leak pill missing');
-          else {
-            const style = getComputedStyle(pill);
-            const border = Number.parseFloat(style.borderTopWidth);
-            if (border < 1 || style.borderTopStyle === 'none') found.push('leak pill has no border');
-          }
-        }
-        return found;
-      }, step * 10));
-    }
-    await page.close();
-  }
-}
+for (const [w, h] of [[360, 780], [390, 844], [768, 1024], [1024, 768], [1280, 800], [1440, 900]]) await checkLayout(w, h);
+await checkFold(1280, 800);
+await checkFold(1440, 900);
+await checkNavOverflow();
+for (const w of [360, 390, 1280, 1440]) await checkHeroLines(w);
+await checkMobileMenu(360, 780);
+await checkMobileMenu(390, 844);
+await checkCopy();
+await checkReducedMotion();
+note('status copy', statusPhrases(dist));
 
 await browser.close();
 server.close();

@@ -30,6 +30,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ### Changed
 
+- Site (H35, phase A): gatefit.io homepage redesign. One value line with an `npx gatefit init` copy button, a live-HTML run frame (Stripe events, the access row, the failing golden), a three-step how-it-works strip, the 14 free goldens, a Free vs $49 comparison and a /status link. The GSAP scroll scenes and the access dial are gone. The Starlight docs shell gets the G mark, a navy header, a mint-barred sidebar and navy code frames; docs content is unchanged. `scripts/h13-frames.mjs` now checks the new page (overlap, clipping, sideways scroll, first screen, mobile menu, copy button, reduced motion).
 - `./ci-local.sh` also typechecks the collector Worker entry (`worker/telemetry/src/index.ts` and its imports) through `tsconfig.worker.json`. It had no type errors; no runtime change.
 - h13 mint detectors: regression test that `--mint-low` and its anti-aliased edges over navy and the surfaces never count as mint or orbit mint. The detector fix itself shipped in 0.7.0.
 - `worker/telemetry/wrangler.toml` comment: "daily rollup at 00:15 UTC" instead of "nightly rollup". No config change.
