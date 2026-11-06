@@ -242,9 +242,44 @@ test("H25: telemetry docs list every payload key and stay honest", async () => {
   }
 });
 
+// Release notes up to 0.5.2 are written history: they quote phrases that were true or
+// banned later, and stay as shipped. Named so a new release note is still scanned.
+const HISTORICAL_RELEASE_NOTES = ["release-v0.4.0.md", "release-v0.5.0.md", "release-v0.5.1.md", "release-v0.5.2.md"];
+const BANNED = [/coming soon/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i, /\$19/, /monthly/i, /optional updates/i];
+const BANNED_VARIANTS = [/docs\W*(site)?\W*live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i];
+
+function filesUnder(rel: string): string[] {
+  return fs.readdirSync(path.join(root, rel), { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? filesUnder(`${rel}/${e.name}`) : [`${rel}/${e.name}`],
+  );
+}
+
+test("h33_templates_skill_and_unreleased_changelog_have_no_banned_phrases", () => {
+  const templates = filesUnder("src/init/templates");
+  assert.ok(templates.includes("src/init/templates/README.md.tpl"));
+  assert.ok(templates.includes("src/init/templates/workflow.yml.tpl"));
+  for (const file of [...templates, ".cursor/skills/verify-gate/SKILL.md"]) {
+    const text = read(file);
+    for (const re of [...BANNED, ...BANNED_VARIANTS]) assert.doesNotMatch(text, re, `${file} has ${re}`);
+  }
+  const changelog = read("CHANGELOG.md");
+  const unreleased = changelog.slice(changelog.indexOf("## [Unreleased]"), changelog.indexOf("\n## [", changelog.indexOf("## [Unreleased]") + 1));
+  for (const re of [...BANNED, ...BANNED_VARIANTS]) assert.doesNotMatch(unreleased, re, `CHANGELOG [Unreleased] has ${re}`);
+  assert.match(unreleased, /site\/src\/scripts\/status\.ts/, "Unreleased drops the site-side future checked_at guard");
+  assert.match(unreleased, /H33/);
+});
+
+test("h33_status_rollup_comments_say_daily_not_nightly", () => {
+  for (const file of ["worker/telemetry/src/status.ts", "worker/telemetry/migrations/0002_checks.sql"]) {
+    const text = read(file);
+    assert.doesNotMatch(text, /nightly/i, `${file} says nightly`);
+    assert.match(text, /daily[^\n]*00:15 UTC/i, `${file} lacks the 00:15 UTC daily cron`);
+  }
+});
+
 test("h32_current_docs_have_no_banned_phrases_and_no_stale_redeploy_wording", () => {
   const banned = [/coming soon/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i, /\$19/, /monthly/i, /optional updates/i];
-  const docs = fs.readdirSync(path.join(root, "docs")).filter((f) => f.endsWith(".md") && !f.startsWith("release-")).map((f) => `docs/${f}`);
+  const docs = fs.readdirSync(path.join(root, "docs")).filter((f) => f.endsWith(".md") && !HISTORICAL_RELEASE_NOTES.includes(f)).map((f) => `docs/${f}`);
   for (const file of [...docs, "README.md", "worker/telemetry/README.md", "site/src/content/docs/telemetry.md"]) {
     const text = read(file);
     for (const re of banned) assert.doesNotMatch(text, re, `${file} has ${re}`);
