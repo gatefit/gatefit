@@ -2,11 +2,17 @@
 # Stripe API version 2025-10-29.clover (src/stripe-clock.ts).
 # Sources: https://docs.stripe.com/billing/subscriptions/trials and
 # https://docs.stripe.com/api/subscriptions/resume
-# Assumed policy: resuming is not a payment. customer.subscription.paused
-# and customer.subscription.resumed stay locked, and so does the failed
-# resumption charge (past_due). Only invoice.paid unlocks. A replayed resume
-# event does not re-lock. HTTP 200 is not access. Fixture-only; not a live
-# Test Clock id. No license key.
+# Stripe order: when resuming creates a resumption invoice, the subscription
+# stays paused until that invoice is paid or marked uncollectible. So a failed
+# resumption charge arrives with status still paused, invoice.paid follows,
+# and customer.subscription.resumed (status active) comes last.
+# Assumed policy: customer.subscription.paused and a failed resumption charge
+# while paused stay locked. invoice.paid unlocks. customer.subscription.resumed
+# does not grant on its own; that only matters for a resume that creates no
+# invoice, where Stripe's trials page says to grant on resumed and Gatefit
+# chooses to wait for invoice.paid instead. A replayed resume event does not
+# re-lock. HTTP 200 is not access. Fixture-only; not a live Test Clock id.
+# No license key.
 id: trial_end_pause_resume_waits_for_paid
 subject: cus_s10
 steps:
@@ -30,21 +36,12 @@ steps:
       locked: true
       plan: pro
   - event:
-      id: evt_s10_resumed
-      type: customer.subscription.resumed
-      customerId: cus_s10
-      status: active
-      plan: pro
-      httpStatus: 200
-    expect:
-      locked: true
-      plan: pro
-  - event:
       id: evt_s10_resume_charge_failed
       type: invoice.payment_failed
       customerId: cus_s10
-      status: past_due
+      status: paused
       plan: pro
+      httpStatus: 200
     expect:
       locked: true
       plan: pro
@@ -53,6 +50,16 @@ steps:
       type: invoice.paid
       customerId: cus_s10
       plan: pro
+    expect:
+      locked: false
+      plan: pro
+  - event:
+      id: evt_s10_resumed
+      type: customer.subscription.resumed
+      customerId: cus_s10
+      status: active
+      plan: pro
+      httpStatus: 200
     expect:
       locked: false
       plan: pro

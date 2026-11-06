@@ -50,7 +50,7 @@ export const SUITES = [
   "entitlements_active_summary",
   "trial_end_pause_resume_waits_for_paid",
   "smart_retries_unpaid_then_paid_recovers",
-  "pause_collection_void_locks_draft_keeps",
+  "pause_collection_keeps_access_all_behaviors",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];

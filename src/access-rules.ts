@@ -53,16 +53,12 @@ export function isRefund(event: BillingEvent): boolean {
 export function isUnpaidExhaust(event: BillingEvent): boolean {
   // Stripe marks invoices uncollectible on purpose during a mark_uncollectible
   // collection pause. That is not a failed customer, so it does not revoke.
+  // No pause_collection behaviour (keep_as_draft, mark_uncollectible, void)
+  // changes access: the customer keeps access while collection is paused.
   return (
     event.status === "unpaid" ||
     (event.type === "invoice.marked_uncollectible" &&
       event.pause_collection_behavior !== "mark_uncollectible")
-  );
-}
-
-export function isCollectionVoided(event: BillingEvent): boolean {
-  return (
-    event.type === "customer.subscription.updated" && event.pause_collection_behavior === "void"
   );
 }
 
@@ -132,8 +128,7 @@ export function nextSnapshot(current: AccessSnapshot, event: BillingEvent): Acce
     isRefund(event) ||
     isImmediateCancel(event) ||
     isPastDue(event) ||
-    isUnpaidExhaust(event) ||
-    isCollectionVoided(event)
+    isUnpaidExhaust(event)
   ) {
     return { ...current, locked: true };
   }

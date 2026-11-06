@@ -84,7 +84,7 @@ const s7s9 = [
 const s10s12 = [
   "trial_end_pause_resume_waits_for_paid.yaml",
   "smart_retries_unpaid_then_paid_recovers.yaml",
-  "pause_collection_void_locks_draft_keeps.yaml",
+  "pause_collection_keeps_access_all_behaviors.yaml",
 ];
 
 for (const name of [...s3s6, ...h6, ...h7, ...s7s9, ...s10s12]) {

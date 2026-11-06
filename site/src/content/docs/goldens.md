@@ -54,7 +54,9 @@ An immediate downgrade has no `downgrade_at_period_end` flag. The plan changes o
 
 `trial_end_pause_resume_waits_for_paid`. A trial ends with no payment method and the subscription pauses ([trials](https://docs.stripe.com/billing/subscriptions/trials)). `customer.subscription.paused` stays locked.
 
-`customer.subscription.resumed` with status `active` and HTTP 200 stays locked. Resuming is not a payment. A failed resumption charge (`invoice.payment_failed`, `past_due`) stays locked ([resume](https://docs.stripe.com/api/subscriptions/resume)). Only `invoice.paid` unlocks, and a replayed resume event leaves that grant in place.
+When resuming creates a resumption invoice, the subscription stays `paused` until that invoice is paid or marked uncollectible ([resume](https://docs.stripe.com/api/subscriptions/resume)). So a failed resumption charge (`invoice.payment_failed`) arrives with status `paused` and stays locked. `invoice.paid` unlocks. `customer.subscription.resumed` with status `active` and HTTP 200 follows and stays unlocked, and a replayed resume event leaves that grant in place.
+
+Stripe's trials page says to grant access on `customer.subscription.resumed`. Gatefit's reference rules do not grant on `resumed` alone; that only matters for a resume that creates no invoice, and it is an assumed policy, not a Stripe rule.
 
 ## S11 — Smart Retries, unpaid, then paid
 
@@ -62,9 +64,9 @@ An immediate downgrade has no `downgrade_at_period_end` flag. The plan changes o
 
 ## S12 — collection pause
 
-`pause_collection_void_locks_draft_keeps`. The event field `pause_collection_behavior` is a flat copy of the subscription's `pause_collection.behavior` ([pause payment collection](https://docs.stripe.com/billing/subscriptions/pause-payment)). On invoice events it carries the parent subscription's pause.
+`pause_collection_keeps_access_all_behaviors`. The event field `pause_collection_behavior` is a flat copy of the subscription's `pause_collection.behavior` ([pause payment collection](https://docs.stripe.com/billing/subscriptions/pause-payment)). Stripe invoices have no such field, so on invoice events the adapter copies it from the parent subscription.
 
-`keep_as_draft` and `mark_uncollectible` leave access unchanged and never grant to a locked row. `invoice.marked_uncollectible` during a `mark_uncollectible` pause does not revoke. `void` locks. Clearing the pause (`null`, HTTP 200) does not grant; a later `invoice.paid` does. `invoice.marked_uncollectible` without a pause still locks.
+While payment collection is paused the subscription stays active and the customer keeps access. `keep_as_draft`, `mark_uncollectible` and `void` only change how the paused period's invoices are handled (`void` voids them), so none of them changes access. `invoice.marked_uncollectible` during a `mark_uncollectible` pause does not revoke; Stripe sends no webhooks for those invoices, so that step is defensive. After a failed payment locks the row, setting a `void` pause or clearing the pause (`null`, HTTP 200) does not grant; a later `invoice.paid` does. `invoice.marked_uncollectible` without a pause still locks.
 
 S10–S12 are not live Test Clock ids.
 

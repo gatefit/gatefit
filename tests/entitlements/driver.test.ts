@@ -180,7 +180,7 @@ test("S10–S12 goldens pin the Stripe API version and stay fixture-only", () =>
   const names = [
     "trial_end_pause_resume_waits_for_paid.yaml",
     "smart_retries_unpaid_then_paid_recovers.yaml",
-    "pause_collection_void_locks_draft_keeps.yaml",
+    "pause_collection_keeps_access_all_behaviors.yaml",
   ];
   for (const name of names) {
     const file = path.join(import.meta.dirname, "goldens", name);
@@ -204,16 +204,22 @@ test("S10–S12 goldens pin the Stripe API version and stay fixture-only", () =>
   assert.equal(resume.steps[0]?.event.status, "trialing");
   assert.equal(resume.steps[1]?.event.type, "customer.subscription.paused");
   assert.equal(resume.steps[1]?.expect.locked, true);
-  assert.equal(resume.steps[2]?.event.type, "customer.subscription.resumed");
-  assert.equal(resume.steps[2]?.event.status, "active");
-  assert.equal(resume.steps[2]?.event.httpStatus, 200);
+  // Stripe keeps the subscription paused until the resumption invoice is paid.
+  assert.equal(resume.steps[2]?.event.type, "invoice.payment_failed");
+  assert.equal(resume.steps[2]?.event.status, "paused");
   assert.equal(resume.steps[2]?.expect.locked, true);
-  assert.equal(resume.steps[3]?.event.type, "invoice.payment_failed");
-  assert.equal(resume.steps[3]?.expect.locked, true);
-  assert.equal(resume.steps[4]?.event.type, "invoice.paid");
+  assert.equal(resume.steps[3]?.event.type, "invoice.paid");
+  assert.equal(resume.steps[3]?.expect.locked, false);
+  assert.equal(resume.steps[4]?.event.type, "customer.subscription.resumed");
+  assert.equal(resume.steps[4]?.event.status, "active");
+  assert.equal(resume.steps[4]?.event.httpStatus, 200);
   assert.equal(resume.steps[4]?.expect.locked, false);
-  assert.equal(resume.steps[5]?.event.id, resume.steps[2]?.event.id);
+  assert.equal(resume.steps[5]?.event.id, resume.steps[4]?.event.id);
   assert.equal(resume.steps[5]?.expect.locked, false);
+  assert.equal(
+    resume.steps.some((step) => step.event.type === "customer.subscription.resumed" && step.expect.locked === true),
+    false,
+  );
   const retries = loadGolden(
     path.join(import.meta.dirname, "goldens/smart_retries_unpaid_then_paid_recovers.yaml"),
   );
@@ -233,7 +239,7 @@ test("S10–S12 goldens pin the Stripe API version and stay fixture-only", () =>
   assert.equal(retries.steps[6]?.event.id, retries.steps[3]?.event.id);
   assert.equal(retries.steps[6]?.expect.locked, false);
   const pause = loadGolden(
-    path.join(import.meta.dirname, "goldens/pause_collection_void_locks_draft_keeps.yaml"),
+    path.join(import.meta.dirname, "goldens/pause_collection_keeps_access_all_behaviors.yaml"),
   );
   assert.equal(pause.steps[0]?.event.type, "invoice.paid");
   assert.equal(pause.steps[1]?.event.pause_collection_behavior, "keep_as_draft");
@@ -243,17 +249,26 @@ test("S10–S12 goldens pin the Stripe API version and stay fixture-only", () =>
   assert.equal(pause.steps[3]?.event.type, "invoice.marked_uncollectible");
   assert.equal(pause.steps[3]?.event.pause_collection_behavior, "mark_uncollectible");
   assert.equal(pause.steps[3]?.expect.locked, false);
+  // Stripe: void only voids the paused period's invoices; the customer keeps access.
   assert.equal(pause.steps[4]?.event.pause_collection_behavior, "void");
   assert.equal(pause.steps[4]?.event.httpStatus, 200);
-  assert.equal(pause.steps[4]?.expect.locked, true);
+  assert.equal(pause.steps[4]?.expect.locked, false);
   assert.equal(pause.steps[5]?.event.pause_collection_behavior, null);
-  assert.equal(pause.steps[5]?.event.httpStatus, 200);
-  assert.equal(pause.steps[5]?.expect.locked, true);
-  assert.equal(pause.steps[6]?.event.type, "invoice.paid");
-  assert.equal(pause.steps[6]?.expect.locked, false);
-  assert.equal(pause.steps[7]?.event.type, "invoice.marked_uncollectible");
-  assert.equal(pause.steps[7]?.event.pause_collection_behavior, undefined);
+  assert.equal(pause.steps[5]?.expect.locked, false);
+  assert.equal(pause.steps[6]?.event.type, "invoice.payment_failed");
+  assert.equal(pause.steps[6]?.expect.locked, true);
+  assert.equal(pause.steps[7]?.event.pause_collection_behavior, "void");
+  assert.equal(pause.steps[7]?.event.httpStatus, 200);
   assert.equal(pause.steps[7]?.expect.locked, true);
+  assert.equal(pause.steps[8]?.event.pause_collection_behavior, null);
+  assert.equal(pause.steps[8]?.event.httpStatus, 200);
+  assert.equal(pause.steps[8]?.expect.locked, true);
+  assert.equal(pause.steps[9]?.event.type, "invoice.paid");
+  assert.equal(pause.steps[9]?.expect.locked, false);
+  assert.equal(pause.steps[10]?.event.type, "invoice.marked_uncollectible");
+  assert.equal(pause.steps[10]?.event.pause_collection_behavior, undefined);
+  assert.equal(pause.steps[10]?.expect.locked, true);
+  assert.doesNotMatch(fs.readFileSync(path.join(import.meta.dirname, "goldens/pause_collection_keeps_access_all_behaviors.yaml"), "utf8"), /void locks/);
 });
 
 test("runGolden refuses GATEFIT_LIVE_CLOCK", async () => {

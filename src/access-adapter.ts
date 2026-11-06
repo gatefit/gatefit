@@ -43,9 +43,11 @@ export type BillingEvent = {
   /** Paddle adjustment type. Only an approved full refund locks. */
   adjustment_type?: "full" | "partial";
   /**
-   * Flat copy of Stripe's subscription pause_collection.behavior. On invoice events it
-   * carries the parent subscription's pause. void locks; keep_as_draft and
-   * mark_uncollectible leave access unchanged. null means the pause was cleared.
+   * Flat copy of Stripe's subscription pause_collection.behavior. Stripe invoices have
+   * no such field, so on invoice events the adapter copies it from the parent
+   * subscription. No behaviour changes access: Stripe keeps the customer's access while
+   * collection is paused, and void only voids the paused period's invoices. Stripe sends
+   * no webhooks for invoices created during some pauses. null means the pause was cleared.
    */
   pause_collection_behavior?: "keep_as_draft" | "mark_uncollectible" | "void" | null;
   /** Original timeline position. Chaos folds on this so arrival order is not access. */

@@ -56,7 +56,7 @@ test("gatefit run S7–S9: hardened passes and naive fails each golden", () => {
 const s10s12 = [
   "trial_end_pause_resume_waits_for_paid",
   "smart_retries_unpaid_then_paid_recovers",
-  "pause_collection_void_locks_draft_keeps",
+  "pause_collection_keeps_access_all_behaviors",
 ];
 
 test("gatefit run S10–S12: hardened passes and naive fails each golden", () => {
