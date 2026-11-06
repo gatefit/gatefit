@@ -126,10 +126,10 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 		detail: 'Failed retries lock it until that invoice is paid. A repeated failure does not lock it again.',
 	},
 	pause_collection_keeps_access_all_behaviors: {
-		label: 'Pause keeps access',
+		label: 'Uncollectible locks',
 		outcome: 'locked',
 		category: 'pauses',
-		detail: 'Pausing does not revoke or grant. An uncollectible invoice with no pause locks.',
+		detail: 'A pause keeps access and does not grant. An uncollectible invoice with no pause locks.',
 	},
 };
 

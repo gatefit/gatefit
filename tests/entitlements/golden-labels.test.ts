@@ -148,7 +148,11 @@ test("each pill matches the golden's final locked row", () => {
   );
   assert.equal(GOLDEN_LABELS.entitlements_active_summary.outcome, "kept");
   assert.equal(GOLDEN_LABELS.pause_collection_keeps_access_all_behaviors.outcome, "locked");
-  assert.equal(GOLDEN_LABELS.pause_collection_keeps_access_all_behaviors.label, "Pause keeps access");
+  assert.equal(GOLDEN_LABELS.pause_collection_keeps_access_all_behaviors.label, "Uncollectible locks");
+  assert.equal(
+    GOLDEN_LABELS.pause_collection_keeps_access_all_behaviors.detail,
+    "A pause keeps access and does not grant. An uncollectible invoice with no pause locks.",
+  );
   assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.outcome, "period_end");
   assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.label, "Upgrade stays open");
   assert.equal(
