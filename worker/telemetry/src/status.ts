@@ -247,7 +247,7 @@ export async function buildStatus(reader: StatusReader, now: Date): Promise<Stat
   return { checked_at: counted.length ? new Date(newest).toISOString() : null, services };
 }
 
-/** Nightly window: roll up finished days still fully in raw, prune raw and old days. */
+/** Daily window (cron `15 0 * * *`, 00:15 UTC): roll up finished days still fully in raw, prune raw and old days. */
 export function rollupWindow(now: Date): { from: number; to: number; dayCutoff: string } {
   const to = startOfDay(now.getTime());
   return { from: to - RAW_KEEP_DAYS * DAY_MS, to, dayCutoff: dayOf(to - (DAYS - 1) * DAY_MS) };
