@@ -5,7 +5,7 @@ description: A paid provider pack that checks your access table against ugly Pad
 
 The Paddle provider pack ships in 0.7.0 as `gatefit run --suite paddle` (`npx gatefit@0.7.0` or the installed package). It is not in 0.6.0.
 
-The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the provider packs. S1–S9 and Phase 2 stay free. Paddle is a provider your app bills through; it is not how you buy Gatefit.
+The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the provider packs. S1–S12 and Phase 2 stay free. Paddle is a provider your app bills through; it is not how you buy Gatefit.
 
 HTTP 200 is not access. The pack asserts what your access table says after each Paddle webhook, never that Paddle or your checkout page answered 200.
 

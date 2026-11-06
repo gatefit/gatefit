@@ -35,7 +35,12 @@ function cloneEvents(events: BillingEvent[]): BillingEvent[] {
 }
 
 function stamp(suite: GoldenSuite): BillingEvent[] {
-  return suite.steps.map((step, index) => ({ ...step.event, created: index }));
+  // A Stripe replay keeps the original created, so a repeated id keeps its first index.
+  const first = new Map<string, number>();
+  return suite.steps.map((step, index) => {
+    if (!first.has(step.event.id)) first.set(step.event.id, index);
+    return { ...step.event, created: first.get(step.event.id)! };
+  });
 }
 
 function duplicate(seed: string, goldenId: string, events: BillingEvent[]): BillingEvent[] {

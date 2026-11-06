@@ -4,7 +4,7 @@ Fixture-first access checks. Each file is one customer and a list of `event` / `
 
 The Stripe API version is the pin in `src/stripe-clock.ts`: `2025-10-29.clover`. These files do not call Stripe. `sk_live` is refused. An event `httpStatus` of 200 is not access; the `expect` block is the access row.
 
-S1–S6, the Phase 2 packs, and S7–S9 are free. They do not read `GATEFIT_LICENSE_KEY` and do not call Polar. The $49 Indie License unlocks chaos mode, Polar and Paddle packs. Chaos mode is live. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. 0.5.2 is the first release that ships S7–S9. This change does not publish `0.7.0`.
+S1–S6, the Phase 2 packs, and S7–S12 are free. They do not read `GATEFIT_LICENSE_KEY` and do not call Polar. The $49 Indie License unlocks chaos mode, Polar and Paddle packs. Chaos mode is live. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. 0.5.2 is the first release that ships S7–S9. S10–S12 are not in a release yet. This change does not publish `0.7.0`.
 
 | Id | Pack | Access row |
 | --- | --- | --- |
@@ -22,5 +22,8 @@ S1–S6, the Phase 2 packs, and S7–S9 are free. They do not read `GATEFIT_LICE
 | `trial_no_card` | S7 | No-card trial. `customer.subscription.trial_will_end` does not grant and does not revoke. A failed first charge, `paused`, and cancel stay locked. A later `invoice.paid` grants; a repeated `trial_will_end` does not revoke it. |
 | `portal_downgrade_period_end_vs_immediate` | S8 | Customer Portal downgrade. `downgrade_at_period_end` keeps the current plan until `now >= period_end`, including one second early. The period-end event applies `pending_plan`. An immediate downgrade applies on that event while `now` is still before `period_end`. |
 | `entitlements_active_summary` | S9 | `entitlements.active_entitlement_summary.updated` sets `features` to the active entitlement lookup keys, including an empty summary. It does not lock or unlock. |
+| `trial_end_pause_resume_waits_for_paid` | S10 | Trial ends and pauses. `customer.subscription.paused` and a failed resumption charge (status still `paused`) stay locked. `invoice.paid` unlocks; the later `customer.subscription.resumed` (HTTP 200) and its replay keep access. |
+| `smart_retries_unpaid_then_paid_recovers` | S11 | Smart Retries: three failed retries (one with HTTP 200) and `unpaid` stay locked with plan and seats kept. Paying the latest invoice unlocks; a replayed failure does not re-lock. |
+| `pause_collection_keeps_access_all_behaviors` | S12 | `pause_collection_behavior`: `keep_as_draft`, `mark_uncollectible` and `void` all keep access, and `invoice.marked_uncollectible` during a `mark_uncollectible` pause does not revoke. On a row locked by a failed payment, a pause or clearing it does not grant; `invoice.paid` does. `invoice.marked_uncollectible` with no pause locks. |
 
-S7–S9 are not live Test Clock ids. H6 and H7 are not either. The live lane ports only `paid_grants_access`, `cancel_revokes_access`, and `trial_to_paid_grants`.
+S7–S12 are not live Test Clock ids. H6 and H7 are not either. The live lane ports only `paid_grants_access`, `cancel_revokes_access`, and `trial_to_paid_grants`.

@@ -33,6 +33,8 @@ export type BillingEvent = {
   pending_plan?: string;
   period_end?: number;
   now?: number;
+  /** Stripe pause_collection.behavior, flattened. null means the pause was cleared. Invoices lack it: copy from the parent subscription. */
+  pause_collection_behavior?: "keep_as_draft" | "mark_uncollectible" | "void" | null;
   created?: number;
 };
 
@@ -61,7 +63,11 @@ const isDispute = (e: BillingEvent) =>
 
 const isRefund = (e: BillingEvent) => e.refunded === true || e.type === "charge.refunded";
 
-const isUnpaidExhaust = (e: BillingEvent) => e.status === "unpaid" || e.type === "invoice.marked_uncollectible";
+// A mark_uncollectible collection pause marks invoices uncollectible on purpose. It does not revoke.
+// No pause_collection behaviour, void included, changes access: the customer keeps access while paused.
+const isUnpaidExhaust = (e: BillingEvent) =>
+  e.status === "unpaid" ||
+  (e.type === "invoice.marked_uncollectible" && e.pause_collection_behavior !== "mark_uncollectible");
 
 const isPastDue = (e: BillingEvent) => e.status === "past_due" || e.type === "invoice.payment_failed";
 

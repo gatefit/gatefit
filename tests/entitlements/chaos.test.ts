@@ -5,6 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { runChaos } from "../../src/chaos.ts";
 
 const root = path.join(import.meta.dirname, "../..");
 const bin = path.join(root, "bin/gatefit.js");
@@ -214,6 +215,27 @@ test("two hardened chaos runs with the same seed are byte-identical", async () =
   } finally {
     await mock.close();
   }
+});
+
+test("replayed_event_keeps_first_created_under_any_chaos_seed", async () => {
+  // A Stripe replay keeps the original created. A replayed failed retry (S11) or
+  // resume (S10) must not fold after the payment that recovered access.
+  const prevErr = console.error;
+  const lines: string[] = [];
+  console.error = (...args: unknown[]) => {
+    lines.push(args.map(String).join(" "));
+  };
+  const failed: string[] = [];
+  try {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      lines.length = 0;
+      const code = await runChaos(HARDENED, String(seed));
+      if (code !== 0) failed.push(`${seed}: ${lines.find((line) => line.includes("FAIL")) ?? ""}`);
+    }
+  } finally {
+    console.error = prevErr;
+  }
+  assert.deepEqual(failed, []);
 });
 
 test("chaos --seed matches GATEFIT_CHAOS_SEED and overrides the default", async () => {

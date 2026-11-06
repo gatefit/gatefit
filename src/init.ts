@@ -480,7 +480,7 @@ async function initMain(argv: string[], out: { quiet: boolean }): Promise<number
       ? `  5. commit ${WORKFLOW_REL}`
       : `  5. add CI: npx gatefit init --template ${template}${values.dir ? ` --dir ${dir}` : ""} --print-workflow`,
   );
-  console.log(`  6. run the full free suite (S1–S9 and Phase 2): npx gatefit run --suite tests/entitlements/goldens --adapter ${adapter}`);
+  console.log(`  6. run the full free suite (S1–S12 and Phase 2): npx gatefit run --suite tests/entitlements/goldens --adapter ${adapter}`);
   console.log("HTTP 200 from Stripe is not access. Gatefit asserts the gatefit_access row.");
   return INIT_OK;
 }

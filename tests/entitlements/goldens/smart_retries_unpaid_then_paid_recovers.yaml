@@ -1,0 +1,80 @@
+# S11. Smart Retries fail, the subscription goes unpaid, then the latest
+# invoice is paid. Stripe API version 2025-10-29.clover (src/stripe-clock.ts).
+# Sources: https://docs.stripe.com/billing/revenue-recovery/smart-retries and
+# https://docs.stripe.com/billing/subscriptions/overview
+# Assumed policy: every failed retry and status unpaid revoke access
+# (locked: true) and keep plan and seats on the row, because the subscription
+# stays in place. Paying the most recent invoice restores access. A replayed
+# retry failure does not re-lock. HTTP 200 is not access. Fixture-only; not a
+# live Test Clock id. No license key.
+id: smart_retries_unpaid_then_paid_recovers
+subject: cus_s11
+steps:
+  - event:
+      id: evt_s11_paid
+      type: invoice.paid
+      customerId: cus_s11
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_s11_retry_1_failed
+      type: invoice.payment_failed
+      customerId: cus_s11
+      status: past_due
+    expect:
+      locked: true
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_s11_retry_2_failed
+      type: invoice.payment_failed
+      customerId: cus_s11
+      status: past_due
+      httpStatus: 200
+    expect:
+      locked: true
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_s11_retry_3_failed
+      type: invoice.payment_failed
+      customerId: cus_s11
+      status: past_due
+    expect:
+      locked: true
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_s11_unpaid
+      type: customer.subscription.updated
+      customerId: cus_s11
+      status: unpaid
+      plan: pro
+      seats: 1
+    expect:
+      locked: true
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_s11_paid_recovered
+      type: invoice.paid
+      customerId: cus_s11
+      plan: pro
+      seats: 1
+    expect:
+      locked: false
+      plan: pro
+      seats: 1
+  - event:
+      id: evt_s11_retry_3_failed
+      type: invoice.payment_failed
+      customerId: cus_s11
+      status: past_due
+    expect:
+      locked: false
+      plan: pro
+      seats: 1

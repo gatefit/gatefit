@@ -4,6 +4,17 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ## [Unreleased]
 
+### Added
+
+- Free S10–S12 goldens. They do not read a license key and do not call Polar. Stripe API version stays `2025-10-29.clover`. They are not live Test Clock ids, and each has an HTTP 200 step that must stay locked.
+  - `trial_end_pause_resume_waits_for_paid` (S10): a trial ends and pauses. Events follow Stripe's order: the subscription stays `paused` until the resumption invoice is paid, so a failed resumption charge arrives with status `paused` and stays locked, `invoice.paid` unlocks, and `customer.subscription.resumed` (status `active`) comes after it and stays unlocked. A replayed resume does not re-lock. Not granting on `resumed` alone is assumed Gatefit policy for a resume with no invoice, not a Stripe rule (Stripe's trials page says to grant on `resumed`). Sources: https://docs.stripe.com/billing/subscriptions/trials and https://docs.stripe.com/api/subscriptions/resume.
+  - `smart_retries_unpaid_then_paid_recovers` (S11): failed Smart Retries and `unpaid` stay locked with plan and seats kept; paying the latest invoice unlocks. Sources: https://docs.stripe.com/billing/revenue-recovery/smart-retries and https://docs.stripe.com/billing/subscriptions/overview.
+  - `pause_collection_keeps_access_all_behaviors` (S12): Stripe keeps the customer's access while payment collection is paused, so `keep_as_draft`, `mark_uncollectible` and `void` all leave access unchanged (`void` only voids the paused period's invoices). `invoice.marked_uncollectible` during a `mark_uncollectible` pause does not revoke. A pause set or cleared (HTTP 200) on a row locked by a failed payment does not grant; `invoice.paid` does. `invoice.marked_uncollectible` with no pause still locks. Source: https://docs.stripe.com/billing/subscriptions/pause-payment.
+- `BillingEvent.pause_collection_behavior` (`"keep_as_draft" | "mark_uncollectible" | "void" | null`), a flat copy of Stripe's `pause_collection.behavior`. Stripe invoices have no such field, so on invoice events the adapter copies it from the parent subscription. No behaviour changes access in the reference rules, and `invoice.marked_uncollectible` no longer locks when it carries `mark_uncollectible`. Without that field it still locks.
+- The `gatefit init` rules template (`src/init/templates/access-rules.ts.tpl`) has the same field and rule changes. Regenerate with `gatefit init` to pick them up.
+- Chaos: a repeated event id in a golden keeps the `created` of its first occurrence, as a real Stripe replay does. Before, a replay was stamped with its own later position, so under `reorder`, `stale`, `late` or `dropped_replay` it could fold after the recovering `invoice.paid` and lock the row (for example S11's replayed failed retry, and `duplicate_webhook_idempotent` under `reorder`), failing chaos for some `GATEFIT_CHAOS_SEED` values.
+- Telemetry: the three new ids are in `SUITES` and the collector's `suite` allow-list. Code only: there is no Worker deploy in this change, so the live collector does not know these ids yet.
+
 ### Fixed
 
 - License copy: the $49 Gatefit Indie License now says what it unlocks (chaos mode, Polar and Paddle packs) instead of "Pro packs", on the landing page, the goldens docs, `docs/license.md`, and the README. S1–S9 and Phase 2 stay free.

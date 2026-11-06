@@ -254,7 +254,7 @@ test("running the Paddle golden directory as a free suite is still gated", async
   }
 });
 
-test("free S1-S9 run with no key and chaos still lists only the S goldens", async () => {
+test("free S1-S12 run with no key and chaos still lists only the S goldens", async () => {
   const silent = await refusing();
   try {
     const free = await run(
