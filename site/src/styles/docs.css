@@ -72,3 +72,94 @@ starlight-copy-button {
 	outline: 2px solid #5EE0A8;
 	outline-offset: 3px;
 }
+
+/* H35 docs shell: navy header with a mint hairline, the G mark, a mint-barred sidebar. */
+:root {
+	--sl-nav-height: 4rem;
+	--sl-content-width: 46rem;
+}
+
+header.header {
+	background: #071330;
+	border-bottom: 1px solid rgba(158, 184, 230, 0.12);
+	box-shadow: inset 0 -1px 0 rgba(94, 224, 168, 0.18);
+}
+
+.site-title {
+	gap: 0.6rem;
+	color: #F4F7FB;
+	font-weight: 640;
+	letter-spacing: -0.03em;
+}
+.site-title img {
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 6px;
+}
+
+site-search button[data-open-modal] {
+	border-radius: 6px;
+	background: #0B1B3A;
+	border-color: rgba(158, 184, 230, 0.2);
+}
+
+.sidebar-pane {
+	border-inline-end: 1px solid rgba(158, 184, 230, 0.1);
+}
+.sidebar-content a {
+	border-radius: 6px;
+	padding-inline: 0.75rem;
+	color: #D3DCEB;
+}
+.sidebar-content a:hover {
+	background: #10234A;
+	color: #F4F7FB;
+}
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover {
+	background: #123F3A;
+	color: #A8F0CF;
+	font-weight: 600;
+	box-shadow: inset 3px 0 0 #5EE0A8;
+}
+
+.content-panel + .content-panel {
+	border-top-color: rgba(158, 184, 230, 0.1);
+}
+.sl-markdown-content h1,
+.content-panel h1 {
+	letter-spacing: -0.035em;
+}
+.sl-markdown-content :is(h2, h3) {
+	color: #F4F7FB;
+	letter-spacing: -0.025em;
+}
+.sl-markdown-content a {
+	color: #5EE0A8;
+	text-underline-offset: 3px;
+}
+.sl-markdown-content a:hover {
+	color: #A8F0CF;
+}
+.sl-markdown-content :not(pre) > code {
+	padding: 0.1em 0.35em;
+	border-radius: 4px;
+	border: 1px solid rgba(158, 184, 230, 0.14);
+	background: #10234A;
+	color: #F4F7FB;
+}
+.sl-markdown-content table {
+	border-radius: 8px;
+}
+.sl-markdown-content th {
+	background: #10234A;
+	color: #F4F7FB;
+}
+.pagination-links a {
+	border-radius: 8px;
+	border-color: rgba(158, 184, 230, 0.16);
+	background: #0B1B3A;
+}
+.pagination-links a:hover {
+	border-color: #5EE0A8;
+}
