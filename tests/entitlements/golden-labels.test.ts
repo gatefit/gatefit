@@ -70,7 +70,7 @@ test("labels are 2-4 plain words with an access pill and a known category", () =
     assert.notEqual(copy.label, id);
     assert.ok(copy.outcome in OUTCOMES, id);
     assert.ok(categories.has(copy.category), id);
-    assert.match(OUTCOMES[copy.outcome].pill, /^(Access kept|Access revoked|Locked)$/);
+    assert.match(OUTCOMES[copy.outcome].pill, /^(Access kept|Access revoked|Locked|No change)$/);
     if (copy.detail !== undefined) {
       assert.equal(copy.detail.trim(), copy.detail, id);
       assert.ok(copy.detail.length > 0 && copy.detail.length <= 140, `${id} detail length ${copy.detail.length}`);
@@ -88,8 +88,20 @@ test("labels are 2-4 plain words with an access pill and a known category", () =
   }
   assert.deepEqual(
     Object.values(OUTCOMES).map((outcome) => outcome.pill).sort(),
-    ["Access kept", "Access revoked", "Locked"],
+    ["Access kept", "Access revoked", "Locked", "No change"],
   );
+});
+
+test("stamps that would mislead use the final access state or no change", () => {
+  assert.equal(GOLDEN_LABELS.duplicate_webhook_idempotent.outcome, "unchanged");
+  assert.equal(GOLDEN_LABELS.duplicate_webhook_idempotent.label, "Duplicate event ignored");
+  assert.equal(OUTCOMES.unchanged.pill, "No change");
+  assert.equal(GOLDEN_LABELS.entitlements_active_summary.outcome, "unchanged");
+  assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.outcome, "locked");
+  assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.label, "Upgrade, then period end");
+  assert.equal(GOLDEN_LABELS.trial_no_card.outcome, "kept");
+  assert.equal(GOLDEN_LABELS.trial_end_pause_resume_waits_for_paid.outcome, "kept");
+  assert.equal(GOLDEN_LABELS.cancel_at_period_end_keeps_access_until_end.outcome, "locked");
 });
 
 test("the landing section renders the label map and does not hardcode the count", () => {

@@ -7,6 +7,7 @@ export const OUTCOMES = {
 	kept: { pill: 'Access kept', icon: 'check' },
 	revoked: { pill: 'Access revoked', icon: 'x' },
 	locked: { pill: 'Locked', icon: 'lock' },
+	unchanged: { pill: 'No change', icon: 'minus' },
 } as const;
 
 export type GoldenOutcome = keyof typeof OUTCOMES;
@@ -48,9 +49,9 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 	},
 	duplicate_webhook_idempotent: {
 		label: 'Duplicate event ignored',
-		outcome: 'locked',
+		outcome: 'unchanged',
 		category: 'payments',
-		detail: 'The same event applies once. A replay does not undo a cancel.',
+		detail: 'Sending it again does not grant or revoke.',
 	},
 	trial_to_paid_grants: {
 		label: 'Trial payment unlocks',
@@ -59,16 +60,16 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 		detail: 'Trialing stays locked until then.',
 	},
 	trial_no_card: {
-		label: 'No-card trial locked',
-		outcome: 'locked',
+		label: 'Paid after no card',
+		outcome: 'kept',
 		category: 'trials',
-		detail: 'A later payment unlocks it. The trial warning never changes access.',
+		detail: 'The trial stays locked until a payment. The trial warning never changes access.',
 	},
 	trial_end_pause_resume_waits_for_paid: {
-		label: 'Trial ends unpaid → locked',
-		outcome: 'locked',
+		label: 'Paid after the pause',
+		outcome: 'kept',
 		category: 'trials',
-		detail: 'A payment unlocks it. Resuming does not grant or revoke.',
+		detail: 'Pause and a failed resume stay locked. Resuming does not grant or revoke.',
 	},
 	cancel_revokes_access: {
 		label: 'Cancel → access revoked',
@@ -77,10 +78,10 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 		detail: 'It locks as soon as the subscription is deleted.',
 	},
 	cancel_at_period_end_keeps_access_until_end: {
-		label: 'Access until period end',
-		outcome: 'kept',
+		label: 'Locks at period end',
+		outcome: 'locked',
 		category: 'changes',
-		detail: 'Locks once the period ends.',
+		detail: 'Stays open until now reaches the end.',
 	},
 	portal_downgrade_period_end_vs_immediate: {
 		label: 'Downgrade keeps access',
@@ -89,10 +90,10 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 		detail: 'Scheduled waits for the period to end. Immediate changes the plan now.',
 	},
 	upgrade_plus_cape_race: {
-		label: 'Upgrade, then locked',
+		label: 'Upgrade, then period end',
 		outcome: 'locked',
 		category: 'changes',
-		detail: 'Plan and seats change first. Period end is what locks it.',
+		detail: 'Plan and seats change while access stays open.',
 	},
 	seat_qty_vs_db_cap: {
 		label: 'Seat count updates',
@@ -102,7 +103,7 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 	},
 	entitlements_active_summary: {
 		label: 'Summary sets features',
-		outcome: 'kept',
+		outcome: 'unchanged',
 		category: 'changes',
 		detail: 'It does not lock or unlock. Unpaid stays locked.',
 	},

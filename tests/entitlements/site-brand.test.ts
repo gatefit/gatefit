@@ -161,6 +161,7 @@ test("H36: golden labels and outcome pills pass WCAG AA", async () => {
     [".outcome-kept", BRAND.navy, BRAND.mint],
     [".outcome-revoked", BRAND.navy, BRAND.red],
     [".outcome-locked", BRAND.navy, BRAND.red],
+    [".outcome-unchanged", BRAND.text, BRAND.surface2],
   ];
   for (const [what, fg, bg] of pairs) {
     const ratio = contrast(fg, bg);
@@ -179,6 +180,8 @@ test("H36: golden labels and outcome pills pass WCAG AA", async () => {
   assert.match(rule(landing, ".outcome-revoked"), /color: var\(--navy\)/);
   assert.match(rule(landing, ".outcome-locked"), /background: var\(--red\)/);
   assert.match(rule(landing, ".outcome-locked"), /color: var\(--navy\)/);
+  assert.match(rule(landing, ".outcome-unchanged"), /background: var\(--surface-2\)/);
+  assert.match(rule(landing, ".outcome-unchanged"), /color: var\(--text\)/);
 });
 
 test("H35: leak text passes WCAG AA over its red tints (access row, failed tag, failed event)", async () => {
