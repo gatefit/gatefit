@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
+import { parse as parseYaml } from "yaml";
 import {
   CATEGORIES,
   GOLDEN_LABELS,
@@ -70,7 +71,7 @@ test("labels are 2-4 plain words with an access pill and a known category", () =
     assert.notEqual(copy.label, id);
     assert.ok(copy.outcome in OUTCOMES, id);
     assert.ok(categories.has(copy.category), id);
-    assert.match(OUTCOMES[copy.outcome].pill, /^(Access kept|Access revoked|Locked|No change)$/);
+    assert.match(OUTCOMES[copy.outcome].pill, /^(Access kept|Access revoked|Locked|Locks at period end)$/);
     if (copy.detail !== undefined) {
       assert.equal(copy.detail.trim(), copy.detail, id);
       assert.ok(copy.detail.length > 0 && copy.detail.length <= 140, `${id} detail length ${copy.detail.length}`);
@@ -88,20 +89,93 @@ test("labels are 2-4 plain words with an access pill and a known category", () =
   }
   assert.deepEqual(
     Object.values(OUTCOMES).map((outcome) => outcome.pill).sort(),
-    ["Access kept", "Access revoked", "Locked", "No change"],
+    ["Access kept", "Access revoked", "Locked", "Locks at period end"],
   );
 });
 
-test("stamps that would mislead use the final access state or no change", () => {
-  assert.equal(GOLDEN_LABELS.duplicate_webhook_idempotent.outcome, "unchanged");
+type GoldenStep = {
+  event?: {
+    type?: string;
+    cancel_at_period_end?: boolean;
+    now?: number;
+    period_end?: number;
+    plan?: string;
+    paid?: boolean;
+  };
+  expect?: { locked?: unknown; plan?: string };
+};
+
+function goldenSteps(id: string): GoldenStep[] {
+  const doc = parseYaml(fs.readFileSync(path.join(root, "tests/entitlements/goldens", `${id}.yaml`), "utf8")) as {
+    steps?: GoldenStep[];
+  };
+  assert.ok(doc.steps && doc.steps.length > 0, `${id} steps`);
+  return doc.steps;
+}
+
+function finalLocked(id: string): boolean {
+  const locked = goldenSteps(id).at(-1)?.expect?.locked;
+  assert.equal(typeof locked, "boolean", `${id} last expect.locked`);
+  return locked as boolean;
+}
+
+/** An earlier row stays open after the cancel is scheduled or the upgrade is paid. */
+function staysOpenAfterCancelOrUpgrade(steps: GoldenStep[]): boolean {
+  const marker = steps.findIndex((step, index) => {
+    const event = step.event ?? {};
+    const scheduled =
+      event.cancel_at_period_end === true &&
+      typeof event.now === "number" &&
+      typeof event.period_end === "number" &&
+      event.now < event.period_end;
+    const upgrade =
+      event.type === "invoice.paid" &&
+      event.paid === true &&
+      typeof event.plan === "string" &&
+      steps.slice(0, index).some((prev) => typeof prev.expect?.plan === "string" && prev.expect.plan !== event.plan);
+    return scheduled || upgrade;
+  });
+  if (marker < 0 || marker >= steps.length - 1) return false;
+  return steps.slice(marker, -1).some((step) => step.expect?.locked === false);
+}
+
+test("each pill matches the golden's final locked row", () => {
+  assert.equal(GOLDEN_LABELS.duplicate_webhook_idempotent.outcome, "locked");
   assert.equal(GOLDEN_LABELS.duplicate_webhook_idempotent.label, "Duplicate event ignored");
-  assert.equal(OUTCOMES.unchanged.pill, "No change");
-  assert.equal(GOLDEN_LABELS.entitlements_active_summary.outcome, "unchanged");
-  assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.outcome, "locked");
-  assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.label, "Upgrade, then period end");
+  assert.equal(
+    GOLDEN_LABELS.duplicate_webhook_idempotent.detail,
+    "The same event applies once. A replay does not undo a cancel.",
+  );
+  assert.equal(GOLDEN_LABELS.entitlements_active_summary.outcome, "kept");
+  assert.equal(GOLDEN_LABELS.pause_collection_keeps_access_all_behaviors.outcome, "locked");
+  assert.equal(GOLDEN_LABELS.pause_collection_keeps_access_all_behaviors.label, "Pause keeps access");
+  assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.outcome, "period_end");
+  assert.equal(GOLDEN_LABELS.upgrade_plus_cape_race.label, "Upgrade stays open");
+  assert.equal(
+    GOLDEN_LABELS.upgrade_plus_cape_race.detail,
+    "Plan and seats change right away. Locks when the period ends.",
+  );
   assert.equal(GOLDEN_LABELS.trial_no_card.outcome, "kept");
   assert.equal(GOLDEN_LABELS.trial_end_pause_resume_waits_for_paid.outcome, "kept");
-  assert.equal(GOLDEN_LABELS.cancel_at_period_end_keeps_access_until_end.outcome, "locked");
+  assert.equal(GOLDEN_LABELS.cancel_at_period_end_keeps_access_until_end.outcome, "period_end");
+  assert.equal(GOLDEN_LABELS.cancel_at_period_end_keeps_access_until_end.label, "Open until period end");
+  assert.equal(
+    GOLDEN_LABELS.cancel_at_period_end_keeps_access_until_end.detail,
+    "Access stays on until the period ends, then locks.",
+  );
+  assert.doesNotMatch(GOLDEN_LABELS.cancel_at_period_end_keeps_access_until_end.detail ?? "", /\bnow\b/);
+  assert.equal(OUTCOMES.period_end.pill, "Locks at period end");
+  assert.notEqual(OUTCOMES.period_end.icon, OUTCOMES.locked.icon);
+  for (const [id, copy] of Object.entries(GOLDEN_LABELS)) {
+    const locked = finalLocked(id);
+    if (copy.outcome === "period_end") {
+      assert.equal(locked, true, `${id} period_end must end locked`);
+      assert.ok(staysOpenAfterCancelOrUpgrade(goldenSteps(id)), `${id} must stay open after cancel or upgrade`);
+      continue;
+    }
+    const closed = copy.outcome === "locked" || copy.outcome === "revoked";
+    assert.equal(closed, locked, `${id} pill ${copy.outcome} but final locked is ${locked}`);
+  }
 });
 
 test("the landing section renders the label map and does not hardcode the count", () => {

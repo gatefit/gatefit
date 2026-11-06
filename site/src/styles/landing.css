@@ -22,6 +22,7 @@
 	--mint-low: #123F3A;
 	--red: #F2555A;
 	--red-high: #FF8487;
+	--amber: #FFC266;
 	--text-rgb: 244, 247, 251;
 	--ease: cubic-bezier(0.16, 1, 0.3, 1);
 	--ease-io: cubic-bezier(0.65, 0, 0.35, 1);
@@ -404,7 +405,7 @@ h1 {
 .golden-row.is-kept { box-shadow: inset 3px 0 0 var(--mint); }
 .golden-row.is-revoked { box-shadow: inset 3px 0 0 var(--red); }
 .golden-row.is-locked { box-shadow: inset 3px 0 0 var(--red); }
-.golden-row.is-unchanged { box-shadow: inset 3px 0 0 var(--muted); }
+.golden-row.is-period_end { box-shadow: inset 3px 0 0 var(--amber); }
 .golden-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 12px; min-width: 0; }
 .golden-label { flex: 1 1 auto; min-width: 0; color: var(--text); font-size: 1.125rem; font-weight: 660; letter-spacing: -0.02em; line-height: 1.25; overflow-wrap: break-word; }
 .golden-detail { min-width: 0; color: var(--muted); font-size: 0.92rem; line-height: 1.4; overflow-wrap: break-word; }
@@ -413,7 +414,7 @@ h1 {
 .outcome-kept { background: var(--mint); color: var(--navy); }
 .outcome-revoked { background: var(--red); color: var(--navy); }
 .outcome-locked { background: var(--red); color: var(--navy); }
-.outcome-unchanged { background: var(--surface-2); color: var(--text); }
+.outcome-period_end { background: var(--amber); color: var(--navy); }
 
 /* Pricing */
 .prices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }

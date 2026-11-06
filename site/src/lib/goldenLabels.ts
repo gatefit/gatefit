@@ -7,7 +7,7 @@ export const OUTCOMES = {
 	kept: { pill: 'Access kept', icon: 'check' },
 	revoked: { pill: 'Access revoked', icon: 'x' },
 	locked: { pill: 'Locked', icon: 'lock' },
-	unchanged: { pill: 'No change', icon: 'minus' },
+	period_end: { pill: 'Locks at period end', icon: 'clock' },
 } as const;
 
 export type GoldenOutcome = keyof typeof OUTCOMES;
@@ -49,9 +49,9 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 	},
 	duplicate_webhook_idempotent: {
 		label: 'Duplicate event ignored',
-		outcome: 'unchanged',
+		outcome: 'locked',
 		category: 'payments',
-		detail: 'Sending it again does not grant or revoke.',
+		detail: 'The same event applies once. A replay does not undo a cancel.',
 	},
 	trial_to_paid_grants: {
 		label: 'Trial payment unlocks',
@@ -78,10 +78,10 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 		detail: 'It locks as soon as the subscription is deleted.',
 	},
 	cancel_at_period_end_keeps_access_until_end: {
-		label: 'Locks at period end',
-		outcome: 'locked',
+		label: 'Open until period end',
+		outcome: 'period_end',
 		category: 'changes',
-		detail: 'Stays open until now reaches the end.',
+		detail: 'Access stays on until the period ends, then locks.',
 	},
 	portal_downgrade_period_end_vs_immediate: {
 		label: 'Downgrade keeps access',
@@ -90,10 +90,10 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 		detail: 'Scheduled waits for the period to end. Immediate changes the plan now.',
 	},
 	upgrade_plus_cape_race: {
-		label: 'Upgrade, then period end',
-		outcome: 'locked',
+		label: 'Upgrade stays open',
+		outcome: 'period_end',
 		category: 'changes',
-		detail: 'Plan and seats change while access stays open.',
+		detail: 'Plan and seats change right away. Locks when the period ends.',
 	},
 	seat_qty_vs_db_cap: {
 		label: 'Seat count updates',
@@ -103,7 +103,7 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 	},
 	entitlements_active_summary: {
 		label: 'Summary sets features',
-		outcome: 'unchanged',
+		outcome: 'kept',
 		category: 'changes',
 		detail: 'It does not lock or unlock. Unpaid stays locked.',
 	},
@@ -127,7 +127,7 @@ export const GOLDEN_LABELS: Record<string, GoldenCopy> = {
 	},
 	pause_collection_keeps_access_all_behaviors: {
 		label: 'Pause keeps access',
-		outcome: 'kept',
+		outcome: 'locked',
 		category: 'pauses',
 		detail: 'Pausing does not revoke or grant. An uncollectible invoice with no pause locks.',
 	},

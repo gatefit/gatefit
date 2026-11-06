@@ -161,7 +161,7 @@ test("H36: golden labels and outcome pills pass WCAG AA", async () => {
     [".outcome-kept", BRAND.navy, BRAND.mint],
     [".outcome-revoked", BRAND.navy, BRAND.red],
     [".outcome-locked", BRAND.navy, BRAND.red],
-    [".outcome-unchanged", BRAND.text, BRAND.surface2],
+    [".outcome-period_end", BRAND.navy, BRAND.amber],
   ];
   for (const [what, fg, bg] of pairs) {
     const ratio = contrast(fg, bg);
@@ -180,8 +180,12 @@ test("H36: golden labels and outcome pills pass WCAG AA", async () => {
   assert.match(rule(landing, ".outcome-revoked"), /color: var\(--navy\)/);
   assert.match(rule(landing, ".outcome-locked"), /background: var\(--red\)/);
   assert.match(rule(landing, ".outcome-locked"), /color: var\(--navy\)/);
-  assert.match(rule(landing, ".outcome-unchanged"), /background: var\(--surface-2\)/);
-  assert.match(rule(landing, ".outcome-unchanged"), /color: var\(--text\)/);
+  assert.match(rule(landing, ".outcome-period_end"), /background: var\(--amber\)/);
+  assert.match(rule(landing, ".outcome-period_end"), /color: var\(--navy\)/);
+  assert.doesNotMatch(rule(landing, ".outcome-period_end"), /var\(--red\)/);
+  assert.ok(landing.toUpperCase().includes(BRAND.amber.toUpperCase()), "period-end fill is brand amber");
+  const periodEnd = contrast(BRAND.navy, BRAND.amber);
+  assert.ok(periodEnd >= 4.5, `navy on amber is ${periodEnd.toFixed(2)}:1`);
 });
 
 test("H35: leak text passes WCAG AA over its red tints (access row, failed tag, failed event)", async () => {
