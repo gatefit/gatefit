@@ -53,7 +53,7 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | `outcome` | `pass` (exit 0), `fail` (non-zero exit), or `error` (crash) |
 | `template` | `init` only: `drizzle`, `prisma`, `supabase`, `generic`, or `auto` (no `--template`); empty otherwise |
 | `pack` | `chaos`, `polar`, `paddle`, or empty. A `--suite` path into a pack's golden directory reports that pack (the path itself is not sent). The live collector accepts `paddle`. |
-| `suite` | a bundled golden id, including the S10–S12 ids, `pack` (a pack name, or a path into a pack's golden directory), `custom` (any other path or value), or empty. The live collector accepts the S10–S12 ids. |
+| `suite` | a bundled golden id, S1–S12 (17 goldens), including the S10–S12 ids, `pack` (a pack name, or a path into a pack's golden directory), `custom` (any other path or value), or empty. The live collector accepts every Stripe suite id. |
 
 Never sent: file paths, repo or package names, emails, adapter names or contents, license keys, Stripe or Polar data, environment values, IP addresses, or command output.
 
@@ -73,11 +73,10 @@ The collector stores daily counts per allowed value. It keeps a 16-character SHA
 | GitHub Action | Fetches `action.yml` at the tag `v<npm latest>` from `raw.githubusercontent.com` and checks that it is a composite action. If the npm check failed there is no version to check, so this tile shows unknown. |
 | Polar checkout | `HEAD` on the Checkout Link (falling back to `GET` without following redirects). A 2xx, or a redirect to `polar.sh`, counts as up. This check runs only on the :00 and :30 runs, so it does not open a checkout session every 5 minutes. |
 
-- Each check has a 5-second timeout. A check that fails or times out is down. One that answers but takes more than 3 seconds is degraded.
-- Each tile shows the latest check. If that check is older than 15 minutes (45 for Polar), the tile shows unknown, so stopped checks never look green. A `checked_at` more than 5 minutes in the future (`FUTURE_SKEW_MS`) also shows unknown. The live collector applies the same guard on `GET /v1/status`: a sample that far ahead is unknown, never ok, and is left out of `checked_at`. Deployed 2026-11-08 from main `70faa3e` (version `ffb08bff`).
+- Each check has a 5-second timeout. A failed or timed-out probe is down. A probe slower than 3 seconds is degraded. The Action check is unknown when npm has no version. A sample older than 15 minutes is unknown (45 minutes for Polar, probed only on the :00 and :30 runs). A sample more than 5 minutes ahead (`FUTURE_SKEW_MS`) is unknown, never ok, and is left out of `checked_at`. The status page shows those Worker states when `checked_at` is within 15 minutes in the past and 5 minutes in the future. Outside that window every tile is unknown. A page fetch that fails, returns a non-200, or has a body the page cannot parse is unknown. That unknown is not a down probe. Down and degraded from the Worker stay down and degraded. Deployed 2026-11-08 from main `70faa3e` (version `ffb08bff`).
 - Each day bar is the share of checks that passed that UTC day: 99% or more is up, 95% or more is degraded, anything lower is down. A day where more than 10% of checks were slow is degraded. A day without checks has no data.
 - The rollup at 00:15 UTC rolls finished days into daily totals. Daily totals are kept for 90 days, and raw checks for two to three days.
-- The page treats every failure as unknown: a timeout, an error status, a body it cannot parse, or a shape it does not expect. It never shows green without a fresh answer for all five services.
+- A green banner needs all five services ok. The page does not turn a down or degraded probe into unknown.
 - Only a short code (`timeout`, `http 503`, `bad body`, `no version`) or the version that was checked is stored. Response bodies are not stored.
 - The status page and the usage counts store nothing in your browser.
 

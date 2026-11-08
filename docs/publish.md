@@ -2,18 +2,18 @@
 
 The named gate does **not** publish. There is no npm token in this repo. Do not paste tokens here. An annotated `v*` tag publishes with GitHub OIDC. See the [Releasing](../README.md#releasing) section.
 
-**npm:** live. `npx gatefit` is the last published tarball, `gatefit@0.7.0`, at https://www.npmjs.com/package/gatefit. This repo is `0.8.0`. This change does not publish `0.8.0`. The named gate runs `npm publish --dry-run` only.
+**npm:** live. `npx gatefit` is `gatefit@0.8.0` at https://www.npmjs.com/package/gatefit, the same version as this repo. Tag `v0.8.0` is cut. The named gate runs `npm publish --dry-run` only. The publish job runs on Node 24 with npm >= 11.5.1 (`actions/setup-node@v6`). Callers, `ci.yml`, and `engines` stay Node 22 (`>=22`).
 
 **Docs:** https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. GitHub Pages needs a public repository or a paid plan and is not the live host. `scripts/deploy-site.sh` copies `site/dist` or deploys the Cloudflare target.
 
-**Polar checkout:** Gatefit Indie License, **$49** one-time via the Polar Checkout Link `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`.
+**Polar checkout:** Gatefit Indie License, **$49** one-time via the Polar Checkout Link `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
 
 **Tag:** `v0.8.0` must match `package.json` `version`. Do not create the git tag or the GitHub Release from the named gate. Notes: [release-v0.8.0.md](release-v0.8.0.md).
 
 ## npm
 
 1. `bash ./ci-local.sh` green on the release commit.
-2. Confirm `package.json` `name` is `gatefit`, `version` is the tag you will cut (today `0.8.0`), `private` is not `true`.
+2. Confirm `package.json` `name` is `gatefit`, `version` matches the tag (this release: `0.8.0`, tag `v0.8.0`), `private` is not `true`.
 3. `npm pack` — tarball must contain `bin/gatefit.js`, `src/cli.ts`, `CHANGELOG.md`, `tests/entitlements/goldens/*.yaml`, `action.yml`, `LICENSE`. It must not contain `site/` or secret files.
 4. Smoke: `npm install --ignore-scripts ./gatefit-0.8.0.tgz` in a temp dir, then `npx gatefit adapter-check` (exit 0) and `npx gatefit --version`. A SQLite adapter run without the native module exits non-zero and names npm 10, `npm install --ignore-scripts`, or a C++ compiler.
 5. Publish with `npm publish --access public` from `.github/workflows/publish.yml` after the annotated tag is pushed. Provenance is automatic. Do not add a registry token.
@@ -23,7 +23,7 @@ The named gate does **not** publish. There is no npm token in this repo. Do not 
 
 Root `action.yml` is marketplace-ready (name, description, branding, composite `runs`). Listing on marketplace is optional.
 
-1. After merge to `main`, a human may push the annotated tag `v0.8.0` on that SHA. The named gate does not create the tag. This change does not publish `0.8.0`.
+1. Tag `v0.8.0` is cut on the release SHA. The named gate does not create the tag.
 2. Callers: `uses: gatefit/gatefit@v0.8.0`.
 3. Nested shim: `uses: gatefit/gatefit/.github/actions/gatefit@v0.8.0`.
 4. Submit to marketplace only from a human GitHub session (not this CI).

@@ -24,7 +24,7 @@ The nested path also works:
     adapter: src/your-access-adapter.ts
 ```
 
-`adapter` is a path in **your** repo. The bundled access checks are the default suite.
+`adapter` is a path in **your** repo. The bundled access checks are the default suite: S1–S12 (17 goldens). The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
 
 ## Rules
 

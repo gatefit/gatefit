@@ -4,6 +4,8 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ## [Unreleased]
 
+- Docs: npm `gatefit@0.8.0` and tag `v0.8.0` are the release. Scenario lists say S1–S12 (17 goldens). The $49 Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 stay free.
+
 ## [0.8.0] - 2026-11-08
 
 0.8.0 adds free S10–S12 goldens (`trial_end_pause_resume_waits_for_paid`, `smart_retries_unpaid_then_paid_recovers`, `pause_collection_keeps_access_all_behaviors`), copies Stripe `pause_collection.behavior` onto billing events, keeps a chaos replay on the first `created` of a repeated event id, and ships the gatefit.io homepage redesign. The collector Worker deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`) accepts the S10–S12 suite ids and applies the `FUTURE_SKEW_MS` guard. This change does not publish the package and does not create a tag.

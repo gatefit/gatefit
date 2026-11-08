@@ -75,4 +75,4 @@ These codes apply to `gatefit init` only. `gatefit run` keeps 0 (pass) and 1 (fa
 
 ## Price
 
-`init`, the S1–S12 goldens, and Phase 2 are free. The only paid item is the $49 one-time [Gatefit Indie License](/polar/) (Polar), which unlocks chaos mode and the provider packs only.
+The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free. `init` is free and does not read a license key. The buy page is the [Gatefit Indie License](/polar/) (Polar), $49 one-time.

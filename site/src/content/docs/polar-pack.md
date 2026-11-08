@@ -5,7 +5,7 @@ description: A paid provider pack that checks your access table against ugly Pol
 
 The Polar provider pack ships in 0.6.0. It is not in 0.5.2.
 
-The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the provider packs. S1–S12 and Phase 2 stay free.
+The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
 
 HTTP 200 is not access. The pack asserts what your access table says after each Polar webhook, never that Polar or your checkout page answered 200.
 

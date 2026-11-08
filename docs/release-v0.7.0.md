@@ -59,7 +59,7 @@ Run these by hand, in this order, after the tag and publish above. The site goes
 2. From the repo root, deploy the site:
 
    ```bash
-   cd site && npm ci && npm run build && npx wrangler@4 pages deploy dist --project-name gatefit --branch main
+   cd site && npm ci && npm run build && npx wrangler@4 pages deploy dist --project-name gatefit
    ```
 
 3. Checks:

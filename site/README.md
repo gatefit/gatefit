@@ -1,6 +1,6 @@
 # Gatefit docs site
 
-Astro + Starlight app for [gatefit/gatefit](https://github.com/gatefit/gatefit). Not part of the `gatefit` npm package. This repo’s package version is 0.8.0, and this change does not publish it.
+Astro + Starlight app for [gatefit/gatefit](https://github.com/gatefit/gatefit). Not part of the `gatefit` npm package. This repo’s package version is 0.8.0. npm `gatefit@0.8.0` is released and tag `v0.8.0` is cut. The Stripe suite is S1–S12 (17 goldens).
 
 ```bash
 npm ci
@@ -28,4 +28,4 @@ GATEFIT_DEPLOY_TARGET=local GATEFIT_DEPLOY_DEST=/tmp/gatefit-site \
 
 See `scripts/deploy-site.sh` for `local`, `rsync`, `s3`, and `cloudflare`.
 
-A plain `npm run build` uses the committed Gatefit Indie License link (`https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`, **$49** one-time). `scripts/deploy-site.sh` publishes that build. Empty `PUBLIC_POLAR_CHECKOUT_URL` keeps the committed link; any other non-Checkout-Link value fails closed. See [docs/polar.md](../docs/polar.md).
+A plain `npm run build` uses the committed Gatefit Indie License link (`https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`, **$49** one-time). The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free. `scripts/deploy-site.sh` publishes that build. Empty `PUBLIC_POLAR_CHECKOUT_URL` keeps the committed link; any other non-Checkout-Link value fails closed. See [docs/polar.md](../docs/polar.md).

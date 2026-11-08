@@ -1,6 +1,6 @@
 # Chaos mode
 
-Chaos mode is a Pro pack. It requires `GATEFIT_LICENSE_KEY`. A missing, invalid, or revoked key exits non-zero and prints https://gatefit.io/#pricing. Free packs do not enter this suite.
+The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free. Chaos mode requires `GATEFIT_LICENSE_KEY`. A missing, invalid, or revoked key exits non-zero and prints https://gatefit.io/#pricing. Free packs do not enter this suite.
 
 ```bash
 gatefit run --suite chaos --adapter src/adapters/hardened.ts --seed 1

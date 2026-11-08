@@ -15,15 +15,15 @@ Gatefit 0.8.0 adds free S10–S12 goldens, a `pause_collection_behavior` field o
 - Site (H35): gatefit.io homepage redesign. One value line, a live-HTML run frame, a three-step strip, the free Stripe goldens, a Free vs $49 comparison, and a /status link. The homepage transition count includes S10–S12.
 - Site (H36): the Stripe goldens section uses plain-language labels in category groups. The pill shows how access ends up. Period-end cancel and the upgrade race use the amber 'Locks at period end' pill. The pause card is 'Uncollectible locks'.
 
-The collector Worker at `t.gatefit.io` was deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`). That deploy accepts the S10–S12 suite ids and includes the `FUTURE_SKEW_MS` guard.
+The collector Worker at `t.gatefit.io` was deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`). That deploy accepts every Stripe suite id, S1–S12 (17 goldens), including S10–S12, and includes the `FUTURE_SKEW_MS` guard.
 
-S1–S12 and the Phase 2 checks stay free. They do not read `GATEFIT_LICENSE_KEY` and do not call Polar. HTTP 200 is not access. The Stripe API version pin stays `2025-10-29.clover`.
+The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free. Those free checks do not read `GATEFIT_LICENSE_KEY` and do not call Polar. HTTP 200 is not access. The Stripe API version pin stays `2025-10-29.clover`.
 
-v0.7.0 is already released (`npx gatefit`, https://www.npmjs.com/package/gatefit). **This PR does not publish `0.8.0` and does not create a tag.** Cutting tag `v0.8.0` and approving the publish need Edip's explicit go. The Gatefit Indie License is $49 one-time on Polar. That license unlocks chaos mode and the provider packs. This PR does not deploy the docs site or the collector Worker.
+npm `gatefit@0.8.0` is released (`npx gatefit`, https://www.npmjs.com/package/gatefit) and the annotated tag `v0.8.0` is cut. The named gate does not create a tag and does not publish. Cutting the tag does not deploy the docs site or the collector Worker.
 
 ## npm
 
-After this PR merges to `main`, and only with Edip's explicit go, a human pushes the annotated tag `v0.8.0` on the merge SHA:
+Tag `v0.8.0` is the annotated tag on the release SHA. A later release uses the same commands with its own version:
 
 ```bash
 git tag -a v0.8.0 -m "v0.8.0"
@@ -32,7 +32,7 @@ git push origin v0.8.0
 
 That push runs `.github/workflows/publish.yml`. The workflow fails when the tag without the leading `v` is not `package.json` `version`. It runs `npm test` and the tarball checks, then the publish job waits for approval on the GitHub environment `npm` and runs `npm publish --access public` with tokenless OIDC (trusted publishing). Provenance is automatic. The workflow does not read a registry token. `workflow_dispatch` runs the unit tests and tarball checks and does not publish.
 
-`./ci-local.sh` runs `npm publish --dry-run`. It does not write the registry and it does not create this tag.
+`./ci-local.sh` runs `npm publish --dry-run`. It does not write the registry and it does not create a tag. The publish job runs on Node 24 with npm >= 11.5.1 (`actions/setup-node@v6`). Callers, `ci.yml`, and `engines` stay Node 22 (`>=22`).
 
 ## After publish
 
@@ -46,19 +46,19 @@ That push runs `.github/workflows/publish.yml`. The workflow fails when the tag 
 
 ## Collector Worker
 
-No new Worker deploy and no new D1 migration are part of 0.8.0. The Worker deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`) already accepts the S10–S12 suite ids and applies `FUTURE_SKEW_MS` on `GET /v1/status`.
+No new Worker deploy and no new D1 migration are part of 0.8.0. The Worker deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`) already accepts every Stripe suite id, S1–S12 (17 goldens), including S10–S12, and applies `FUTURE_SKEW_MS` on `GET /v1/status`.
 
 ## Docs site
 
-This PR does not deploy the site. After the tag, a human may deploy so the install copy says `@v0.8.0`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. Do not paste them into this repo.
+Cutting the tag does not deploy the site. A human may deploy so the install copy says `@v0.8.0`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. Do not paste them into this repo. The command is the one in `scripts/deploy-site.sh`.
 
 ```bash
-cd site && npm ci && npm run build && npx wrangler@4 pages deploy dist --project-name gatefit --branch main
+cd site && npm ci && npm run build && npx wrangler@4 pages deploy dist --project-name gatefit
 ```
 
 ## GitHub Action
 
-Callers, once a human pushes the annotated tag:
+Callers, on tag `v0.8.0`:
 
 ```yaml
 - uses: actions/setup-node@v4
@@ -81,6 +81,5 @@ Both paths wrap `gatefit run` via `scripts/action-run.sh`. Do not use `gatefit/g
 
 ## Not included
 
-- No change to the license price. The Indie License stays $49 one-time.
-- A docs site deploy or a collector Worker deploy from this PR.
-- Publishing `0.8.0`. The tag is not cut here.
+- No change to the license price. The Indie License stays $49 one-time and unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
+- A docs site deploy or a collector Worker deploy from the release commit.
