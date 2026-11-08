@@ -2,7 +2,7 @@
 
 Evaluation only, sources read 8 November 2026. This document does not add a pack, YAML files, a site page, or a license-copy change.
 
-**Recommendation: defer.** Effort **M**. The webhook surface can be expressed as a fixture pack on the same contract as Polar and Paddle, and the event names do not collide with Stripe. Defer because Stripe now ships Merchant of Record as Managed Payments, a Billing and Checkout product the free Stripe suite already speaks, while the Lemon Squeezy v1 API is an acquired product with no published sunset and no test clock. Build later if a licensee needs license-key sequences and `api.lemonsqueezy.com` is still the supported contract. Skip if Lemon Squeezy retires those webhooks in favor of Stripe Billing events.
+**Recommendation: defer.** Effort **M**. The webhook surface can be expressed as a fixture pack on the same contract as Polar and Paddle. The wire names are not in those type sets, and a Lemon Squeezy rules module still has to return before the Stripe fold, because `past_due` and `paused` lock on status alone. Defer because Stripe now ships Merchant of Record as Managed Payments, a Billing and Checkout product the free Stripe suite already speaks, while the Lemon Squeezy v1 API is an acquired product with no published sunset and no test clock. Build later if a licensee needs license-key sequences and `api.lemonsqueezy.com` is still the supported contract. Skip if Lemon Squeezy retires those webhooks in favor of Stripe Billing events.
 
 ## Pack contract this is measured against
 
@@ -16,7 +16,7 @@ Gatefit asserts the access row after a transition. HTTP 200 is not access. Provi
 - dispatch on exact webhook names inside `nextSnapshot` (`src/access-rules.ts`) before the Stripe fold
 - treat a repeated event `id` as a no-op (`applyBillingEvent` in `src/access-rules.ts`)
 - fold a customer on `created`, so a later arrival with an older `created` cannot reopen a row
-- keep shared type names (`subscription.updated`, `order.created`, `refund.created`) off the wrong rules unless `provider` is set
+- route shared type names the way `BillingEvent.provider` documents in `src/access-adapter.ts`. `subscription.updated` is in `POLAR_EVENT_TYPES` (`src/polar-rules.ts`), with `subscription.created` and `subscription.canceled`, so an untagged one folds with the Polar rules. `provider: paddle` selects the Paddle rules only for those three names, and only because the Paddle check runs first. Untagged `order.created` and `refund.created` stay on the Stripe fold. Polar rules handle `refund.*` only when `provider` is `polar` (the same gate covers `order.updated` and `refund.updated`)
 
 The free suite is S1–S12 (17 goldens), listed in `tests/entitlements/goldens/README.md`. Phase 2 in that table is H6 (seats, cancel-at-period-end, upgrade during cancel) and H7 (dispute, unpaid after retries). Live clocks port only three Stripe ids and are opt-in (`docs/live-clock.md`). Polar and Paddle are paid packs on the $49 one-time Gatefit Indie License (`docs/license.md`).
 
@@ -26,7 +26,7 @@ The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and
 
 Canonical event list: [Event types](https://docs.lemonsqueezy.com/help/webhooks/event-types). Request shape: [Webhook requests](https://docs.lemonsqueezy.com/help/webhooks/webhook-requests). Subscription statuses: [The Subscription Object](https://docs.lemonsqueezy.com/api/subscriptions/the-subscription-object) and [Subscriptions](https://docs.lemonsqueezy.com/help/products/subscriptions). Recovery: [Recovery and dunning](https://docs.lemonsqueezy.com/help/online-store/recovery-dunning).
 
-Wire names use underscores (`subscription_cancelled`, status `cancelled`). Stripe, Polar, and Paddle use dotted names and the American spelling `canceled`. Keeping the underscore spelling is what keeps these events out of `isPastDue`, `isPaused`, and `isTrialing`. Translating them to dotted names would select the wrong rules.
+Wire names use underscores (`subscription_cancelled`, status `cancelled`). Stripe, Polar, and Paddle use dotted names and the American spelling `canceled`. The predicates are in `src/access-rules.ts`. `isPastDue` is `status === "past_due"`. `isPaused` is `status === "paused"`. Neither status check has an event-type guard, so an underscore event that falls through `nextSnapshot` with `past_due` or `paused` locks. `isTrialing` matches only `"trialing"`, so Lemon Squeezy `on_trial` misses it. `isImmediateCancel` matches `"canceled"`, so status `cancelled` misses it. Underscore spelling does not keep `past_due` or `paused` out of that fold. A Lemon Squeezy rules module has to return before the Stripe fold. `subscription.updated` is in `POLAR_EVENT_TYPES`, so the dotted name is Polar unless `provider` is `paddle`.
 
 ### Orders
 
@@ -82,7 +82,7 @@ Two help pages disagree about `unpaid`. The [subscription lifecycle](https://doc
 
 `ends_at` is the period boundary for a cancel, in the same role as `period_end` on the H6 and Polar cancel files. `renews_at` is the next charge, including the next retry while `past_due`. Time in a golden is the fixture `now` compared with `ends_at`, the same way Polar and Paddle compare `now` with `period_end`.
 
-Trials grant access. The [free-trial page](https://docs.lemonsqueezy.com/help/products/free-trials) says the trial is full access before payments begin. Status is `on_trial` and `trial_ends_at` is set. That is the opposite of the Stripe trial goldens, which stay locked until `invoice.paid`. `on_trial` is not the string `trialing`, so it does not hit `isTrialing` unless a mapper renames it. `first_subscription_item` is null during a trial, so a trial event must not clear seats.
+Trials grant access. The [free-trial page](https://docs.lemonsqueezy.com/help/products/free-trials) says the trial is full access before payments begin. Status is `on_trial` and `trial_ends_at` is set. That is the opposite of the Stripe trial goldens, which stay locked until `invoice.paid`. `isTrialing` matches only `"trialing"`, so `on_trial` does not lock there. `isImmediateCancel` matches `"canceled"`, so status `cancelled` does not lock there either. A `paused` or `past_due` event that reaches the same fold does lock, with no rename. `first_subscription_item` is null during a trial, so a trial event must not clear seats.
 
 Pause is collection, not a deny. `pause` is null unless status is `paused`. `pause.mode` is `void` or `free`, and `pause.resumes_at` is when collection resumes ([subscription object](https://docs.lemonsqueezy.com/api/subscriptions/the-subscription-object)). Both modes leave the subscription “still active” on the lifecycle page. This is the Stripe `pause_collection` outcome (access stays) and the opposite of Paddle `subscription.paused` (the row locks).
 
@@ -165,7 +165,7 @@ Every Lemon Squeezy file would be new. None of the Stripe, Polar, or Paddle YAML
 | `duplicate_webhook_idempotent` (S6), `polar_duplicate_order_paid_idempotent` | A retry and a dashboard resend repeat the body. They are a no-op once the id in section 4 is applied. The outcome matches S6. The id is synthesized. Lemon Squeezy does not send one. |
 | `cancel_at_period_end_keeps_access_until_end` (H6), `polar_cancel_keeps_access_until_period_end`, `paddle_cancel_keeps_access_until_period_end` | `subscription_cancelled` stays unlocked until `now >= ends_at`. `subscription_resumed` during the grace period unlocks the ongoing subscription. `subscription_expired` locks. |
 | `polar_checkout_return_before_webhook`, `paddle_checkout_return_before_webhook` | Lemon.js `Checkout.Success` stays locked until `order_created` or `subscription_created`. |
-| `polar_out_of_order_revoked_before_active`, `polar_late_stale_update_after_revoke`, and the Paddle cancel twins | Fold on `attributes.updated_at` as `created`. An older `active` after `subscription_expired` stays locked. |
+| `polar_out_of_order_revoked_before_active`, `polar_late_stale_update_after_revoke`, and the Paddle cancel twins | Order on a numeric `created`. Polar and Paddle goldens use small integers. An ISO `updated_at` stored in `created` subtracts to `NaN` and skips the id tie-break. The string stays on the event `id`. An older number after `subscription_expired` stays locked. |
 
 ### Needs new goldens
 
@@ -196,7 +196,7 @@ Every Lemon Squeezy file would be new. None of the Stripe, Polar, or Paddle YAML
 | S12’s three collection behaviours and uncollectible invoices | Modes are `void` and `free` only. |
 | A live Test Clock lane | No clock and no documented way to advance `ends_at` or `renews_at`. The simulator omits payment and license events. Provider packs already refuse `GATEFIT_LIVE_CLOCK`. |
 | Metered usage as an access transition | Usage records are merchant-submitted API calls. They are not webhooks. |
-| Reusing Polar or Paddle names | Only by translating underscores into dots, which would select the Stripe, Polar, or Paddle fold and lock `past_due`, `paused`, and a renamed trial. |
+| Falling through `nextSnapshot` | `isPastDue` is `status === "past_due"` and `isPaused` is `status === "paused"`, with no event-type guard on those checks, so an underscore event with either status locks. `isTrialing` matches only `"trialing"` and `isImmediateCancel` matches `"canceled"`, so `on_trial` and `cancelled` miss them. Spelling is not the guard. The LS rules have to return first. `subscription.updated` is in `POLAR_EVENT_TYPES`, so the dotted name is Polar unless `provider` is `paddle`. |
 
 `customer_updated` and `affiliate_activated` are real events and are irrelevant to the access row.
 
@@ -214,9 +214,9 @@ A future pack’s id, stated here as a convention rather than a field the API se
 
 `{event_name}:{data.type}:{data.id}:{attributes.updated_at}`
 
-`attributes.updated_at` is the `created` value the fold sorts on (ISO 8601, with fractional seconds in the samples). A retry shares that timestamp and collapses. A later mutation has a newer timestamp and is a new id. Two events in one pair can share a timestamp. `applyBillingEvent` then orders them by id string. The rules have to give both events in the pair the same access outcome, so that tie does not matter. That is true if invoice events do not grant or lock and the subscription-status event carries the decision.
+`BillingEvent.created` is a number (`src/access-adapter.ts`). `foldCustomer` in `src/access-rules.ts` sorts by `(a.created ?? 0) - (b.created ?? 0)`, and only when that difference is `0` does it break the tie on `id`. Polar and Paddle goldens set `created` to small integers (`1`, `2`, `3`). `attributes.updated_at` is an ISO 8601 string. Stored in `created`, the subtraction is `NaN`. `NaN !== 0`, so the comparator returns before the id tie-break. A pack converts the timestamp to a number, or assigns a synthesized ordinal. The ISO string stays in the synthesized event `id`, so a retry of the same body collapses in the seen-set while the number is what sorts. A later mutation has a newer timestamp, a new id, and a later number. Two events in one pair can share a timestamp. After the numeric `created` values tie, the id string orders them. The rules have to give both events in the pair the same access outcome, so that tie does not matter. That is true if invoice events do not grant or lock and the subscription-status event carries the decision.
 
-Out-of-order delivery is the Polar case: an `active` payload whose `updated_at` is older than an `expired` payload must not reopen the row. The fold already does that once `updated_at` is `created`.
+Out-of-order delivery is the Polar case: an `active` payload whose numeric `created` is smaller than an `expired` payload must not reopen the row. The fold does that when the YAML sets `created: 1` after `created: 2`. The ISO string has to become that number first. When `created` is omitted, `applyBillingEvent` stamps the arrival counter, which is arrival order and not `updated_at` order.
 
 The pack itself, like Polar and Paddle, would not verify signatures and would not call the API. Signature checks stay in the app’s webhook endpoint. The golden’s `id` is the synthesized key above, written out in the YAML the way Polar writes a `webhook-id`.
 
@@ -259,7 +259,7 @@ Longevity risk is therefore: the owner’s forward product emits Stripe Billing 
 
 A build is one rules module, one pack registration, and about nine YAML files. It is the size of the Paddle pack, plus a license-copy sweep.
 
-The rules module dispatches before the Stripe fold, on the underscore names, and does not call `isPastDue`, `isPaused`, or `isTrialing`. Underscore names do not need a `provider` tag. The runner copies the Polar and Paddle shape: license gate, refuse `GATEFIT_LIVE_CLOCK`, require `reset`, print `v1+fixtures.1`, never call Lemon Squeezy. Suggested files, none of them in this change:
+The rules module has to return from `nextSnapshot` before the Stripe fold. Underscore spelling is not that return. `isPastDue` is `status === "past_due"` and `isPaused` is `status === "paused"`, with no event-type guard on those checks. `isTrialing` matches only `"trialing"` and `isImmediateCancel` matches `"canceled"`, so `on_trial` and `cancelled` miss them, while `past_due` and `paused` lock. `subscription.updated` is in `POLAR_EVENT_TYPES`; the underscored wire name is not, so it does not need a `provider` tag. `attributes.updated_at` becomes a numeric `created` (or a synthesized ordinal). An ISO string in `created` subtracts to `NaN` and skips the id tie-break. The string stays on the event `id`. That mapping sits in the same rules module. The runner copies the Polar and Paddle shape: license gate, refuse `GATEFIT_LIVE_CLOCK`, require `reset`, print `v1+fixtures.1`, never call Lemon Squeezy. Suggested files, none of them in this change:
 
 - grant on `order_created` / `subscription_created`, with `Checkout.Success` left locked
 - replay of the synthesized id
@@ -275,15 +275,15 @@ That is smaller than it looks because S5, S11, and H7 collapse into the one `unp
 
 What keeps it from being S is the license sentence. `docs/license.md`, the README, the site docs, `tests/entitlements/onboarding-docs.test.ts`, and `tests/entitlements/site.test.ts` pin the words “only chaos mode and the Polar and Paddle packs.” `src/telemetry.ts` allow-lists `chaos`, `polar`, and `paddle`. A real pack edits all of those, and the collector has to accept the new pack name. This evaluation does not.
 
-What keeps it from being L is the missing clock. There is no live client, no clock cleanup, and no API client in the runner.
+What keeps it from being L is the missing clock. There is no live client, no clock cleanup, and no API client in the runner. The early return and the numeric `created` are part of that same rules module. They do not move the effort off M, and they do not change defer.
 
 ### Risk
 
 - Longevity, medium-high. Documented and unscheduled, with a Stripe-native successor already covered by the free suite. The license-key sequences are the only slice that successor does not cover.
-- Policy, medium. A mapper that renames `past_due`, `paused`, or `on_trial` into the Stripe words will lock rows the Lemon Squeezy docs leave open. The `unpaid` disagreement between the lifecycle page and the recovery page has to be pinned in the golden, or two readers will “fix” it in opposite directions.
-- Idempotency, medium. The id is a convention. Dropping the event name from it collapses the paired events. Using `data.id` alone collapses every later update.
+- Policy, medium. `isPastDue` and `isPaused` match `past_due` and `paused` with no event-type guard, so a fall-through locks those rows. `on_trial` misses `isTrialing` (`"trialing"` only) and `cancelled` misses `isImmediateCancel` (`"canceled"`). The `unpaid` disagreement between the lifecycle page and the recovery page has to be pinned in the golden, or two readers will “fix” it in opposite directions.
+- Idempotency, medium. The id is a convention. Dropping the event name from it collapses the paired events. Using `data.id` alone collapses every later update. An ISO string in `created` subtracts to `NaN` and skips the id tie-break. The string belongs on the event `id`. `created` stays a small integer, as in the Polar and Paddle goldens.
 - Payload shape, medium until a captured body exists. The guide sample and the webhook-requests sample disagree about the `data` wrapper.
-- Name collision, low, as long as the underscore spelling is preserved.
+- Fall-through, medium. Underscore spelling does not keep `past_due` or `paused` out of the Stripe fold. Missing the early return locks those rows. Type-name overlap with Polar stays low while the wire name stays `subscription_updated`: the dotted `subscription.updated` is already in `POLAR_EVENT_TYPES`.
 - Secrets, low for a fixture pack. No documented prefix, and the runner does not need a key.
 
 ### What would change the answer
