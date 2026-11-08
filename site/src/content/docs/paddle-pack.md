@@ -3,7 +3,7 @@ title: Paddle pack
 description: A paid provider pack that checks your access table against ugly Paddle Billing webhook sequences.
 ---
 
-The Paddle provider pack ships in 0.7.0 as `gatefit run --suite paddle` (`npx gatefit@0.7.0` or the installed package). It is not in 0.6.0.
+The Paddle provider pack ships in 0.7.0 as `gatefit run --suite paddle` (`npx gatefit@0.8.0` or the installed package). It is not in 0.6.0.
 
 The only price is the $49 one-time Gatefit Indie License (Polar). It unlocks only chaos mode and the provider packs. S1–S12 and Phase 2 stay free. Paddle is a provider your app bills through; it is not how you buy Gatefit.
 
@@ -13,7 +13,7 @@ HTTP 200 is not access. The pack asserts what your access table says after each 
 
 ```bash
 export GATEFIT_LICENSE_KEY=GATEFIT-...
-npx gatefit@0.7.0 run --suite paddle --adapter ./gatefit/adapter.ts
+npx gatefit@0.8.0 run --suite paddle --adapter ./gatefit/adapter.ts
 ```
 
 With the package installed, the same command is `gatefit run --suite paddle --adapter <path>`.

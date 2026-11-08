@@ -45,7 +45,7 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | --- | --- |
 | `v` | `1` (number) |
 | `install_id` | random UUID v4 created on opt-in |
-| `version` | gatefit version, e.g. `0.7.0` |
+| `version` | gatefit version, e.g. `0.8.0` |
 | `node` | Node major version, e.g. `22` |
 | `platform` | `linux`, `darwin`, `win32`, or `other` |
 | `arch` | `x64`, `arm64`, or `other` |
@@ -53,7 +53,7 @@ Exactly these keys. Every value comes from a fixed list, so nothing else can lea
 | `outcome` | `pass` (exit 0), `fail` (non-zero exit), or `error` (crash) |
 | `template` | `init` only: `drizzle`, `prisma`, `supabase`, `generic`, or `auto` (no `--template`); empty otherwise |
 | `pack` | `chaos`, `polar`, `paddle`, or empty. A `--suite` path into a pack's golden directory reports that pack (the path itself is not sent). The live collector accepts `paddle`. |
-| `suite` | a bundled golden id, `pack` (a pack name, or a path into a pack's golden directory), `custom` (any other path or value), or empty |
+| `suite` | a bundled golden id, including the S10–S12 ids, `pack` (a pack name, or a path into a pack's golden directory), `custom` (any other path or value), or empty. The live collector accepts the S10–S12 ids. |
 
 Never sent: file paths, repo or package names, emails, adapter names or contents, license keys, Stripe or Polar data, environment values, IP addresses, or command output.
 
@@ -74,7 +74,7 @@ The collector stores daily counts per allowed value. It keeps a 16-character SHA
 | Polar checkout | `HEAD` on the Checkout Link (falling back to `GET` without following redirects). A 2xx, or a redirect to `polar.sh`, counts as up. This check runs only on the :00 and :30 runs, so it does not open a checkout session every 5 minutes. |
 
 - Each check has a 5-second timeout. A check that fails or times out is down. One that answers but takes more than 3 seconds is degraded.
-- Each tile shows the latest check. If that check is older than 15 minutes (45 for Polar), the tile shows unknown, so stopped checks never look green. A `checked_at` more than 5 minutes in the future also shows unknown.
+- Each tile shows the latest check. If that check is older than 15 minutes (45 for Polar), the tile shows unknown, so stopped checks never look green. A `checked_at` more than 5 minutes in the future (`FUTURE_SKEW_MS`) also shows unknown. The live collector applies the same guard on `GET /v1/status`: a sample that far ahead is unknown, never ok, and is left out of `checked_at`. Deployed 2026-11-08 from main `70faa3e` (version `ffb08bff`).
 - Each day bar is the share of checks that passed that UTC day: 99% or more is up, 95% or more is degraded, anything lower is down. A day where more than 10% of checks were slow is degraded. A day without checks has no data.
 - The rollup at 00:15 UTC rolls finished days into daily totals. Daily totals are kept for 90 days, and raw checks for two to three days.
 - The page treats every failure as unknown: a timeout, an error status, a body it cannot parse, or a shape it does not expect. It never shows green without a fresh answer for all five services.

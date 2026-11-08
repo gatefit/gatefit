@@ -2,14 +2,14 @@
 
 Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions.
 
-YAML fixture scenarios, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI. 0.7.0 adds the paid Paddle provider pack and a public status page at gatefit.io/status/. This change does not publish `0.7.0`.
+YAML fixture scenarios, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI. 0.8.0 adds free S10–S12 goldens and the gatefit.io homepage redesign. This change does not publish `0.8.0`.
 
 ## Distribution
 
 The CLI and GitHub Action in this repository stay free. The docs site is live. npm is live: `npx gatefit` ([gatefit](https://www.npmjs.com/package/gatefit)). Buy the $49 one-time Gatefit Indie License from https://gatefit.io/#pricing, which links to the Polar Checkout Link on buy.polar.sh.
 
 - **Docs site:** live. Hosted at https://gatefit.io. Cloudflare Pages project `gatefit`, hostname `gatefit-bdu.pages.dev`. From `site/`: `npm run build`, then `npx wrangler@4 pages deploy dist --project-name gatefit`. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` come from the environment. GitHub Pages needs a public repository or a paid plan and is not the live host. `.github/workflows/pages.yml` builds the site on pushes to `main` and does not deploy. `scripts/deploy-site.sh` can copy `site/dist` locally or deploy that Cloudflare target.
-- **npm:** live. `npx gatefit` today is the published tarball `gatefit@0.6.0` at https://www.npmjs.com/package/gatefit. This repo is `0.7.0`. This change does not publish `0.7.0`. The named gate runs `npm publish --dry-run` only. A `v*` tag publishes with OIDC. See [Releasing](#releasing).
+- **npm:** live. `npx gatefit` today is the published tarball `gatefit@0.7.0` at https://www.npmjs.com/package/gatefit. This repo is `0.8.0`. This change does not publish `0.8.0`. The named gate runs `npm publish --dry-run` only. A `v*` tag publishes with OIDC. See [Releasing](#releasing).
 - **Polar checkout:** Gatefit Indie License, **$49** one-time via the Polar Checkout Link `https://buy.polar.sh/polar_cl_biyvx7HYtN2u19tUJCCkIuGOc98uVv7IG3gcB04eIJ0`. A plain `site` build and `scripts/deploy-site.sh` use that committed link. `PUBLIC_POLAR_CHECKOUT_URL` may override it. Any other value fails closed.
 
 ## Install / run
@@ -20,7 +20,7 @@ npx gatefit adapter-check
 npx gatefit run --suite paid_grants_access --adapter ./src/your-access-adapter.ts
 ```
 
-This repo is `0.7.0`. It is not published yet. Registry: https://www.npmjs.com/package/gatefit
+This repo is `0.8.0`. It is not published yet. Registry: https://www.npmjs.com/package/gatefit
 
 `better-sqlite3` is optional and ships prebuilds for common platforms. npm 9 still runs node-gyp during install and drops the package when that compile fails. npm 10 and newer unpack the prebuild. `--version`, `--help`, and `adapter-check` run when the native module is missing. The reference SQLite adapter loads it only when that adapter runs. If the module is missing, that command tells you to upgrade npm to 10 or newer, reinstall with `npm install --ignore-scripts`, or install a C++ compiler, then exits non-zero.
 
@@ -45,13 +45,13 @@ Bring your own AccessAdapter in ≤30 minutes: [docs/bring-your-adapter.md](docs
 
 ## GitHub Action
 
-Marketplace-ready Action lives at the repo root (`action.yml`). Snippets use `@v0.7.0`. That tag is not cut in this change. Tag `v0.6.0` is the last release.
+Marketplace-ready Action lives at the repo root (`action.yml`). Snippets use `@v0.8.0`. That tag is not cut in this change. Tag `v0.7.0` is the last release.
 
 ```yaml
 - uses: actions/setup-node@v4
   with:
     node-version: "22"
-- uses: gatefit/gatefit@v0.7.0
+- uses: gatefit/gatefit@v0.8.0
   with:
     adapter: src/your-access-adapter.ts
 ```
@@ -59,12 +59,12 @@ Marketplace-ready Action lives at the repo root (`action.yml`). Snippets use `@v
 Nested path still works:
 
 ```yaml
-- uses: gatefit/gatefit/.github/actions/gatefit@v0.7.0
+- uses: gatefit/gatefit/.github/actions/gatefit@v0.8.0
   with:
     adapter: src/your-access-adapter.ts
 ```
 
-The Action wraps `gatefit run`. Adapter path is in *your* repo. `uses: gatefit/gatefit@v0.7.0` runs this repo’s goldens, including free S7–S12. 0.5.2 is the first release that ships S7–S9; S10–S12 are not in a release yet. This change does not publish that tag. See [docs/publish.md](docs/publish.md) and the release notes [docs/release-v0.7.0.md](docs/release-v0.7.0.md).
+The Action wraps `gatefit run`. Adapter path is in *your* repo. `uses: gatefit/gatefit@v0.8.0` runs this repo’s goldens, including free S7–S12. 0.5.2 is the first release that ships S7–S9. 0.8.0 is the first release that ships S10–S12. This change does not publish that tag. See [docs/publish.md](docs/publish.md) and the release notes [docs/release-v0.8.0.md](docs/release-v0.8.0.md).
 
 Do not set `GATEFIT_LIVE_CLOCK` for the named gate. Do not use `sk_live`. Never treat Stripe HTTP 200 as proof of access.
 
@@ -74,7 +74,7 @@ Opt-in live Test Clocks (not default CI): [docs/live-clock.md](docs/live-clock.m
 
 **Site analytics:** gatefit.io uses cookieless Cloudflare Web Analytics, with no cookies and no browser storage. A Buy click sends one `{"event":"buy_click"}` beacon to `https://t.gatefit.io/v1/site` and never blocks the Checkout Link.
 
-**CLI telemetry:** not shipped in 0.5.2. It ships in 0.6.0, and it is opt-in and off by default. The collector at `t.gatefit.io` is live. It accepts `pack: paddle` and serves the status checks for gatefit.io/status/ at `GET /v1/status` ([worker/telemetry/README.md](worker/telemetry/README.md)). Without `GATEFIT_TELEMETRY=1` or `gatefit telemetry on`, the CLI makes no telemetry request and writes no telemetry file. `DO_NOT_TRACK=1`, `GATEFIT_TELEMETRY=0`, and `gatefit telemetry off` always win. On CI, only `GATEFIT_TELEMETRY=1` opts in. When on, it sends one POST to `https://t.gatefit.io/v1/event` after `init`, `run`, `adapter-check`, or `live`. The request is bounded to about 1.5 s, fails silently, and never changes exit codes or output. `gatefit telemetry status` prints the exact JSON.
+**CLI telemetry:** not shipped in 0.5.2. It ships in 0.6.0, and it is opt-in and off by default. The collector at `t.gatefit.io` is live. It accepts `pack: paddle`, accepts the S10–S12 suite ids, applies the `FUTURE_SKEW_MS` guard, and serves the status checks for gatefit.io/status/ at `GET /v1/status` ([worker/telemetry/README.md](worker/telemetry/README.md)). Deployed 2026-11-08 from main `70faa3e` (version `ffb08bff`). Without `GATEFIT_TELEMETRY=1` or `gatefit telemetry on`, the CLI makes no telemetry request and writes no telemetry file. `DO_NOT_TRACK=1`, `GATEFIT_TELEMETRY=0`, and `gatefit telemetry off` always win. On CI, only `GATEFIT_TELEMETRY=1` opts in. When on, it sends one POST to `https://t.gatefit.io/v1/event` after `init`, `run`, `adapter-check`, or `live`. The request is bounded to about 1.5 s, fails silently, and never changes exit codes or output. `gatefit telemetry status` prints the exact JSON.
 
 Payload keys, each value from a fixed list: `v`, `install_id` (random UUID), `version`, `node` (major), `platform`, `arch`, `command`, `outcome`, `template`, `pack`, `suite` (bundled golden id, `pack`, or `custom`). Paths, repo names, emails, keys, env values, adapter names, and Stripe or Polar data are never sent. Details: [site/src/content/docs/telemetry.md](site/src/content/docs/telemetry.md).
 
@@ -95,13 +95,13 @@ One-time setup on npmjs.com for package `gatefit`: open Package settings, Truste
 
 ## License
 
-S1–S6, S7–S12 (no-card trial, portal downgrade, active entitlement summary, trial pause and resume, Smart Retries recovery from unpaid, collection pause), seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar. 0.5.2 is the first release that ships S7–S9. S10–S12 are not in a release yet. This change does not publish `0.7.0`.
+S1–S6, S7–S12 (no-card trial, portal downgrade, active entitlement summary, trial pause and resume, Smart Retries recovery from unpaid, collection pause), seats/races, dispute/unpaid, and live Test Clocks stay free. Those packs do not read `GATEFIT_LICENSE_KEY` and do not call Polar. 0.5.2 is the first release that ships S7–S9. 0.8.0 is the first release that ships S10–S12. This change does not publish `0.8.0`.
 
 The $49 Gatefit Indie License unlocks chaos mode, Polar and Paddle packs. The Polar provider pack is new in 0.6.0. The Paddle provider pack is new in 0.7.0. A missing, invalid, or revoked key exits non-zero and points at https://gatefit.io/#pricing.
 
 The Polar provider pack ships in 0.6.0 as `gatefit run --suite polar`. It uses the same license and checks your access table against Polar webhooks: [docs](site/src/content/docs/polar-pack.md).
 
-The Paddle provider pack ships in 0.7.0 as `gatefit run --suite paddle` (`npx gatefit@0.7.0` or the installed package), under the same $49 one-time Gatefit Indie License: [docs](site/src/content/docs/paddle-pack.md).
+The Paddle provider pack ships in 0.7.0 as `gatefit run --suite paddle` (`npx gatefit@0.8.0` or the installed package), under the same $49 one-time Gatefit Indie License: [docs](site/src/content/docs/paddle-pack.md).
 
 ```bash
 gatefit run --suite chaos --adapter src/adapters/hardened.ts --seed 1

@@ -8,8 +8,11 @@ the site, npm, the Action tag, the Polar Checkout Link and the Worker itself, an
 Live at `https://t.gatefit.io`. Not part of `./ci-local.sh`, not in the npm tarball.
 The CLI side of the ping ships in 0.6.0 and stays opt-in. The deployed Worker has
 migration `0002`, serves `GET /v1/status`, and accepts `pack: paddle` (CLI side ships in
-0.7.0). Its crons run: `*/5 * * * *` runs the checks (Polar only on the :00 and :30 runs)
-and `15 0 * * *` runs the daily rollup at 00:15 UTC. The pure handler
+0.7.0). Deployed 2026-11-08 from main `70faa3e` (version `ffb08bff`): it accepts the
+S10–S12 suite ids and applies `FUTURE_SKEW_MS` (a sample more than 5 minutes ahead is
+unknown, never ok, and is left out of `checked_at`). Its crons run: `*/5 * * * *` runs
+the checks (Polar only on the :00 and :30 runs) and `15 0 * * *` runs the daily rollup
+at 00:15 UTC. The pure handler
 (`src/handler.ts`) is covered by `tests/entitlements/telemetry-worker.test.ts`.
 
 What it stores: daily counters per allowlisted value (`counts`) and a 16-hex SHA-256
