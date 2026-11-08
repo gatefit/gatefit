@@ -3,7 +3,7 @@ title: gatefit init
 description: Generate a Postgres access adapter for drizzle, Prisma, Supabase, or plain pg, then run every free golden against it.
 ---
 
-`gatefit init` is **not shipped in 0.5.2**. It ships in 0.6.0.
+`gatefit init` is included in npm `gatefit@0.8.0`. The path from install to the first result is [Onboarding](/onboarding/).
 
 `gatefit init` is free. It does not read a license key, does not call Polar, and makes no network request.
 

@@ -39,7 +39,7 @@ Named verify gate (fixture-first; do not set `GATEFIT_LIVE_CLOCK`):
 bash ./ci-local.sh
 ```
 
-Bring your own AccessAdapter in ≤30 minutes: [docs/bring-your-adapter.md](docs/bring-your-adapter.md).
+Bring your own AccessAdapter in ≤30 minutes: [docs/bring-your-adapter.md](docs/bring-your-adapter.md). From install to the first result on your access data: [docs/onboarding.md](docs/onboarding.md).
 
 `gatefit init` (free) generates a Postgres adapter for drizzle, Prisma, Supabase, or plain `pg` and runs every free golden against it. It is not part of 0.5.2 and is new in 0.6.0. See [site/src/content/docs/init.md](site/src/content/docs/init.md) for templates, safety rules, and its exit codes (2 usage, 3 would overwrite, 4 live key refused).
 
