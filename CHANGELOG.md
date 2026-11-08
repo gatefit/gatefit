@@ -1,8 +1,12 @@
 # Changelog
 
-All notable Gatefit changes are listed here. The version heading matches `package.json`. Tag `v0.7.0` is not cut in this change.
+All notable Gatefit changes are listed here. The version heading matches `package.json`.
 
 ## [Unreleased]
+
+## [0.8.0] - 2026-11-08
+
+0.8.0 adds free S10–S12 goldens (`trial_end_pause_resume_waits_for_paid`, `smart_retries_unpaid_then_paid_recovers`, `pause_collection_keeps_access_all_behaviors`), copies Stripe `pause_collection.behavior` onto billing events, keeps a chaos replay on the first `created` of a repeated event id, and ships the gatefit.io homepage redesign. The collector Worker deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`) accepts the S10–S12 suite ids and applies the `FUTURE_SKEW_MS` guard. This change does not publish the package and does not create a tag.
 
 ### Added
 
@@ -13,7 +17,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 - `BillingEvent.pause_collection_behavior` (`"keep_as_draft" | "mark_uncollectible" | "void" | null`), a flat copy of Stripe's `pause_collection.behavior`. Stripe invoices have no such field, so on invoice events the adapter copies it from the parent subscription. No behaviour changes access in the reference rules, and `invoice.marked_uncollectible` no longer locks when it carries `mark_uncollectible`. Without that field it still locks.
 - The `gatefit init` rules template (`src/init/templates/access-rules.ts.tpl`) has the same field and rule changes. Regenerate with `gatefit init` to pick them up.
 - Chaos: a repeated event id in a golden keeps the `created` of its first occurrence, as a real Stripe replay does. Before, a replay was stamped with its own later position, so under `reorder`, `stale`, `late` or `dropped_replay` it could fold after the recovering `invoice.paid` and lock the row (for example S11's replayed failed retry, and `duplicate_webhook_idempotent` under `reorder`), failing chaos for some `GATEFIT_CHAOS_SEED` values.
-- Telemetry: the three new ids are in `SUITES` and the collector's `suite` allow-list. Code only: there is no Worker deploy in this change, so the live collector does not know these ids yet.
+- Telemetry: the three new ids are in `SUITES` and the collector's `suite` allow-list. The collector Worker was deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`). It accepts the S10–S12 suite ids and has the `FUTURE_SKEW_MS` guard.
 
 ### Fixed
 
@@ -23,6 +27,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 - Status: a sample more than 5 minutes in the future (`FUTURE_SKEW_MS`) is no longer fresh. The collector's `GET /v1/status` reports unknown for that service, never ok, and leaves it out of the top-level `checked_at`, so one future sample no longer makes the status page show every tile as unknown. If every sample is that far ahead, `checked_at` is null. Exactly 5 minutes ahead still counts.
 - Status page (`site/src/scripts/status.ts`): a top-level `checked_at` more than 5 minutes in the future (`FUTURE_SKEW_MS`) is not fresh, so every tile shows unknown, never green. This guard shipped in H31; it was dropped from this list when the Worker line above was added.
 - Docs wording: the Worker README and the Telemetry docs page now say the collector at `t.gatefit.io` is live, serves `GET /v1/status`, accepts `pack: paddle`, and runs its crons (`*/5 * * * *`, Polar on :00 and :30; daily rollup `15 0 * * *` at 00:15 UTC), instead of waiting on a redeploy. The README says the collector is live, accepts `pack: paddle` and serves `GET /v1/status`. `docs/paddle.md` says the live collector accepts `paddle`.
+- Docs: the Worker README and the Telemetry page say the collector deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`) accepts the S10–S12 suite ids and applies `FUTURE_SKEW_MS`.
 - `docs/polar.md`, `docs/publish.md`, `docs/live-clock.md` and the README drop the banned phrases and their variants (see the banned-phrase scan in `tests/entitlements/site.test.ts`). The docs line now reads "Docs: https://gatefit.io" or "**Docs site:** live. Hosted at https://gatefit.io", the Polar line says the $49 one-time license is bought via the Polar Checkout Link, and live-clock.md says "run only from YAML fixtures" (README tagline: "YAML fixture scenarios"). `docs/live-clock.md` says which fixtures set `period_end` + `now` on events: `cancel_at_period_end_keeps_access_until_end`, `upgrade_plus_cape_race` and `portal_downgrade_period_end_vs_immediate`, not `seat_qty_vs_db_cap`, H7 or the other S7–S9 fixtures. `docs/license.md` says the $49 license unlocks chaos mode and the Polar and Paddle packs, S1–S9 and Phase 2 stay free, instead of "first Pro pack".
 - Landing price card: the repeated "Chaos mode" bullet under "Unlocks chaos mode, Polar and Paddle packs" is gone.
 - H33 wording: the `gatefit init` README and workflow templates (`src/init/templates/README.md.tpl`, `workflow.yml.tpl`) and the verify-gate skill now say "YAML fixture scenarios", matching the README. Regenerate with `gatefit init` to pick up the new comment; generated files are otherwise unchanged.

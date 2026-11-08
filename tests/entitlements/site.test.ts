@@ -22,7 +22,7 @@ test("Starlight lives in site/ at the gatefit.io root", () => {
     version: string;
     files?: string[];
   };
-  assert.equal(pkg.version, "0.7.0");
+  assert.equal(pkg.version, "0.8.0");
   assert.ok(!pkg.files?.includes("site"));
 });
 
@@ -51,7 +51,7 @@ test("landing, quickstart, Action, and Polar docs exist", () => {
   assert.match(quickstart, /adapter/i);
   assert.match(quickstart, /\/action\//);
   assert.doesNotMatch(quickstart, /\/gatefit\/action\//);
-  assert.match(action, /uses: gatefit\/gatefit@v0\.7\.0/);
+  assert.match(action, /uses: gatefit\/gatefit@v0\.8\.0/);
   assert.match(polar, /location\.replace\('\/#pricing'\)/);
   assert.doesNotMatch(polar, /import PolarRedirect/);
   assert.doesNotMatch(polar, /<PolarRedirect/);
@@ -264,9 +264,13 @@ test("h33_templates_skill_and_unreleased_changelog_have_no_banned_phrases", () =
   }
   const changelog = read("CHANGELOG.md");
   const unreleased = changelog.slice(changelog.indexOf("## [Unreleased]"), changelog.indexOf("\n## [", changelog.indexOf("## [Unreleased]") + 1));
-  for (const re of [...BANNED, ...BANNED_VARIANTS]) assert.doesNotMatch(unreleased, re, `CHANGELOG [Unreleased] has ${re}`);
-  assert.match(unreleased, /site\/src\/scripts\/status\.ts/, "Unreleased drops the site-side future checked_at guard");
-  assert.match(unreleased, /H33/);
+  const released080 = changelog.slice(changelog.indexOf("## [0.8.0]"), changelog.indexOf("\n## [", changelog.indexOf("## [0.8.0]") + 1));
+  for (const re of [...BANNED, ...BANNED_VARIANTS]) {
+    assert.doesNotMatch(unreleased, re, `CHANGELOG [Unreleased] has ${re}`);
+    assert.doesNotMatch(released080, re, `CHANGELOG [0.8.0] has ${re}`);
+  }
+  assert.match(released080, /site\/src\/scripts\/status\.ts/, "[0.8.0] drops the site-side future checked_at guard");
+  assert.match(released080, /H33/);
 });
 
 test("h33_status_rollup_comments_say_daily_not_nightly", () => {

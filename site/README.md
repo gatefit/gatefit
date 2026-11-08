@@ -1,6 +1,6 @@
 # Gatefit docs site
 
-Astro + Starlight app for [gatefit/gatefit](https://github.com/gatefit/gatefit). Not part of the `gatefit` npm package. This repo’s package version is 0.7.0, and this change does not publish it.
+Astro + Starlight app for [gatefit/gatefit](https://github.com/gatefit/gatefit). Not part of the `gatefit` npm package. This repo’s package version is 0.8.0, and this change does not publish it.
 
 ```bash
 npm ci

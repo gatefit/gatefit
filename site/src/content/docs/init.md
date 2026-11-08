@@ -51,7 +51,7 @@ The generated adapter asserts the row in `gatefit_access`. HTTP 200 from Stripe 
 
 ## CI workflow
 
-`--print-workflow` and `--write-workflow` render a GitHub Actions job. It starts a throwaway Postgres service (trust auth, no password), runs `npm ci`, applies the migration with `psql`, and calls `uses: gatefit/gatefit@v0.7.0` with your adapter path. The job needs no stored secrets. Database setup is yours to adapt.
+`--print-workflow` and `--write-workflow` render a GitHub Actions job. It starts a throwaway Postgres service (trust auth, no password), runs `npm ci`, applies the migration with `psql`, and calls `uses: gatefit/gatefit@v0.8.0` with your adapter path. The job needs no stored secrets. Database setup is yours to adapt.
 
 ## Safety
 
