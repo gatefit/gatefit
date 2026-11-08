@@ -8,7 +8,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ## [0.8.0] - 2026-11-08
 
-0.8.0 adds free S10–S12 goldens (`trial_end_pause_resume_waits_for_paid`, `smart_retries_unpaid_then_paid_recovers`, `pause_collection_keeps_access_all_behaviors`), copies Stripe `pause_collection.behavior` onto billing events, keeps a chaos replay on the first `created` of a repeated event id, and ships the gatefit.io homepage redesign. The collector Worker deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`) accepts the S10–S12 suite ids and applies the `FUTURE_SKEW_MS` guard. This change does not publish the package and does not create a tag.
+0.8.0 adds free S10–S12 goldens (`trial_end_pause_resume_waits_for_paid`, `smart_retries_unpaid_then_paid_recovers`, `pause_collection_keeps_access_all_behaviors`), copies Stripe `pause_collection.behavior` onto billing events, keeps a chaos replay on the first `created` of a repeated event id, and ships the gatefit.io homepage redesign. The collector Worker deployed on 2026-11-08 from main `70faa3e` (version `ffb08bff`) accepts the S10–S12 suite ids and applies the `FUTURE_SKEW_MS` guard. Tag `v0.8.0` was cut and `gatefit@0.8.0` was published after that commit.
 
 ### Added
 

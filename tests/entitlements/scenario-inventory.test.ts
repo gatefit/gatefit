@@ -170,6 +170,25 @@ test("stripe scenario lists and counts match tests/entitlements/goldens", () => 
   assert.doesNotMatch(goldensSection, /\b\d+\s+goldens\b/);
 });
 
+test("telemetry probe rules stay one sentence across the docs", () => {
+  const page = read("site/src/content/docs/telemetry.md");
+  const start = page.indexOf("Each check has a 5-second timeout.");
+  const tail = "Down and degraded from the Worker stay down and degraded.";
+  const end = page.indexOf(tail, start);
+  assert.ok(start >= 0 && end > start, "telemetry page is missing the probe rule");
+  const rule = page.slice(start, end + tail.length);
+  assert.match(rule, /5-second timeout/);
+  assert.match(rule, /:00 and :30 runs/);
+  assert.match(rule, /FUTURE_SKEW_MS/);
+  assert.match(rule, /returns a non-200, or has a body the page cannot parse is unknown/);
+  const copies = ["README.md", "worker/telemetry/README.md", "docs/paddle.md", "site/src/content/docs/telemetry.md"];
+  for (const rel of copies) {
+    const text = read(rel);
+    assert.ok(text.includes(rule), `${rel} probe rule diverged from the telemetry page`);
+    assert.equal(text.split("Each check has a 5-second timeout.").length - 1, 1, `${rel} probe rule count`);
+  }
+});
+
 test("living docs do not leave 0.8.0 unpublished or call 0.7.0 current", () => {
   const stale = [
     /gatefit@0\.7\.0/,
