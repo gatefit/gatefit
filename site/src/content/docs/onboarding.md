@@ -45,10 +45,16 @@ npx gatefit@0.8.0 init --template generic --no-prompt
 | `prisma` | `package.json` has `@prisma/client` or `prisma` | `gatefit/access.prisma`, plus `gatefit/migration.sql` |
 | `supabase` | `package.json` has `@supabase/supabase-js`, or `supabase/config.toml` exists | `supabase/migrations/<timestamp>_gatefit_access.sql` with row level security on and no policies |
 
-With one of those ORMs and no `--template`, init uses the one it finds. With none, or with more than one, a terminal asks. In CI, with `--no-prompt`, or when stdin is not a terminal, it exits 2:
+With one of those ORMs and no `--template`, init uses the one it finds. With none, or with more than one, a terminal asks. In CI, with `--no-prompt`, or when stdin is not a terminal, both cases exit 2. They print different messages. No ORM:
 
 ```text
 gatefit init: no ORM found in package.json (drizzle-orm, @prisma/client or prisma, @supabase/supabase-js); pass --template drizzle|prisma|supabase|generic. Nothing was written.
+```
+
+More than one ORM. `<list>` is the names init found, joined with `, `:
+
+```text
+gatefit init: more than one ORM found in package.json (<list>); pass --template drizzle|prisma|supabase|generic. Nothing was written.
 ```
 
 Init is included in npm `gatefit@0.8.0`. It is free. It does not read a license key and it makes no network request. It writes:
@@ -61,14 +67,17 @@ Init is included in npm `gatefit@0.8.0`. It is free. It does not read a license 
 
 `gatefit run` does not read `gatefit.config.json`. Pass `--adapter` and `--suite` on the command line.
 
-Generated files import nothing from the `gatefit` package. `createAdapter()` is the only function the runner calls.
+Generated files import nothing from the `gatefit` package. The loader resolves `createAdapter()`, or `default`, or `adapter`, and checks that `apply` and `snapshot` are functions. The runner then calls `reset` when it is present, then `apply` and `snapshot` for each step. `reset` is required only when more than one golden runs.
 
 Apply the migration and point `DATABASE_URL` at a disposable database:
 
 ```bash
 export DATABASE_URL=postgres://localhost:5432/gatefit_ci
+createdb gatefit_ci
 psql "$DATABASE_URL" -f gatefit/migration.sql
 ```
+
+`createdb` connects to the default local database and creates `gatefit_ci`. The same create is `psql -d postgres -c 'CREATE DATABASE gatefit_ci'`.
 
 `env.example` uses that URL. It has no password and no Stripe key.
 
@@ -537,7 +546,7 @@ export default createAdapter;
 
 ### HTTP endpoint
 
-Gatefit does not fetch an HTTP endpoint for access. There is no HTTP adapter. `loadAdapter` reads a local file and imports it. It calls `apply`, `snapshot`, and, when more than one check runs, `reset`. It never calls `fetch`.
+Gatefit does not fetch an HTTP endpoint for access. There is no HTTP adapter. `loadAdapter` reads the adapter file, refuses `sk_live`, imports the module, and checks that `apply` and `snapshot` are functions. It resolves `createAdapter()`, or `default`, or `adapter`. It does not call `apply`, `snapshot`, or `reset`, and it never calls `fetch`. The runner calls `reset` when the adapter has one, then `apply` and `snapshot` for each step. `reset` is required only when more than one golden runs.
 
 `BillingEvent.httpStatus` and `BillingEvent.stripeHttpStatus` are fields on the event. The reference rules do not treat 200 as access. `src/adapters/naive.ts` does. `adapter-check` expects that module to fail S1.
 
@@ -709,7 +718,13 @@ gatefit adapter: DATABASE_URL is not a valid postgres:// URL
 gatefit adapter: DATABASE_URL host is not local. Goldens truncate gatefit_access between runs. Point it at a disposable database, or set GATEFIT_ALLOW_REMOTE_DB=1 if this one is disposable.
 ```
 
-`connect()` throws these from `gatefit/db.ts` when `createAdapter()` runs. A missing table is an error from `pg` (the driver message), and the process exits 1 with that message. Apply `gatefit/migration.sql` first.
+`connect()` throws these from `gatefit/db.ts` when `createAdapter()` runs. `psql` against `postgres://localhost:5432/gatefit_ci` before that database exists fails with:
+
+```text
+database "gatefit_ci" does not exist
+```
+
+Create it with `createdb gatefit_ci` (or `psql -d postgres -c 'CREATE DATABASE gatefit_ci'`), then apply `gatefit/migration.sql`. A missing table, after the database exists, is an error from `pg` (the driver message), and the process exits 1 with that message.
 
 ### Live key on run
 

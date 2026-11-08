@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { INIT_TEMPLATES } from "../../src/init.ts";
 
 const root = path.join(import.meta.dirname, "../..");
 const bin = path.join(root, "bin/gatefit.js");
@@ -55,6 +56,33 @@ test("onboarding pages match, sit in the nav, and state the free suite", () => {
     assert.doesNotMatch(text, /first release that ships/i);
     assert.doesNotMatch(text, /\bdeployed\b/i);
     assert.doesNotMatch(text, /\bis live\b/i);
+  }
+});
+
+test("onboarding pins both init ORM exit-2 messages to src/init.ts", () => {
+  const init = read("src/init.ts");
+  const none = "no ORM found in package.json (drizzle-orm, @prisma/client or prisma, @supabase/supabase-js)";
+  const manySource = 'more than one ORM found in package.json (${found.join(", ")})';
+  const printed = 'gatefit init: ${why}; pass --template ${INIT_TEMPLATES.join("|")}. Nothing was written.';
+  assert.ok(init.includes(`? "${none}"`), "none branch drifted");
+  assert.ok(init.includes(`: \`${manySource}\``), "many branch drifted");
+  assert.ok(init.includes(printed), "init print drifted");
+  const suffix = `; pass --template ${INIT_TEMPLATES.join("|")}. Nothing was written.`;
+  const noneLine = `gatefit init: ${none}${suffix}`;
+  const manyLine = `gatefit init: more than one ORM found in package.json (<list>)${suffix}`;
+  for (const rel of pages) {
+    const text = read(rel);
+    const noneAt = text.indexOf(noneLine);
+    const manyAt = text.indexOf(manyLine);
+    assert.ok(noneAt >= 0, `${rel} missing no-ORM line`);
+    assert.ok(manyAt > noneAt, `${rel} missing separate many-ORM line`);
+    assert.ok(text.includes("createdb gatefit_ci"), `${rel} missing createdb`);
+    assert.ok(text.includes('database "gatefit_ci" does not exist'), `${rel} missing missing-database error`);
+    assert.match(text, /resolves `createAdapter\(\)`, or `default`, or `adapter`/);
+    assert.match(text, /does not call `apply`, `snapshot`, or `reset`/);
+    assert.match(text, /never calls `fetch`/);
+    assert.doesNotMatch(text, /only function the runner calls/);
+    assert.doesNotMatch(text, /It calls `apply`, `snapshot`, and, when more than one check runs, `reset`/);
   }
 });
 
