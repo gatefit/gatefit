@@ -20,7 +20,7 @@ S1–S9 and the Phase 2 fixtures stay free. They do not read `GATEFIT_LICENSE_KE
 
 The telemetry collector Worker (`worker/telemetry/`) is already live at `t.gatefit.io`. It is deployed by hand, is not in the npm tarball, and is not part of `./ci-local.sh`.
 
-v0.5.2 is already released (`npx gatefit`, https://www.npmjs.com/package/gatefit). **This PR does not publish `0.6.0` and does not create the tag.** Cutting tag `v0.6.0` and approving the publish need Edip's explicit go. The docs site is live at https://gatefit.io. The Gatefit Indie License is $49 one-time on Polar. That license unlocks chaos mode and the provider packs. This release does not deploy the docs site.
+v0.5.2 is already released (`npx gatefit`, https://www.npmjs.com/package/gatefit). **This PR does not publish `0.6.0` and does not create the tag.** Cutting tag `v0.6.0` and approving the publish need Edip's explicit go. Docs site: live. Hosted at https://gatefit.io. The Gatefit Indie License is $49 one-time on Polar. That license unlocks chaos mode and the provider packs. This release does not deploy the docs site.
 
 ## npm
 

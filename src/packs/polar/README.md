@@ -1,6 +1,6 @@
 # Polar provider pack (paid)
 
-P1–P9 Polar goldens for `gatefit run --suite polar --adapter <path>`. Gated by the $49 Gatefit Indie License, like chaos mode. Running this directory (or one file in it) as a `--suite` path is gated too; licensed, it runs exactly like `--suite polar`. A path mixing these files with free goldens is refused.
+P1–P9 Polar goldens for `gatefit run --suite polar --adapter <path>`. The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free. Running this directory (or one file in it) as a `--suite` path is gated too; licensed, it runs exactly like `--suite polar`. A path mixing these files with free goldens is refused.
 
 Events use Polar public v1 webhook event names (`POLAR_SCHEMA = v1+fixtures.1` in `src/polar-pack.ts`; `fixtures.N` goes up whenever a golden changes meaning). Stripe also sends `refund.*` and (legacy Orders API) `order.created` / `order.updated`; those names reach the Polar rules only with `provider: polar`. The `refund.*` steps carry the tag; the two untagged `order.*` steps expect an unchanged row either way. Each golden header names the transition and cites the schema. HTTP 200 is not access.
 

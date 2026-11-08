@@ -1,6 +1,6 @@
 # Live Stripe Test Clock lane
 
-Opt-in. **Not** the merge path. Fixture S1–S6 (`gatefit run`) stay default CI.
+Opt-in. **Not** the merge path. The default CI suite is S1–S12 (17 goldens), run from YAML fixtures (`gatefit run`).
 
 Ported scenarios: `paid_grants_access`, `cancel_revokes_access`, `trial_to_paid_grants`.
 Not on clocks: `refund_revokes_access` (ACH/dispute poor), `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`.
@@ -20,7 +20,7 @@ node bin/gatefit.js live --adapter src/adapters/hardened.ts
 # optional: --scenario paid_grants_access
 ```
 
-`./ci-local.sh` is fixture-first. Do not export `GATEFIT_LIVE_CLOCK` for the named gate. The script unsets the flag so S1–S6 stay YAML-driven.
+`./ci-local.sh` is fixture-first. Do not export `GATEFIT_LIVE_CLOCK` for the named gate. The script unsets the flag so S1–S12 (17 goldens) stay YAML-driven.
 
 ## CI
 

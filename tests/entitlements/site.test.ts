@@ -79,7 +79,7 @@ test("Polar pack page is honest about price, release, and HTTP 200", () => {
   assert.match(page, /The Polar provider pack ships in 0\.6\.0\./);
   assert.match(
     page,
-    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S12 and Phase 2 stay free\./,
+    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the Polar and Paddle packs\. The core, Phase 2, and S1–S12 \(\d+ goldens\) stay free\./,
   );
   assert.match(page, /HTTP 200 is not access/);
   const schema = read("src/polar-pack.ts").match(/export const POLAR_SCHEMA = "([^"]+)";/)?.[1];
@@ -109,7 +109,7 @@ test("Paddle pack page is honest about price, release, and HTTP 200", () => {
   assert.match(page, /The Paddle provider pack ships in 0\.7\.0 as `gatefit run --suite paddle`/);
   assert.match(
     page,
-    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the provider packs\. S1–S12 and Phase 2 stay free\./,
+    /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the Polar and Paddle packs\. The core, Phase 2, and S1–S12 \(\d+ goldens\) stay free\./,
   );
   assert.match(page, /HTTP 200 is not access/);
   const schema = read("src/paddle-pack.ts").match(/export const PADDLE_SCHEMA = "([^"]+)";/)?.[1];
@@ -246,7 +246,7 @@ test("H25: telemetry docs list every payload key and stay honest", async () => {
 // banned later, and stay as shipped. Named so a new release note is still scanned.
 const HISTORICAL_RELEASE_NOTES = ["release-v0.4.0.md", "release-v0.5.0.md", "release-v0.5.1.md", "release-v0.5.2.md"];
 const BANNED = [/coming soon/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i, /\$19/, /monthly/i, /optional updates/i];
-const BANNED_VARIANTS = [/docs\W*(site)?\W*live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i];
+const BANNED_VARIANTS = [/docs\W+(site\W+)?(is\W+)?live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i, /fixture\W+goldens?/i];
 
 function filesUnder(rel: string): string[] {
   return fs.readdirSync(path.join(root, rel), { withFileTypes: true }).flatMap((e) =>
@@ -290,7 +290,7 @@ test("h32_current_docs_have_no_banned_phrases_and_no_stale_redeploy_wording", ()
     assert.doesNotMatch(text, /does not serve them yet|after the Worker is redeployed|until the collector Worker is redeployed/i, `${file} has stale redeploy wording`);
   }
   assert.doesNotMatch(read("docs/license.md"), /first Pro pack/);
-  const variants = [/docs\W*(site)?\W*live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i];
+  const variants = [/docs\W+(site\W+)?(is\W+)?live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i, /fixture\W+goldens?/i];
   const siteDocs = fs.readdirSync(path.join(root, "site/src/content/docs")).filter((f) => f.endsWith(".md")).map((f) => `site/src/content/docs/${f}`);
   for (const file of ["README.md", ...docs, ...siteDocs]) {
     const text = read(file);

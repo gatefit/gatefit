@@ -37,7 +37,7 @@ Cursor does **not** start Codex fleet reviewers. Humans or later bots cover that
 
 Standing rules for Cursor sessions. Product detail lives in `CLAUDE.md`. The named verify gate stays `./ci-local.sh`.
 
-- Prefer **E2E as the sole testing mechanism** for complex features. End with a verifiable, repeatable artifact: a fixture golden, the `./ci-local.sh` named gate, or Action smoke. Ad-hoc one-off scripts are not that artifact.
+- Prefer **E2E as the sole testing mechanism** for complex features. End with a verifiable, repeatable artifact: a golden YAML, the `./ci-local.sh` named gate, or Action smoke. Ad-hoc one-off scripts are not that artifact.
 - **NEVER write unit tests after you write code.**
 - Isolation testing: **FIRST** enumerate and encode all failure modes, **THEN** write implementation code.
 

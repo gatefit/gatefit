@@ -17,6 +17,8 @@ Exit 0 is green. Treat any non-zero as blocking.
 
 ## What it covers today
 
+The Stripe suite on this gate is S1–S12 (17 goldens). The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
+
 - Harness integrity (required agent files present; no OtoPilot-only detekt/iOS hooks or `deploy-ios` skill).
 - Entitlement CLI: `gatefit adapter-check` (naive fails S1 / hardened passes S1).
 - Hardened and SQLite S1–S6 goldens: `paid_grants_access`, `cancel_revokes_access`, `refund_revokes_access`, `trial_to_paid_grants`, `past_due_denies_until_recovery`, `duplicate_webhook_idempotent`.
@@ -26,7 +28,7 @@ Exit 0 is green. Treat any non-zero as blocking.
 - Naive directory run must fail.
 - Composite Action wraps `gatefit run` (repo-root `action.yml` plus nested `.github/actions/gatefit/action.yml`) and `docs/bring-your-adapter.md`.
 - Packaging: publishable `gatefit` bin at the `package.json` version, `npm pack`, tarball `npx gatefit adapter-check`, `npm publish --dry-run` (no registry write; tarball has `bin/gatefit.js`, no `site/`, no secrets). `.github/workflows/publish.yml` is the tag publish path (OIDC, GitHub environment `npm`) and must not reference an npm token.
-- Distribution honesty: README and docs say the docs site is live at https://gatefit.io, npm is live (`npx gatefit`, https://www.npmjs.com/package/gatefit), and Polar checkout is the committed `buy.polar.sh/polar_cl_…` link. The built site has no `/gatefit/` asset paths, includes reduced-motion CSS, and does not load an external font CDN. `scripts/deploy-site.sh` copies `site/dist` locally and refuses a dist whose CTA is not that kind of link. The release tag matches `package.json` (`CHANGELOG.md`, `docs/release-vX.Y.Z.md`); the gate does not create a git tag or GitHub Release.
+- Distribution honesty: README and docs say Docs site: live. Hosted at https://gatefit.io. npm is live (`npx gatefit`, https://www.npmjs.com/package/gatefit, `gatefit@0.8.0`, tag `v0.8.0`). The $49 one-time license is bought via the Polar Checkout Link (`buy.polar.sh/polar_cl_…`). The built site has no `/gatefit/` asset paths, includes reduced-motion CSS, and does not load an external font CDN. `scripts/deploy-site.sh` copies `site/dist` locally and refuses a dist whose CTA is not that kind of link. The release tag matches `package.json` (`CHANGELOG.md`, `docs/release-vX.Y.Z.md`); the gate does not create a git tag or GitHub Release.
 - Starlight `site/` build (`npm ci` + `npm run build` in `site/`) and Polar CTA file check (plain `buy.polar.sh/polar_cl_…` link with `target="_blank"`, no checkout embed). Site is not access proof.
 - `tests/entitlements/*.test.ts`.
 - Live Test Clock lane is **not** part of this gate. Do not set `GATEFIT_LIVE_CLOCK`. See `docs/live-clock.md`.

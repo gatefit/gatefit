@@ -37,7 +37,7 @@ node bin/gatefit.js adapter-check
 node bin/gatefit.js run --suite tests/entitlements/goldens --adapter ./src/your-access-adapter.ts
 ```
 
-Exit 0 means the checks passed against that adapter. [Goldens](/goldens/) lists the checks in this repository, including free S7–S12. 0.5.2 is the first release that ships S7–S9. 0.8.0 is the first release that ships S10–S12. This change does not publish `0.8.0`.
+Exit 0 means the checks passed against that adapter. [Goldens](/goldens/) lists the checks in this repository. The Stripe suite is S1–S12 (17 goldens), including free S7–S12. 0.5.2 is the first release that ships S7–S9. 0.8.0 is the first release that ships S10–S12. npm `gatefit@0.8.0` is released and tag `v0.8.0` is cut. The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
 
 ## 3. Named gate
 
