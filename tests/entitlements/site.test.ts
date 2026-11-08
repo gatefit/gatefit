@@ -61,8 +61,10 @@ test("init docs page exists, says init is free, and quickstart points to it", ()
   const init = read("site/src/content/docs/init.md");
   const quickstart = read("site/src/content/docs/quickstart.md");
   assert.match(init, /init.*is free/i);
-  assert.match(init, /not shipped in 0\.5\.2/i);
-  assert.match(init, /ships in 0\.6\.0/);
+  assert.match(init, /included in npm `gatefit@0\.8\.0`/);
+  assert.doesNotMatch(init, /not shipped in 0\.5\.2/i);
+  assert.doesNotMatch(init, /ships in 0\.6\.0/);
+  assert.match(init, /\/onboarding\//);
   assert.match(init, /\$49 one-time/);
   assert.doesNotMatch(init, /\$19/);
   assert.doesNotMatch(init, /monthly|coming soon|optional updates/i);
@@ -76,7 +78,9 @@ test("Polar pack page is honest about price, release, and HTTP 200", () => {
   const readme = read("README.md");
   const changelog = read("CHANGELOG.md");
   assert.match(page, /gatefit run --suite polar --adapter/);
-  assert.match(page, /The Polar provider pack ships in 0\.6\.0\./);
+  assert.match(page, /The Polar provider pack runs as `gatefit run --suite polar`\./);
+  assert.doesNotMatch(page, /ships in 0\.6\.0/);
+  assert.doesNotMatch(page, /not in 0\.5\.2/);
   assert.match(
     page,
     /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the Polar and Paddle packs\. The core, Phase 2, and S1–S12 \(\d+ goldens\) stay free\./,
@@ -106,7 +110,9 @@ test("Paddle pack page is honest about price, release, and HTTP 200", () => {
   const readme = read("README.md");
   const changelog = read("CHANGELOG.md");
   assert.match(page, /gatefit run --suite paddle --adapter/);
-  assert.match(page, /The Paddle provider pack ships in 0\.7\.0 as `gatefit run --suite paddle`/);
+  assert.match(page, /The Paddle provider pack runs as `gatefit run --suite paddle`\./);
+  assert.doesNotMatch(page, /ships in 0\.7\.0/);
+  assert.doesNotMatch(page, /not in 0\.6\.0/);
   assert.match(
     page,
     /The only price is the \$49 one-time Gatefit Indie License \(Polar\)\. It unlocks only chaos mode and the Polar and Paddle packs\. The core, Phase 2, and S1–S12 \(\d+ goldens\) stay free\./,
@@ -231,13 +237,38 @@ test("H25: telemetry docs list every payload key and stay honest", async () => {
     assert.match(doc, /off by default/i);
     assert.match(doc, /DO_NOT_TRACK/);
     assert.match(doc, /no cookies/i);
-    assert.match(doc, /not shipped in 0\.5\.2/);
-    assert.match(doc, /ships in 0\.6\.0/);
     assert.match(doc, /collector at `t\.gatefit\.io` is live/);
     assert.match(doc, /gatefit telemetry off/);
     assert.match(doc, /t\.gatefit\.io/);
     for (const banned of [/coming soon/i, /\$19/, /monthly/i, /optional updates/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i]) {
       assert.doesNotMatch(doc, banned);
+    }
+  }
+  assert.match(readme, /not shipped in 0\.5\.2/);
+  assert.match(readme, /ships in 0\.6\.0/);
+  assert.match(page, /included in npm `gatefit@0\.8\.0`/);
+  assert.match(page, /opt-in and off by default/);
+  assert.doesNotMatch(page, /not shipped in 0\.5\.2/);
+  assert.doesNotMatch(page, /ships in 0\.6\.0/);
+});
+
+test("site docs name 0.8.0 and do not narrate older releases", () => {
+  const history = [
+    /new in 0\.\d/i,
+    /ships in 0\.\d/i,
+    /not shipped in 0\.\d/i,
+    /first release that ships/i,
+    /is not in 0\.\d/i,
+    /not in 0\.\d/i,
+  ];
+  const files = filesUnder("site/src").filter((rel) => rel.endsWith(".md") || rel.endsWith(".astro") || rel.endsWith(".mjs"));
+  assert.ok(files.includes("site/src/content/docs/goldens.md"));
+  assert.ok(files.includes("site/src/content/docs/onboarding.md"));
+  for (const file of files) {
+    const text = read(file);
+    for (const re of history) assert.doesNotMatch(text, re, `${file} has ${re}`);
+    if (file.startsWith("site/src/content/docs/") && file.endsWith(".md")) {
+      assert.match(text, /0\.8\.0/, `${file} does not name the current release`);
     }
   }
 });
@@ -284,6 +315,7 @@ test("h33_status_rollup_comments_say_daily_not_nightly", () => {
 test("h32_current_docs_have_no_banned_phrases_and_no_stale_redeploy_wording", () => {
   const banned = [/coming soon/i, /fixture goldens/i, /names match the goldens/i, /docs live at/i, /checkout is live/i, /\$19/, /monthly/i, /optional updates/i];
   const docs = fs.readdirSync(path.join(root, "docs")).filter((f) => f.endsWith(".md") && !HISTORICAL_RELEASE_NOTES.includes(f)).map((f) => `docs/${f}`);
+  assert.ok(docs.includes("docs/onboarding.md"));
   for (const file of [...docs, "README.md", "worker/telemetry/README.md", "site/src/content/docs/telemetry.md"]) {
     const text = read(file);
     for (const re of banned) assert.doesNotMatch(text, re, `${file} has ${re}`);
@@ -292,6 +324,7 @@ test("h32_current_docs_have_no_banned_phrases_and_no_stale_redeploy_wording", ()
   assert.doesNotMatch(read("docs/license.md"), /first Pro pack/);
   const variants = [/docs\W+(site\W+)?(is\W+)?live at/i, /checkout( link)?\b[^.\n]*\bis live/i, /checkout\W*\s*live\b/i, /fixture[-*\s\w]*goldens/i, /fixture\W+goldens?/i];
   const siteDocs = fs.readdirSync(path.join(root, "site/src/content/docs")).filter((f) => f.endsWith(".md")).map((f) => `site/src/content/docs/${f}`);
+  assert.ok(siteDocs.includes("site/src/content/docs/onboarding.md"));
   for (const file of ["README.md", ...docs, ...siteDocs]) {
     const text = read(file);
     for (const re of [...banned, ...variants]) assert.doesNotMatch(text, re, `${file} has ${re}`);

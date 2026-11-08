@@ -3,7 +3,7 @@ title: Telemetry
 description: What gatefit.io and the gatefit CLI count, what they never send, and how to turn it off.
 ---
 
-**Site analytics:** live and cookieless. **CLI telemetry:** not shipped in 0.5.2. It ships in 0.6.0, and it is opt-in and off by default. The collector at `t.gatefit.io` is live.
+**Site analytics:** live and cookieless. **CLI telemetry:** opt-in and off by default, included in npm `gatefit@0.8.0`. The collector at `t.gatefit.io` is live.
 
 ## gatefit.io
 

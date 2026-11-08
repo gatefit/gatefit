@@ -1,6 +1,6 @@
 # Bring your AccessAdapter
 
-Gatefit checks **your access DB**, not Stripe HTTP 200.
+Gatefit checks **your access DB**, not Stripe HTTP 200. Step by step, from install to the first result: [onboarding.md](onboarding.md).
 
 ## 1. Implement the contract
 

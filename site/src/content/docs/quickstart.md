@@ -7,7 +7,7 @@ Gatefit checks **your access DB**, not Stripe HTTP 200. Node 22+.
 
 ## 1. Adapter
 
-No adapter yet? `npx gatefit init` generates one for drizzle, Prisma, Supabase, or plain `pg`. It is free and new in 0.6.0; see [gatefit init](/init/).
+No adapter yet? `npx gatefit init` generates one for drizzle, Prisma, Supabase, or plain `pg`. It is free. From an empty app to the first result: [Onboarding](/onboarding/). Command details: [gatefit init](/init/).
 
 Export `createAdapter()` (or `default`) with:
 
@@ -37,7 +37,7 @@ node bin/gatefit.js adapter-check
 node bin/gatefit.js run --suite tests/entitlements/goldens --adapter ./src/your-access-adapter.ts
 ```
 
-Exit 0 means the checks passed against that adapter. [Goldens](/goldens/) lists the checks in this repository. The Stripe suite is S1–S12 (17 goldens), including free S7–S12. 0.5.2 is the first release that ships S7–S9. 0.8.0 is the first release that ships S10–S12. npm `gatefit@0.8.0` is released and tag `v0.8.0` is cut. The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
+Exit 0 means the checks passed against that adapter. [Goldens](/goldens/) lists the checks in this repository. The Stripe suite is S1–S12 (17 goldens), including free S7–S12. npm `gatefit@0.8.0` is the current release and tag `v0.8.0` is cut. That release includes S1–S12 (17 goldens). The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
 
 ## 3. Named gate
 

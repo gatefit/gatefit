@@ -92,6 +92,7 @@ need_file docs/paddle.md
 need_file site/src/content/docs/paddle-pack.md
 need_file .github/actions/gatefit/action.yml
 need_file docs/bring-your-adapter.md
+need_file docs/onboarding.md
 need_file action.yml
 need_file scripts/action-run.sh
 need_file LICENSE
@@ -449,6 +450,7 @@ need_file site/src/components/PolarBuyCta.astro
 need_file site/src/pages/index.astro
 need_file site/public/_redirects
 need_file site/src/content/docs/quickstart.md
+need_file site/src/content/docs/onboarding.md
 need_file site/src/content/docs/action.md
 need_file site/src/pages/polar.astro
 need_file docs/polar.md
