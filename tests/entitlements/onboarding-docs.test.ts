@@ -79,6 +79,10 @@ test("onboarding pins both init ORM exit-2 messages to src/init.ts", () => {
     assert.ok(text.includes("createdb gatefit_ci"), `${rel} missing createdb`);
     assert.ok(text.includes('database "gatefit_ci" does not exist'), `${rel} missing missing-database error`);
     assert.match(text, /resolves `createAdapter\(\)`, or `default`, or `adapter`/);
+    const http = text.slice(text.indexOf("### HTTP endpoint"));
+    const resolveAt = http.indexOf("resolves `createAdapter()`, or `default`, or `adapter`");
+    const checkAt = http.indexOf("checks that `apply` and `snapshot` are functions on the returned object");
+    assert.ok(resolveAt >= 0 && checkAt > resolveAt, `${rel} checks apply before resolving the export`);
     assert.match(text, /does not call `apply`, `snapshot`, or `reset`/);
     assert.match(text, /never calls `fetch`/);
     assert.doesNotMatch(text, /only function the runner calls/);

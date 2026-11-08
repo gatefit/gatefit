@@ -546,7 +546,7 @@ export default createAdapter;
 
 ### HTTP endpoint
 
-Gatefit does not fetch an HTTP endpoint for access. There is no HTTP adapter. `loadAdapter` reads the adapter file, refuses `sk_live`, imports the module, and checks that `apply` and `snapshot` are functions. It resolves `createAdapter()`, or `default`, or `adapter`. It does not call `apply`, `snapshot`, or `reset`, and it never calls `fetch`. The runner calls `reset` when the adapter has one, then `apply` and `snapshot` for each step. `reset` is required only when more than one golden runs.
+Gatefit does not fetch an HTTP endpoint for access. There is no HTTP adapter. `loadAdapter` reads the adapter file, refuses `sk_live`, imports the module, and resolves `createAdapter()`, or `default`, or `adapter`. It checks that `apply` and `snapshot` are functions on the returned object. It does not call `apply`, `snapshot`, or `reset`, and it never calls `fetch`. The runner calls `reset` when the adapter has one, then `apply` and `snapshot` for each step. `reset` is required only when more than one golden runs.
 
 `BillingEvent.httpStatus` and `BillingEvent.stripeHttpStatus` are fields on the event. The reference rules do not treat 200 as access. `src/adapters/naive.ts` does. `adapter-check` expects that module to fail S1.
 
