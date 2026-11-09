@@ -1,0 +1,39 @@
+/* GATEFIT-H40 /contact. Tokens and the shared header come from landing.css. */
+.contact-page a:not(.skip) { color: var(--mint); text-decoration: none; }
+.contact-page a:not(.skip):hover { text-decoration: underline; }
+.contact-page .site-nav a.nav-link { color: var(--muted); }
+.contact-page .site-nav a.word { color: var(--text); }
+.contact-page .site-nav a:hover { text-decoration: none; }
+.contact-page .site-nav a.nav-link[aria-current='page'] { color: var(--text); }
+.contact-page .site-foot a { color: var(--muted); }
+.contact-page .site-foot a:hover { color: var(--text); text-decoration: none; }
+
+.ct { max-width: 40rem; margin: 0 auto; padding: 64px 24px 88px; }
+.ct h1 {
+	font-size: clamp(2rem, 4vw, 2.75rem);
+	line-height: 1.12;
+	letter-spacing: -0.03em;
+}
+.ct .sub { margin-top: 12px; color: var(--muted); font-size: 1.05rem; line-height: 1.5; }
+.channels { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 14px; }
+.channels li {
+	padding: 18px 20px;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--r-card);
+	background: var(--surface);
+}
+.channels h2 {
+	margin: 0;
+	font-size: 0.78rem;
+	line-height: 1.4;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted);
+	font-weight: 600;
+}
+.channels p { margin-top: 8px; color: var(--body); line-height: 1.55; }
+.channels .note { color: var(--muted); font-size: 0.94rem; }
+
+@media (max-width: 430px) {
+	.ct { padding: 44px 22px 56px; }
+}

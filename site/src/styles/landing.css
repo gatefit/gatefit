@@ -178,7 +178,7 @@ html { scroll-padding-top: 64px; }
 	to { transform: translateX(120%); }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 899px) {
 	.site-nav { position: relative; z-index: 20; height: auto; min-height: 64px; }
 	.nav-toggle { display: inline-flex; }
 	.site-nav .wrap {
