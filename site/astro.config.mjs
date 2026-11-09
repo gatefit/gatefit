@@ -72,6 +72,8 @@ export default defineConfig({
 			},
 			components: {
 				ThemeSelect: './src/components/docs/ThemeSelect.astro',
+				Footer: './src/components/docs/Footer.astro',
+				SocialIcons: './src/components/docs/SocialIcons.astro',
 			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/gatefit/gatefit' },
@@ -88,6 +90,7 @@ export default defineConfig({
 				{ label: 'Polar checkout', link: '/polar/' },
 				{ label: 'Pricing', link: '/#pricing' },
 				{ label: 'Status', link: '/status/' },
+				{ label: 'Contact', link: '/contact/' },
 			],
 		}),
 	],

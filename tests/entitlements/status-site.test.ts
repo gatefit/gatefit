@@ -58,12 +58,13 @@ test("status page inlines exactly one Cloudflare beacon with the token", () => {
 test("Status is in the landing nav, the docs sidebar, and the status page nav without a Buy CTA", () => {
   const index = read("site/src/pages/index.astro");
   assert.match(index, /<a class="nav-link" href="\/status\/">Status<\/a>/);
-  assert.equal((index.match(/class="nav-link"/g) ?? []).length, 4);
+  assert.match(index, /<a class="nav-link" href="\/contact\/">Contact<\/a>/);
+  assert.equal((index.match(/class="nav-link"/g) ?? []).length, 5);
   assert.match(read("site/astro.config.mjs"), /\{ label: 'Status', link: '\/status\/' \}/);
   const page = read("site/src/pages/status.astro");
   assert.match(page, /<header class="site-nav">/);
   assert.match(page, /<a class="nav-link" href="\/status\/" aria-current="page">Status<\/a>/);
-  for (const href of ["/quickstart/", "/action/", "/#pricing"]) assert.ok(page.includes(`class="nav-link" href="${href}"`), href);
+  for (const href of ["/quickstart/", "/action/", "/#pricing", "/contact/"]) assert.ok(page.includes(`class="nav-link" href="${href}"`), href);
   assert.doesNotMatch(page, /PolarBuyCta|data-gf-buy|\/pricing\/"/);
 });
 

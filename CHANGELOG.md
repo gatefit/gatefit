@@ -4,6 +4,7 @@ All notable Gatefit changes are listed here. The version heading matches `packag
 
 ## [Unreleased]
 
+- Site: `/contact` lists GitHub Issues, @gatefitio on X, dev@gatefit.io, and the Polar Checkout Link for $49 Indie License questions. The header or nav and the footer link to it, including `/status` and the docs.
 - Docs: npm `gatefit@0.8.0` and tag `v0.8.0` are the release. Scenario lists say S1–S12 (17 goldens). The $49 Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 stay free.
 - Onboarding: `docs/onboarding.md` and the Onboarding docs page. Install `gatefit@0.8.0`, run `gatefit init`, connect an access table, use a Stripe test-mode key, and read the first free-suite result.
 - Site docs name npm `gatefit@0.8.0` as the current release. They no longer say a feature is new in 0.6.0 or 0.7.0, or that an older release was the first to ship a suite.

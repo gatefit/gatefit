@@ -1,0 +1,123 @@
+---
+import '../styles/landing.css';
+import '../styles/contact.css';
+import Icon from '../components/Icon.astro';
+import mark from '../assets/gatefit-mark.svg?raw';
+import { resolvePolarCheckoutUrl } from '../lib/polarCheckout';
+
+const checkoutUrl = resolvePolarCheckoutUrl(import.meta.env.PUBLIC_POLAR_CHECKOUT_URL);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Contact · Gatefit</title>
+		<meta name="description" content="Bugs and questions go to GitHub Issues. License and billing questions for the $49 Indie License use the Polar checkout." />
+		<meta name="theme-color" content="#0B1B3A" />
+		<link rel="canonical" href="https://gatefit.io/contact/" />
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	</head>
+	<body class="contact-page">
+		<a class="skip" href="#contact">Skip to content</a>
+		<header class="site-nav">
+			<div class="wrap">
+				<a class="word" href="/"><span class="mark" set:html={mark} />Gatefit</a>
+				<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+					<span class="nav-toggle-open">Menu</span>
+					<span class="nav-toggle-close">Close</span>
+				</button>
+				<nav class="nav-links" id="nav-links" aria-label="Primary">
+					<a class="nav-link" href="/quickstart/">Quickstart</a>
+					<a class="nav-link" href="/action/">Action</a>
+					<a class="nav-link" href="/#pricing">Pricing</a>
+					<a class="nav-link" href="/status/">Status</a>
+					<a class="nav-link" href="/contact/" aria-current="page">Contact</a>
+				</nav>
+			</div>
+		</header>
+
+		<main id="contact" class="ct">
+			<h1>Contact</h1>
+			<p class="sub">Bugs, questions, and license billing.</p>
+			<ul class="channels">
+				<li>
+					<h2>Bugs and questions</h2>
+					<p><a href="https://github.com/gatefit/gatefit/issues">GitHub Issues</a></p>
+				</li>
+				<li>
+					<h2>X</h2>
+					<p><a href="https://x.com/gatefitio">@gatefitio</a></p>
+				</li>
+				<li>
+					<h2>Email</h2>
+					<p><a href="mailto:dev@gatefit.io">dev@gatefit.io</a></p>
+				</li>
+				<li>
+					<h2>License and billing</h2>
+					<p>Questions about the $49 one-time Indie License go through the Polar checkout.</p>
+					{
+						checkoutUrl ? (
+							<p>
+								<a href={checkoutUrl} target="_blank" rel="noopener">
+									Polar checkout
+								</a>
+							</p>
+						) : (
+							<p role="status" data-checkout-closed>
+								This <code>PUBLIC_POLAR_CHECKOUT_URL</code> is not a Checkout Link, so the Polar link stays closed.
+							</p>
+						)
+					}
+					<p class="note">
+						The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free.
+					</p>
+				</li>
+			</ul>
+		</main>
+
+		<footer class="site-foot">
+			<div class="wrap">
+				<a class="word" href="/"><span class="mark" set:html={mark} />Gatefit</a>
+				<div class="foot-links">
+					<a href="/quickstart/">Quickstart</a>
+					<a href="/init/">gatefit init</a>
+					<a href="/polar-pack/">Polar pack</a>
+					<a href="/paddle-pack/">Paddle pack</a>
+					<a href="/telemetry/">Telemetry</a>
+					<a href="/status/">Status</a>
+					<a href="/contact/">Contact</a>
+					<a href="https://github.com/gatefit/gatefit" aria-label="GitHub"><Icon name="github-logo" size={18} /></a>
+				</div>
+			</div>
+		</footer>
+
+		<script>
+			const nav = document.querySelector<HTMLElement>('.site-nav');
+			const navToggle = nav?.querySelector<HTMLButtonElement>('.nav-toggle');
+			const navLinks = nav?.querySelector<HTMLElement>('#nav-links');
+			const setNavOpen = (open: boolean) => {
+				nav?.classList.toggle('is-open', open);
+				document.documentElement.classList.toggle('nav-open', open);
+				navToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+			};
+			navToggle?.addEventListener('click', () => {
+				const open = navToggle.getAttribute('aria-expanded') !== 'true';
+				setNavOpen(open);
+				if (open) navLinks?.querySelector('a')?.focus({ preventScroll: true });
+			});
+			document.addEventListener('keydown', (event) => {
+				if (event.key !== 'Escape' || !nav?.classList.contains('is-open')) return;
+				setNavOpen(false);
+				navToggle?.focus({ preventScroll: true });
+			});
+			navLinks?.addEventListener('click', (event) => {
+				const target = event.target;
+				if (target instanceof Element && target.closest('a')) setNavOpen(false);
+			});
+		</script>
+	</body>
+</html>
