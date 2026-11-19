@@ -2,6 +2,8 @@
 
 Stripe Entitlement Edge Pack — CI that asserts the access DB survives ugly billing transitions.
 
+New here? Start with the [onboarding guide](https://gatefit.io/onboarding).
+
 YAML fixture scenarios, an `npx gatefit` CLI, and a GitHub Action. Node 22+. Not a billing UI. npm `gatefit@0.8.0` is released and tag `v0.8.0` is cut. 0.8.0 adds free S10–S12 goldens. The Stripe suite is S1–S12 (17 goldens). It also ships the gatefit.io homepage redesign.
 
 ## Distribution
