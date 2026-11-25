@@ -1,0 +1,11 @@
+id: http_200_denies
+subject: cus_http_schema
+steps:
+  - event:
+      id: evt_http_schema
+      type: charge.succeeded
+      customerId: cus_http_schema
+      httpStatus: 200
+      plan: pro
+    expect:
+      locked: true

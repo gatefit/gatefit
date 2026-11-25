@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { loadAdapter } from "./access-adapter.ts";
+import { type AccessAdapter, loadAdapter } from "./access-adapter.ts";
+import { createMappedAdapter } from "./adapters/mapped.ts";
 import { listGoldens, loadGolden, requireReset, runGolden } from "./fixture-driver.ts";
 import { LIVE_SCENARIO_IDS, runLiveLane, type LiveScenarioId } from "./live-scenarios.ts";
 import { resolveChaosSeed } from "./chaos.ts";
@@ -28,6 +29,7 @@ function usage(): string {
     "  gatefit init [--template drizzle|prisma|supabase|generic] [--dir <path>] [--force] [--dry-run]",
     "               [--no-prompt] [--print-workflow | --write-workflow]",
     "  gatefit run --suite <dir|file|id> --adapter <path>",
+    "  gatefit run --suite <dir|file|id> --schema <path>",
     "  gatefit run --suite chaos --adapter <path> [--seed <value>]",
     "  gatefit run --suite polar --adapter <path>",
     "  gatefit run --suite paddle --adapter <path>",
@@ -53,7 +55,60 @@ function resolveSuiteFiles(suite: string): string[] {
   throw new Error(`suite not found: ${suite}`);
 }
 
-async function cmdRun(suite: string, adapterPath: string, seed: string): Promise<number> {
+async function runSuite(adapter: AccessAdapter, files: string[]): Promise<number> {
+  requireReset(adapter, files.length);
+  let failed = 0;
+  for (const file of files) {
+    const golden = loadGolden(file);
+    const result = await runGolden(adapter, golden);
+    if (result.ok) {
+      console.error(`gatefit: PASS ${golden.id}`);
+    } else {
+      failed += 1;
+      console.error(`gatefit: FAIL ${golden.id}`);
+      for (const step of result.results.filter((s) => !s.ok)) {
+        console.error(`  step ${step.stepIndex}: ${step.mismatches.join("; ")}`);
+      }
+    }
+  }
+  return failed === 0 ? 0 : 1;
+}
+
+async function cmdRun(
+  suite: string,
+  adapterPath: string | undefined,
+  schemaPath: string | undefined,
+  seed: string,
+): Promise<number> {
+  if (schemaPath && adapterPath) {
+    usageError = true;
+    console.error("gatefit: pass --schema or --adapter, not both");
+    return 1;
+  }
+  if (schemaPath) {
+    // Free suite only. Pack names and pack directories are refused before any license call.
+    if (isProPack(suite)) {
+      usageError = true;
+      console.error(
+        "gatefit: --schema maps an access table on the free suite. Chaos mode and the Polar and Paddle packs stay on --adapter.",
+      );
+      return 1;
+    }
+    const files = resolveSuiteFiles(suite);
+    if (files.length === 0) throw new Error(`suite not found: ${suite}`);
+    if (mixesPackAndFree(files) || proPackOwning(files)) {
+      usageError = true;
+      console.error("gatefit: --schema does not run Polar or Paddle goldens");
+      return 1;
+    }
+    const adapter = await createMappedAdapter(schemaPath);
+    return runSuite(adapter, files);
+  }
+  if (!adapterPath) {
+    usageError = true;
+    console.error(usage());
+    return 1;
+  }
   if (isProPack(suite)) {
     const gate = await ensureProLicense();
     if (!gate.ok) {
@@ -87,22 +142,7 @@ async function cmdRun(suite: string, adapterPath: string, seed: string): Promise
     if (owner.run) return owner.run({ adapterPath, seed, files });
   }
   const adapter = await loadAdapter(resolveUserOrPackage(adapterPath));
-  requireReset(adapter, files.length);
-  let failed = 0;
-  for (const file of files) {
-    const golden = loadGolden(file);
-    const result = await runGolden(adapter, golden);
-    if (result.ok) {
-      console.error(`gatefit: PASS ${golden.id}`);
-    } else {
-      failed += 1;
-      console.error(`gatefit: FAIL ${golden.id}`);
-      for (const step of result.results.filter((s) => !s.ok)) {
-        console.error(`  step ${step.stepIndex}: ${step.mismatches.join("; ")}`);
-      }
-    }
-  }
-  return failed === 0 ? 0 : 1;
+  return runSuite(adapter, files);
 }
 
 async function cmdAdapterCheck(): Promise<number> {
@@ -164,15 +204,21 @@ async function main(argv: string[]): Promise<number> {
       options: {
         suite: { type: "string" },
         adapter: { type: "string" },
+        schema: { type: "string" },
         seed: { type: "string" },
       },
     });
-    if (!values.suite || !values.adapter) {
+    if (!values.suite || (!values.adapter && !values.schema)) {
       usageError = true;
       console.error(usage());
       return 1;
     }
-    return cmdRun(values.suite, values.adapter, resolveChaosSeed(values.seed, process.env.GATEFIT_CHAOS_SEED));
+    return cmdRun(
+      values.suite,
+      values.adapter,
+      values.schema,
+      resolveChaosSeed(values.seed, process.env.GATEFIT_CHAOS_SEED),
+    );
   }
   if (command === "live") {
     const { values } = parseArgs({

@@ -48,6 +48,13 @@ need_file src/fixture-driver.ts
 need_file src/adapters/naive.ts
 need_file src/adapters/hardened.ts
 need_file src/adapters/sqlite.ts
+need_file src/adapters/mapped.ts
+need_file src/schema-map.ts
+need_file tests/fixtures/saas-starter/schema.json
+need_file tests/fixtures/saas-starter/subscription.sql
+need_file tests/fixtures/saas-starter/check.ts
+need_file docs/bring-your-own-schema.md
+need_file site/src/content/docs/bring-your-own-schema.md
 need_file tests/entitlements/goldens/paid_grants_access.yaml
 need_file tests/entitlements/goldens/cancel_revokes_access.yaml
 need_file tests/entitlements/goldens/refund_revokes_access.yaml
@@ -336,6 +343,8 @@ node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapter
   || fail "hardened goldens"
 node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapters/sqlite.ts \
   || fail "sqlite goldens"
+npx tsx tests/fixtures/saas-starter/check.ts || fail "bring-your-own-schema"
+ok "bring-your-own-schema (starter-kit table runs S1–S12, dedupe finding, no license)"
 naive_out="$(node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapters/naive.ts 2>&1 || true)"
 echo "$naive_out" >&2
 echo "$naive_out" | grep -q 'gatefit: FAIL' || fail "naive did not report FAIL"

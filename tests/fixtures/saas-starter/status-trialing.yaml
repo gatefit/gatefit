@@ -1,0 +1,12 @@
+id: status_trialing_denies
+subject: cus_trial_status
+steps:
+  - event:
+      id: evt_status_trialing
+      type: customer.subscription.updated
+      customerId: cus_trial_status
+      status: trialing
+      plan: pro
+    expect:
+      locked: true
+      plan: pro
