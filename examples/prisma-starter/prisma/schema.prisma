@@ -1,0 +1,24 @@
+// Minimal Subscription model shaped like boxyhq/saas-starter-kit.
+// Columns: id, customerId, priceId, active, startDate, endDate, cancelAt.
+// Gatefit maps this table. It does not add columns.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Subscription {
+  id         String    @id
+  customerId String
+  priceId    String
+  active     Boolean   @default(false)
+  startDate  DateTime
+  endDate    DateTime
+  cancelAt   DateTime?
+
+  @@index([customerId])
+}

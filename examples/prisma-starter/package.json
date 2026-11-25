@@ -1,0 +1,19 @@
+{
+  "name": "gatefit-prisma-starter-example",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Minimal Prisma Subscription table for the Gatefit --schema example. Not published.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "db:push": "prisma db push --skip-generate",
+    "example": "bash ci.sh"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "6.19.3"
+  }
+}
