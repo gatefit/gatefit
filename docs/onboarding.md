@@ -673,6 +673,16 @@ A missing file, invalid JSON, or a column that is not one identifier (`gatefit: 
 
 Rules and the Postgres URL guard: [bring-your-own-schema.md](bring-your-own-schema.md).
 
+## Check the webhook you already have
+
+`check-my-webhook` reads a Stripe webhook handler and prints possible missing safeguards in plain words: no signature check, no event-id dedupe, no ordering guard, a status ignored on create, or an update that recreates a deleted row. It is free. It does not read `GATEFIT_LICENSE_KEY` and it does not use the network. It does not write to the repository. Each report line says `possible`. A line is a heuristic, not a verdict. This command ships in the next release. From a checkout of this repository:
+
+```bash
+node bin/gatefit.js check-my-webhook
+```
+
+Details: [check-my-webhook.md](check-my-webhook.md).
+
 ## 6. Read the first result
 
 `paid_grants_access` has one step. The event is `invoice.paid` for `cus_s1` with `plan: pro`. The expected snapshot is `locked: false` and `plan: "pro"`. `locked: false` means the customer is allowed.

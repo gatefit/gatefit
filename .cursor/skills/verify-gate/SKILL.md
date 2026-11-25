@@ -26,6 +26,7 @@ The Stripe suite on this gate is S1–S12 (17 goldens). The $49 one-time Gatefit
 - H7 YAML fixture scenarios: `dispute_revokes_or_flags`, `unpaid_after_retries_revokes` (dispute+clocks flake; fixtures only).
 - Free S7–S12 YAML fixture scenarios: `trial_no_card`, `portal_downgrade_period_end_vs_immediate`, `entitlements_active_summary`, `trial_end_pause_resume_waits_for_paid`, `smart_retries_unpaid_then_paid_recovers`, `pause_collection_keeps_access_all_behaviors` (no license key, no Polar call; fixtures only).
 - Bring-your-own-schema: `tests/fixtures/saas-starter/check.ts` runs S1–S12 against a Subscription-shaped sqlite table via `--schema`. No license call. An omitted dedupe mapping is a finding (exit 0). A mapped dedupe table that is absent from the database is an error (exit 1). The mapping does not add or alter tables.
+- Free `gatefit check-my-webhook`: read-only, no network, not license-gated. A saas-starter-kit-shaped handler reports possible missing dedupe and ordering. A guarded handler reports no findings.
 - Naive directory run must fail.
 - Composite Action wraps `gatefit run` (repo-root `action.yml` plus nested `.github/actions/gatefit/action.yml`) and `docs/bring-your-adapter.md`.
 - Packaging: publishable `gatefit` bin at the `package.json` version, `npm pack`, tarball `npx gatefit adapter-check`, `npm publish --dry-run` (no registry write; tarball has `bin/gatefit.js`, no `site/`, no secrets). `.github/workflows/publish.yml` is the tag publish path (OIDC, GitHub environment `npm`) and must not reference an npm token.
