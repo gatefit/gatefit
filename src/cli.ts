@@ -13,6 +13,7 @@ import { ensureProLicense } from "./license.ts";
 import { cmdTelemetry, maybeSendTelemetry, type Outcome } from "./telemetry.ts";
 import { getProPack, isProPack, mixesPackAndFree, proPackOwning } from "./packs.ts";
 import { goldenDir, packageRoot, readPackageVersion, resolveUserOrPackage, userCwd } from "./paths.ts";
+import { formatReport, scanExitCode, scanWebhookTree } from "./webhook-scan.ts";
 import {
   createStripeClockClient,
   requireLiveClockEnabled,
@@ -34,6 +35,7 @@ function usage(): string {
     "  gatefit run --suite polar --adapter <path>",
     "  gatefit run --suite paddle --adapter <path>",
     "  gatefit adapter-check",
+    "  gatefit check-my-webhook [--dir <path>]",
     "  gatefit live --adapter <path> [--scenario <id>]",
     "  gatefit telemetry on|off|status",
     "  gatefit --help",
@@ -145,6 +147,18 @@ async function cmdRun(
   return runSuite(adapter, files);
 }
 
+function cmdCheckMyWebhook(dirArg: string | undefined): number {
+  const display = dirArg ?? ".";
+  const root = dirArg === undefined ? userCwd() : path.resolve(userCwd(), dirArg);
+  const report = scanWebhookTree(root);
+  if (!report.ok) {
+    console.error(`gatefit check-my-webhook: path not found: ${display}`);
+    return 1;
+  }
+  console.log(formatReport(report, display));
+  return scanExitCode(report);
+}
+
 async function cmdAdapterCheck(): Promise<number> {
   const suite = loadGolden(S1());
   const naive = await runGolden(await loadAdapter(NAIVE()), suite);
@@ -197,6 +211,29 @@ async function main(argv: string[]): Promise<number> {
   }
   if (command === "adapter-check") {
     return cmdAdapterCheck();
+  }
+  if (command === "check-my-webhook") {
+    const rest = argv.slice(1);
+    if (rest.includes("--help") || rest.includes("-h")) {
+      usageError = true;
+      console.log(usage());
+      return 0;
+    }
+    let dir: string | undefined;
+    try {
+      dir = parseArgs({
+        args: rest,
+        options: { dir: { type: "string" } },
+      }).values.dir;
+    } catch (err) {
+      if (isUsageError(err)) {
+        usageError = true;
+        console.error(usage());
+        return 1;
+      }
+      throw err;
+    }
+    return cmdCheckMyWebhook(dir);
   }
   if (command === "run") {
     const { values } = parseArgs({

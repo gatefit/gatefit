@@ -53,6 +53,12 @@ need_file src/schema-map.ts
 need_file tests/fixtures/saas-starter/schema.json
 need_file tests/fixtures/saas-starter/subscription.sql
 need_file tests/fixtures/saas-starter/check.ts
+need_file src/webhook-scan.ts
+need_file tests/fixtures/webhook-scan/starter-kit/pages/api/webhooks/stripe.ts
+need_file tests/fixtures/webhook-scan/guarded/pages/api/webhooks/stripe.ts
+need_file tests/entitlements/webhook-scan.test.ts
+need_file docs/check-my-webhook.md
+need_file site/src/content/docs/check-my-webhook.md
 need_file docs/bring-your-own-schema.md
 need_file site/src/content/docs/bring-your-own-schema.md
 need_file tests/entitlements/goldens/paid_grants_access.yaml
@@ -345,6 +351,24 @@ node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapter
   || fail "sqlite goldens"
 npx tsx tests/fixtures/saas-starter/check.ts || fail "bring-your-own-schema"
 ok "bring-your-own-schema (starter-kit table runs S1–S12, dedupe finding, no license)"
+
+set +e
+starter_scan="$(node bin/gatefit.js check-my-webhook --dir tests/fixtures/webhook-scan/starter-kit 2>&1)"
+starter_code=$?
+set -e
+printf '%s\n' "$starter_scan" >&2
+[[ "$starter_code" -eq 1 ]] || fail "check-my-webhook starter-kit exit ${starter_code}"
+printf '%s\n' "$starter_scan" | grep -q 'possible missing event-id dedupe' || fail "check-my-webhook starter-kit missed dedupe"
+printf '%s\n' "$starter_scan" | grep -q 'possible missing ordering guard' || fail "check-my-webhook starter-kit missed ordering"
+if printf '%s\n' "$starter_scan" | grep -E -q '\b(bug|vulnerability|definitely)\b'; then
+  fail "check-my-webhook starter-kit claimed a definite defect"
+fi
+guarded_scan="$(node bin/gatefit.js check-my-webhook --dir tests/fixtures/webhook-scan/guarded 2>&1)"
+printf '%s\n' "$guarded_scan" >&2
+if printf '%s\n' "$guarded_scan" | grep -q 'possible'; then
+  fail "check-my-webhook guarded handler was noisy"
+fi
+ok "check-my-webhook (starter-kit flags dedupe and ordering, guarded stays quiet)"
 naive_out="$(node bin/gatefit.js run --suite tests/entitlements/goldens --adapter src/adapters/naive.ts 2>&1 || true)"
 echo "$naive_out" >&2
 echo "$naive_out" | grep -q 'gatefit: FAIL' || fail "naive did not report FAIL"

@@ -85,6 +85,7 @@ export default defineConfig({
 				{ label: 'gatefit init', slug: 'init' },
 				{ label: 'Goldens', slug: 'goldens' },
 				{ label: 'GitHub Action', slug: 'action' },
+				{ label: 'Check my webhook', slug: 'check-my-webhook' },
 				{ label: 'Polar pack', slug: 'polar-pack' },
 				{ label: 'Paddle pack', slug: 'paddle-pack' },
 				{ label: 'Telemetry', slug: 'telemetry' },
