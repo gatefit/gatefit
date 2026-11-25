@@ -678,7 +678,7 @@ Rules and the Postgres URL guard: [Bring your own schema](/bring-your-own-schema
 
 ## Check the webhook you already have
 
-`check-my-webhook` reads a Stripe webhook handler and prints possible missing safeguards in plain words: no signature check, no event-id dedupe, no ordering guard, a status ignored on create, or an update that recreates a deleted row. It is free. It does not read `GATEFIT_LICENSE_KEY` and it does not use the network. It does not write to the repository. Each report line says `possible`. A line is a heuristic, not a verdict. This command ships in the next release. From a checkout of this repository:
+`check-my-webhook` reads a Stripe webhook handler and prints possible missing safeguards in plain words: no signature check, no event-id dedupe, no ordering guard, a status ignored on create, or an update that recreates a deleted row. It is free. It does not read `GATEFIT_LICENSE_KEY` and it does not use the network. It does not write to the repository. Each finding starts with `possible`. A line is a heuristic, not a verdict. This command ships in the next release. From a checkout of this repository:
 
 ```bash
 node bin/gatefit.js check-my-webhook

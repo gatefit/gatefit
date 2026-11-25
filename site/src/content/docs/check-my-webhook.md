@@ -22,7 +22,7 @@ With no `--dir`, the scan uses the working directory. Exit 0 means a handler was
 
 ## What a line means
 
-Each report line starts with `possible`. The scan is a heuristic. It does not prove a defect, and a quiet run does not prove the handler is safe.
+Each finding starts with `possible`. The scan is a heuristic. It does not prove a defect, and a quiet run does not prove the handler is safe.
 
 It looks for five gaps:
 
