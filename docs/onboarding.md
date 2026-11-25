@@ -655,6 +655,8 @@ This flag ships in the next release. From a checkout of this repository:
 node bin/gatefit.js run --suite tests/entitlements/goldens --schema gatefit.schema.json
 ```
 
+A Prisma sqlite app with this Subscription model is [examples/prisma-starter](../examples/prisma-starter/README.md). Run it from a checkout with `node bin/gatefit.js`. The published package `gatefit@0.8.0` does not include `--schema` or `check-my-webhook`. The example runs both from this repository. The $49 one-time Gatefit Indie License does not gate this path.
+
 **What counts as paid.** A missing row is not paid (`locked: true`). An `active` column is paid only when the value is boolean `true` or integer `1`. A `status` column is paid only when the value is exactly `active`. `trialing`, `past_due`, `paused`, `canceled`, `unpaid`, and any other status are not paid. When both columns are mapped, both must agree or the row is not paid. `periodEnd` and `cancelAt` are written from the event. They do not grant access. A Stripe HTTP 200 does not grant access. The plan column (`priceId` above) is the plan on the snapshot.
 
 `reset` deletes every row in the mapped access table and, when a dedupe table is mapped, every row in that table. Use a disposable database.
