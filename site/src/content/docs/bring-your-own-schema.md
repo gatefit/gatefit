@@ -3,7 +3,7 @@ title: Bring your own schema
 description: Point Gatefit at the access table you already have. Free with the S1–S12 suite.
 ---
 
-Point Gatefit at the access table you already have. `--schema` is free with npm `gatefit@0.8.0`. It does not read `GATEFIT_LICENSE_KEY` and it does not call Polar. The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free. Chaos mode and those packs stay on `--adapter`.
+Point Gatefit at the access table you already have. `--schema` is free and ships in the next release. npm `gatefit@0.8.0` is the current published package. `--schema` does not read `GATEFIT_LICENSE_KEY` and does not call Polar. The $49 one-time Gatefit Indie License unlocks only chaos mode and the Polar and Paddle packs. The core, Phase 2, and S1–S12 (17 goldens) stay free. Chaos mode and those packs stay on `--adapter`.
 
 From install to the first result: [Onboarding](/onboarding/).
 
@@ -11,8 +11,10 @@ From install to the first result: [Onboarding](/onboarding/).
 
 `gatefit init` creates `gatefit_access` and `gatefit_seen_events`. `--schema` does not. You name the table and the columns. Gatefit does not add tables, columns, or indexes. `reset` deletes every row in the mapped table, and in the dedupe table when you mapped one. Use a disposable database.
 
+From a checkout of this repository:
+
 ```bash
-npx gatefit@0.8.0 run --suite tests/entitlements/goldens --schema gatefit.schema.json
+node bin/gatefit.js run --suite tests/entitlements/goldens --schema gatefit.schema.json
 ```
 
 Pass `--schema` or `--adapter`, not both. A sqlite `database` path is relative to the working directory. The file must already exist. Postgres sets `dialect` to `postgres`, omits `database`, and reads `DATABASE_URL`. A non-local host is refused unless `GATEFIT_ALLOW_REMOTE_DB=1`. The error does not print the URL.
@@ -51,7 +53,7 @@ Paid means the snapshot is `locked: false`.
 
 The plan column is the snapshot `plan`. On insert, `id` is the customer id. Later updates leave that id alone. `start` is set on insert from `now`, else `created`, else unix `0`.
 
-Several rows can share a customer id. The customer is paid when any of those rows is paid. A granting event updates the paid row with the latest period end, or the latest row when none are paid. It does not mark the other rows paid. A revoking event clears every row for that customer.
+Several rows can share a customer id. The customer is paid when any of those rows is paid. When `id` is mapped, a granting event updates the paid row with the latest period end, or the latest row when none are paid, and does not mark the other rows paid. Without an `id` column, a granting event writes every row for that customer. A revoking event clears every row for that customer.
 
 ## Event dedupe
 

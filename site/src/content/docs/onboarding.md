@@ -652,13 +652,15 @@ A table shaped like the boxyhq/saas-starter-kit Prisma `Subscription` model (`id
 
 `database` is a sqlite file path relative to the working directory. The file and the table must already exist. Postgres uses `"dialect": "postgres"`, omits `database`, and reads `DATABASE_URL`.
 
+This flag ships in the next release. From a checkout of this repository:
+
 ```bash
-npx gatefit@0.8.0 run --suite tests/entitlements/goldens --schema gatefit.schema.json
+node bin/gatefit.js run --suite tests/entitlements/goldens --schema gatefit.schema.json
 ```
 
 **What counts as paid.** A missing row is not paid (`locked: true`). An `active` column is paid only when the value is boolean `true` or integer `1`. A `status` column is paid only when the value is exactly `active`. `trialing`, `past_due`, `paused`, `canceled`, `unpaid`, and any other status are not paid. When both columns are mapped, both must agree or the row is not paid. `periodEnd` and `cancelAt` are written from the event. They do not grant access. A Stripe HTTP 200 does not grant access. The plan column (`priceId` above) is the plan on the snapshot.
 
-`reset` deletes every row in the mapped table. Use a disposable database.
+`reset` deletes every row in the mapped access table and, when a dedupe table is mapped, every row in that table. Use a disposable database.
 
 Event dedupe is optional. With no `dedupe` object, Gatefit prints this finding and still exits 0 when the suite passes:
 
