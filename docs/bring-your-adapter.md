@@ -1,6 +1,6 @@
 # Bring your AccessAdapter
 
-Gatefit checks **your access DB**, not Stripe HTTP 200. Step by step, from install to the first result: [onboarding.md](onboarding.md).
+Gatefit checks **your access DB**, not Stripe HTTP 200. Step by step, from install to the first result: [onboarding.md](onboarding.md). Already have a subscription table? [bring-your-own-schema.md](bring-your-own-schema.md) maps it and runs the same S1–S12 (17 goldens). That path is free.
 
 ## 1. Implement the contract
 

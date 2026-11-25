@@ -624,6 +624,55 @@ Each check prints one line to stderr. File names are sorted, so the first line o
 
 Exit 0 means every check passed. Exit 1 means at least one did not. Pass and fail lines do not change the license rule: this suite stays free.
 
+## Map the table you already have
+
+`gatefit init` creates `gatefit_access` and `gatefit_seen_events`. To point Gatefit at the subscription table you already have, pass `--schema` and do not pass `--adapter`. Gatefit reads and writes that table. It does not add or alter tables. This path is free. It does not read `GATEFIT_LICENSE_KEY` and it does not call Polar. Chaos mode and the Polar and Paddle packs stay on `--adapter`. The $49 one-time Gatefit Indie License does not gate this path.
+
+A table shaped like the boxyhq/saas-starter-kit Prisma `Subscription` model (`id`, `customerId`, `priceId`, `active`, `startDate`, `endDate`, `cancelAt`) runs S1–S12 (17 goldens) with no schema change.
+
+```json
+{
+  "dialect": "sqlite",
+  "database": "gatefit-byo.sqlite",
+  "table": "Subscription",
+  "columns": {
+    "id": "id",
+    "customerId": "customerId",
+    "plan": "priceId",
+    "active": "active",
+    "start": "startDate",
+    "periodEnd": "endDate",
+    "cancelAt": "cancelAt"
+  }
+}
+```
+
+`database` is a sqlite file path relative to the working directory. The file and the table must already exist. Postgres uses `"dialect": "postgres"`, omits `database`, and reads `DATABASE_URL`.
+
+This flag ships in the next release. From a checkout of this repository:
+
+```bash
+node bin/gatefit.js run --suite tests/entitlements/goldens --schema gatefit.schema.json
+```
+
+**What counts as paid.** A missing row is not paid (`locked: true`). An `active` column is paid only when the value is boolean `true` or integer `1`. A `status` column is paid only when the value is exactly `active`. `trialing`, `past_due`, `paused`, `canceled`, `unpaid`, and any other status are not paid. When both columns are mapped, both must agree or the row is not paid. `periodEnd` and `cancelAt` are written from the event. They do not grant access. A Stripe HTTP 200 does not grant access. The plan column (`priceId` above) is the plan on the snapshot.
+
+`reset` deletes every row in the mapped access table and, when a dedupe table is mapped, every row in that table. Use a disposable database.
+
+Event dedupe is optional. With no `dedupe` object, Gatefit prints this finding and still exits 0 when the suite passes:
+
+```text
+gatefit: finding: event dedupe is not mapped; a replayed event id is ignored for this process only and is not stored in the database
+```
+
+A second process can apply that event id again. Map a dedupe table that already exists (`"dedupe": { "table": "seen_events", "eventId": "event_id" }`) when a replay must stay a no-op after the process exits. Gatefit does not create that table. If the name is mapped and the table is missing, the run stops with `gatefit: event dedupe table "seen_events" is not in the database`.
+
+Seats and features are not on this model. Gatefit prints a finding and keeps them in memory for the process so S1–S12 (17 goldens) can run. They are not written to the table. Map `seats` and `features` when those columns exist.
+
+A missing file, invalid JSON, or a column that is not one identifier (`gatefit: access mapping column "customerId" is not a single identifier`) stops the run with that one line. An illegal name is rejected before the database file is opened.
+
+Rules and the Postgres URL guard: [bring-your-own-schema.md](bring-your-own-schema.md).
+
 ## 6. Read the first result
 
 `paid_grants_access` has one step. The event is `invoice.paid` for `cus_s1` with `plan: pro`. The expected snapshot is `locked: false` and `plan: "pro"`. `locked: false` means the customer is allowed.

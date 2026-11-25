@@ -81,6 +81,7 @@ export default defineConfig({
 			sidebar: [
 				{ label: 'Quickstart', slug: 'quickstart' },
 				{ label: 'Onboarding', slug: 'onboarding' },
+				{ label: 'Your schema', slug: 'bring-your-own-schema' },
 				{ label: 'gatefit init', slug: 'init' },
 				{ label: 'Goldens', slug: 'goldens' },
 				{ label: 'GitHub Action', slug: 'action' },

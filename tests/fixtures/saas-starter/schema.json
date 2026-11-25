@@ -1,0 +1,14 @@
+{
+  "dialect": "sqlite",
+  "database": "subscription.sqlite",
+  "table": "Subscription",
+  "columns": {
+    "id": "id",
+    "customerId": "customerId",
+    "plan": "priceId",
+    "active": "active",
+    "start": "startDate",
+    "periodEnd": "endDate",
+    "cancelAt": "cancelAt"
+  }
+}
